@@ -234,6 +234,12 @@ export default function LeadFinderApp() {
 
   const [existingCrmPhones, setExistingCrmPhones] = useState<Set<string>>(new Set());
 
+  // ---------- PITCH MODAL ----------
+  const [pitchModalLead, setPitchModalLead] = useState<LeadWithMeta | null>(null);
+  const [pitchModalLoading, setPitchModalLoading] = useState(false);
+  const [pitchModalMessage, setPitchModalMessage] = useState('');
+  const [pitchModalError, setPitchModalError] = useState('');
+
   // ---------- MISSION ----------
   const [missionDailyTarget, setMissionDailyTarget] = useState(() => {
     if (typeof window !== 'undefined') return Number(localStorage.getItem('leads_mission_target')) || 20;
@@ -623,6 +629,38 @@ export default function LeadFinderApp() {
     window.open(`https://wa.me/${cleanP}?text=${encodeURIComponent(pitch)}`, '_blank');
   };
 
+  const handleOpenPitchModal = (lead: LeadWithMeta) => {
+    setPitchModalLead(lead);
+    setPitchModalLoading(true);
+    setPitchModalMessage('');
+    setPitchModalError('');
+
+    fetch('/api/generate-pitch', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ businessName: cleanBizName(lead.name), category: lead.selectedCategory, address: lead.formattedAddress, rating: lead.rating, userRatingCount: lead.userRatingCount, senderName, senderRole, marketMode, geminiKey: geminiApiKey || undefined }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success && data.message) {
+          setPitchModalMessage(data.message);
+        } else {
+          setPitchModalError(data.error || 'Gagal menghasilkan pesan.');
+        }
+      })
+      .catch(() => setPitchModalError('Terjadi kesalahan jaringan.'))
+      .finally(() => setPitchModalLoading(false));
+  };
+
+  const handlePitchModalSendWa = () => {
+    if (!pitchModalLead || !pitchModalMessage.trim()) return;
+    const cleanP = pitchModalLead.phoneAnalysis?.cleaned || normalizeWhatsAppNumber(pitchModalLead.nationalPhoneNumber);
+    if (!cleanP) return;
+    const waUrl = `https://wa.me/${cleanP}?text=${encodeURIComponent(pitchModalMessage.trim())}`;
+    window.open(waUrl, '_blank');
+    updateLeadStatus(pitchModalLead.id, 'CONTACTED');
+    setPitchModalLead(null);
+  };
+
   const handleGenerateAiPitch = async (lead: LeadWithMeta) => {
     setGeneratingAiId(lead.id);
     try {
@@ -795,6 +833,7 @@ export default function LeadFinderApp() {
   }
 
   return (
+    <>
     <div className="min-h-screen bg-[#FAFAFA] flex text-slate-900 antialiased font-sans">
       {notification && (
         <div className="fixed bottom-5 right-5 z-50 animate-in slide-in-from-bottom-3 duration-150">
@@ -1274,7 +1313,12 @@ export default function LeadFinderApp() {
                   <div className="flex flex-wrap items-center gap-1.5 pt-1">
                     <span className="text-[10px] font-bold text-slate-400 uppercase mr-1">Kategori:</span>
                     {(marketMode === 'indo' ? PRESET_CATEGORIES : GLOBAL_PRESET_CATEGORIES).map((cat) => (
-                      <button key={cat.label} type="button" onClick={() => { setSelectedCategoryPreset(cat.query); setQuery(cat.query ? `${cat.query} di ${selectedCities[0] || ''}` : ''); }} className={`text-[11px] px-2.5 py-1 rounded-md font-medium transition cursor-pointer ${selectedCategoryPreset === cat.query ? 'bg-slate-900 text-white font-semibold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>{cat.label}</button>
+                      <button key={cat.label} type="button" onClick={() => {
+                        setSelectedCategoryPreset(cat.query);
+                        if (cat.query) {
+                          setQuery(`${cat.query} di ${selectedCities[0] || ''}`);
+                        }
+                      }} className={`text-[11px] px-2.5 py-1 rounded-md font-medium transition cursor-pointer ${selectedCategoryPreset === cat.query ? 'bg-slate-900 text-white font-semibold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>{cat.label}</button>
                     ))}
                   </div>
 
@@ -1330,11 +1374,15 @@ export default function LeadFinderApp() {
                             {lead.generatedPitch && <div className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-700 font-sans line-clamp-2">&quot;{lead.generatedPitch}&quot;</div>}
                           </div>
                           <div className="pt-3 flex items-center justify-between gap-2">
-                            <button onClick={() => handleGenerateAiPitch(lead)} disabled={generatingAiId === lead.id} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold cursor-pointer shadow-xs">
-                              <FontAwesomeIcon icon={faMagic} className={`h-3 w-3 text-purple-600 ${generatingAiId === lead.id ? 'animate-spin' : ''}`} />
-                              <span>{lead.generatedPitch ? 'Draf Ulang' : 'Draf AI'}</span>
+                            <button onClick={() => handleOpenPitchModal(lead)} disabled={pitchModalLoading && pitchModalLead?.id === lead.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white text-xs font-semibold cursor-pointer shadow-xs">
+                              {pitchModalLoading && pitchModalLead?.id === lead.id ? (
+                                <><svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg><span>Memproses...</span></>
+                              ) : (
+                                <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg><span>Buat Pesan</span></>
+                              )}
                             </button>
                             <div className="flex items-center gap-1.5">
+                              {lead.generatedPitch && <span className="text-[10px] text-slate-400 font-mono">Draf siap</span>}
                               <button onClick={() => handleOpenWhatsAppManual(lead)} disabled={!cleanP} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-300 cursor-pointer">
                                 <FontAwesomeIcon icon={faPaperPlane} className="h-3 w-3 text-emerald-600" /><span>Chat WA</span>
                               </button>
@@ -1619,5 +1667,66 @@ export default function LeadFinderApp() {
         </div>
       </main>
     </div>
+
+    {pitchModalLead && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setPitchModalLead(null)}>
+        <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-slate-100">
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">Buat Pesan Penawaran</h2>
+              <p className="text-[11px] text-slate-500 mt-0.5">{pitchModalLead.name} — {pitchModalLead.selectedCategory}</p>
+            </div>
+            <button onClick={() => setPitchModalLead(null)} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <div className="px-6 py-4 min-h-[180px]">
+            {pitchModalLoading ? (
+              <div className="space-y-3 animate-pulse">
+                <div className="h-3 bg-slate-200 rounded w-3/4" />
+                <div className="h-3 bg-slate-200 rounded w-full" />
+                <div className="h-3 bg-slate-200 rounded w-5/6" />
+                <div className="h-3 bg-slate-200 rounded w-2/3" />
+                <div className="h-3 bg-slate-200 rounded w-4/5" />
+                <div className="h-3 bg-slate-200 rounded w-1/2" />
+                <div className="pt-2 flex items-center gap-2">
+                  <div className="h-3 w-3 bg-slate-200 rounded-full" />
+                  <div className="h-3 bg-slate-200 rounded w-1/3" />
+                </div>
+              </div>
+            ) : pitchModalError ? (
+              <div className="flex flex-col items-center gap-3 py-6">
+                <div className="p-2 rounded-full bg-rose-50">
+                  <svg className="w-6 h-6 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                  </svg>
+                </div>
+                <p className="text-xs text-rose-600 font-medium">{pitchModalError}</p>
+                <button onClick={() => setPitchModalLead(null)} className="px-4 py-1.5 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer">Tutup</button>
+              </div>
+            ) : (
+              <textarea
+                value={pitchModalMessage}
+                onChange={(e) => setPitchModalMessage(e.target.value)}
+                className="w-full h-40 p-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-slate-300"
+                placeholder="Draf pesan akan muncul di sini..."
+              />
+            )}
+          </div>
+          {!pitchModalLoading && !pitchModalError && (
+            <div className="flex items-center justify-end gap-2 px-6 pb-5 pt-2 border-t border-slate-100">
+              <button onClick={() => setPitchModalLead(null)} className="px-4 py-2 rounded-lg text-[11px] font-semibold text-slate-600 hover:bg-slate-100 transition cursor-pointer">Batal</button>
+              <button onClick={handlePitchModalSendWa} disabled={!pitchModalMessage.trim()} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                </svg>
+                Kirim via WhatsApp
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+    </>
   );
 }
