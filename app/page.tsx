@@ -140,13 +140,13 @@ export const GLOBAL_PRESET_CATEGORIES = [
 
 export const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string; icon: any }> = {
   NEW: { label: 'NEW', bg: 'bg-amber-50 text-amber-800', text: 'text-amber-800', border: 'border-amber-200', icon: faMagic },
-  QUALIFIED: { label: 'QUALIFIED', bg: 'bg-sky-50 text-sky-800', text: 'text-sky-800', border: 'border-sky-200', icon: faBullseye },
-  CONTACTED: { label: 'CONTACTED', bg: 'bg-emerald-50 text-emerald-800', text: 'text-emerald-800', border: 'border-emerald-200', icon: faPaperPlane },
-  INTERESTED: { label: 'INTERESTED', bg: 'bg-indigo-50 text-indigo-800', text: 'text-indigo-800', border: 'border-indigo-200', icon: faBolt },
+  QUALIFIED: { label: 'QUALIFIED', bg: 'bg-cream-200 text-olive-800', text: 'text-olive-800', border: 'border-olive-200', icon: faBullseye },
+  CONTACTED: { label: 'CONTACTED', bg: 'bg-mint-50 text-olive-700', text: 'text-olive-700', border: 'border-mint-100', icon: faPaperPlane },
+  INTERESTED: { label: 'INTERESTED', bg: 'bg-olive-100 text-olive-800', text: 'text-olive-800', border: 'border-olive-200', icon: faBolt },
   LOST_FRANCHISE: { label: 'LOST_FRANCHISE', bg: 'bg-rose-50 text-rose-800', text: 'text-rose-800', border: 'border-rose-200', icon: faTimesCircle },
-  CLOSED: { label: 'CLOSED', bg: 'bg-purple-50 text-purple-800', text: 'text-purple-800', border: 'border-purple-200', icon: faCheckCircle },
-  IN_PROGRESS: { label: 'IN_PROGRESS', bg: 'bg-cyan-50 text-cyan-800', text: 'text-cyan-800', border: 'border-cyan-200', icon: faClock },
-  LOST_REJECTED: { label: 'LOST_REJECTED', bg: 'bg-slate-100 text-slate-700', text: 'text-slate-700', border: 'border-slate-300', icon: faTimesCircle },
+  CLOSED: { label: 'CLOSED', bg: 'bg-olive-100 text-olive-700', text: 'text-olive-700', border: 'border-olive-300', icon: faCheckCircle },
+  IN_PROGRESS: { label: 'IN_PROGRESS', bg: 'bg-mint-100 text-olive-800', text: 'text-olive-800', border: 'border-mint-200', icon: faClock },
+  LOST_REJECTED: { label: 'LOST_REJECTED', bg: 'bg-cream-200 text-olive-800', text: 'text-olive-800', border: 'border-cream-300', icon: faTimesCircle },
 };
 
 const cleanBizName = (name: string) => sanitizeBusinessName(name);
@@ -756,23 +756,23 @@ export default function LeadFinderApp() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center p-4 antialiased">
-        <div className="w-full max-w-sm bg-white border border-slate-200 rounded-2xl p-8 shadow-xs text-center space-y-6">
-          <div className="mx-auto w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs">
+      <div className="min-h-screen bg-cream-100 flex flex-col items-center justify-center p-4 antialiased">
+        <div className="w-full max-w-sm bg-cream-50 border border-olive-200 rounded-2xl p-8 shadow-sm text-center space-y-6">
+          <div className="mx-auto w-12 h-12 rounded-xl bg-olive-500 text-cream-50 flex items-center justify-center shadow-sm">
             <FontAwesomeIcon icon={faLock} className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-base font-bold text-slate-900 tracking-tight">Leads Machine CRM</h1>
-            <p className="text-xs text-slate-500 mt-1">Masukkan 4-digit PIN keamanan operator</p>
+            <h1 className="text-base font-bold text-olive-900 tracking-tight">Leads Machine CRM</h1>
+            <p className="text-xs text-olive-600 mt-1">Masukkan 4-digit PIN keamanan operator</p>
           </div>
           <div className="flex justify-center gap-3">
             {pinInputs.map((val, idx) => (
               <input key={idx} ref={pinInputRefs[idx]} type="password" maxLength={1} value={val}
                 onChange={(e) => handlePinInput(idx, e.target.value)} onKeyDown={(e) => handlePinKeyDown(idx, e)}
-                className={`w-12 h-14 text-center text-xl font-mono font-bold rounded-xl border transition outline-none ${pinError ? 'border-rose-300 bg-rose-50 text-rose-700' : 'border-slate-200 bg-white text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'}`} />
+                className={`w-12 h-14 text-center text-xl font-mono font-bold rounded-xl border transition outline-none ${pinError ? 'border-rose-300 bg-rose-50 text-rose-700' : 'border-olive-200 bg-cream-50 text-olive-900 focus:border-olive-500 focus:ring-2 focus:ring-mint-100'}`} />
             ))}
           </div>
-          {pinError ? <p className="text-xs text-rose-600 font-medium">PIN tidak cocok.</p> : <p className="text-[11px] text-slate-400 font-mono">Default: 1992</p>}
+          {pinError ? <p className="text-xs text-rose-600 font-medium">PIN tidak cocok.</p> : <p className="text-[11px] text-olive-500 font-mono">Default: 1992</p>}
         </div>
       </div>
     );
@@ -780,12 +780,12 @@ export default function LeadFinderApp() {
 
   if (isAppLoading) {
     return (
-      <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen bg-cream-100 flex flex-col items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3 text-center">
-          <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs animate-pulse">
+          <div className="w-10 h-10 rounded-xl bg-olive-500 text-cream-50 flex items-center justify-center shadow-sm animate-pulse">
             <FontAwesomeIcon icon={faBullseye} className="h-5 w-5" />
           </div>
-          <p className="text-xs font-semibold text-slate-800">Menyiapkan CRM Workspace...</p>
+          <p className="text-xs font-semibold text-olive-800">Menyiapkan CRM Workspace...</p>
         </div>
       </div>
     );
@@ -793,87 +793,87 @@ export default function LeadFinderApp() {
 
   return (
     <>
-    <div className="min-h-screen bg-[#FAFAFA] flex text-slate-900 antialiased font-sans">
+    <div className="min-h-screen bg-cream-100 flex text-olive-900 antialiased font-sans">
       {notification && (
         <div className="fixed bottom-5 right-5 z-50 animate-in slide-in-from-bottom-3 duration-150">
-          <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl shadow-lg border text-xs font-medium ${notification.type === 'success' ? 'bg-emerald-950 text-emerald-100 border-emerald-800' : 'bg-rose-950 text-rose-100 border-rose-800'}`}>
-            {notification.type === 'success' ? <FontAwesomeIcon icon={faCheckCircle} className="h-4 w-4 text-emerald-400 shrink-0" /> : <FontAwesomeIcon icon={faTimesCircle} className="h-4 w-4 text-rose-400 shrink-0" />}
+          <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl shadow-sm border text-xs font-medium ${notification.type === 'success' ? 'bg-olive-500 text-cream-50 border-olive-400' : 'bg-rose-100 text-rose-800 border-rose-200'}`}>
+            {notification.type === 'success' ? <FontAwesomeIcon icon={faCheckCircle} className="h-4 w-4 text-mint-200 shrink-0" /> : <FontAwesomeIcon icon={faTimesCircle} className="h-4 w-4 text-rose-500 shrink-0" />}
             <span>{notification.message}</span>
           </div>
         </div>
       )}
 
-      <aside className={`fixed md:sticky top-0 z-40 h-screen w-64 bg-white border-r border-slate-200 flex flex-col justify-between transition-transform duration-150 ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      <aside className={`fixed md:sticky top-0 z-40 h-screen w-64 bg-cream-50 border-r border-olive-200 flex flex-col justify-between transition-transform duration-150 ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="p-4 flex flex-col h-full overflow-y-auto">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+          <div className="flex items-center justify-between pb-4 border-b border-olive-200">
             <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold shadow-xs">
-                <FontAwesomeIcon icon={faBullseye} className="h-4 w-4 text-emerald-400" />
+              <div className="h-8 w-8 rounded-lg bg-olive-500 text-cream-50 flex items-center justify-center font-bold shadow-sm">
+                <FontAwesomeIcon icon={faBullseye} className="h-4 w-4 text-mint-200" />
               </div>
               <div>
-                <h2 className="font-bold text-xs tracking-tight text-slate-900">Leads Machine <span className="text-[9px] uppercase font-mono px-1 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200">v3.0</span></h2>
+                <h2 className="font-bold text-xs tracking-tight text-olive-900">Leads Machine <span className="text-[9px] uppercase font-mono px-1 py-0.2 rounded bg-olive-100 text-olive-700 border border-olive-200">v3.0</span></h2>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[10px] text-slate-500 font-medium">Sheets Sync Live</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-olive-500 animate-pulse" />
+                  <span className="text-[10px] text-olive-600 font-medium">Sheets Sync Live</span>
                 </div>
               </div>
             </div>
-            <button onClick={() => setMobileSidebarOpen(false)} className="md:hidden p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100">
+            <button onClick={() => setMobileSidebarOpen(false)} className="md:hidden p-1 rounded-md text-olive-500 hover:text-olive-800 hover:bg-cream-200">
               <FontAwesomeIcon icon={faTimes} className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="mt-4 p-1 bg-slate-100 rounded-lg flex items-center text-[11px] font-semibold">
-            <button onClick={() => { setMarketMode('indo'); setSelectedCity('Malang'); }} className={`flex-1 py-1.5 rounded-md transition text-center cursor-pointer ${marketMode === 'indo' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'}`}>🇮🇩 Indonesia</button>
-            <button onClick={() => { setMarketMode('global'); setSelectedCity('London'); }} className={`flex-1 py-1.5 rounded-md transition text-center cursor-pointer ${marketMode === 'global' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'}`}>🌍 Global B2B</button>
+          <div className="mt-4 p-1 bg-olive-100 rounded-lg flex items-center text-[11px] font-semibold">
+            <button onClick={() => { setMarketMode('indo'); setSelectedCity('Malang'); }} className={`flex-1 py-1.5 rounded-md transition text-center cursor-pointer ${marketMode === 'indo' ? 'bg-cream-50 text-olive-900 shadow-sm' : 'text-olive-600 hover:text-olive-900'}`}>🇮🇩 Indonesia</button>
+            <button onClick={() => { setMarketMode('global'); setSelectedCity('London'); }} className={`flex-1 py-1.5 rounded-md transition text-center cursor-pointer ${marketMode === 'global' ? 'bg-cream-50 text-olive-900 shadow-sm' : 'text-olive-600 hover:text-olive-900'}`}>🌍 Global B2B</button>
           </div>
 
           <nav className="mt-4 space-y-1 flex-1">
-            <button onClick={() => { setActiveTab('search'); setMobileSidebarOpen(false); }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${activeTab === 'search' ? 'bg-slate-900 text-white font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}>
-              <div className="flex items-center gap-2.5"><FontAwesomeIcon icon={faSearch} className={`h-4 w-4 ${activeTab === 'search' ? 'text-emerald-400' : 'text-slate-500'}`} /><span>Discovery & Search</span></div>
-              {leads.length > 0 && <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${activeTab === 'search' ? 'bg-slate-800 text-emerald-300' : 'bg-slate-200 text-slate-700'}`}>{leads.length}</span>}
+            <button onClick={() => { setActiveTab('search'); setMobileSidebarOpen(false); }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${activeTab === 'search' ? 'bg-olive-500 text-cream-50 font-semibold shadow-sm' : 'text-olive-700 hover:text-olive-900 hover:bg-cream-200'}`}>
+              <div className="flex items-center gap-2.5"><FontAwesomeIcon icon={faSearch} className={`h-4 w-4 ${activeTab === 'search' ? 'text-mint-200' : 'text-olive-500'}`} /><span>Discovery & Search</span></div>
+              {leads.length > 0 && <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${activeTab === 'search' ? 'bg-olive-400 text-mint-100' : 'bg-olive-200 text-olive-700'}`}>{leads.length}</span>}
             </button>
-            <button onClick={() => { setActiveTab('crm'); setMobileSidebarOpen(false); }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${activeTab === 'crm' ? 'bg-slate-900 text-white font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}>
-              <div className="flex items-center gap-2.5"><FontAwesomeIcon icon={faLayerGroup} className={`h-4 w-4 ${activeTab === 'crm' ? 'text-emerald-400' : 'text-slate-500'}`} /><span>Pipeline CRM</span></div>
-              <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${activeTab === 'crm' ? 'bg-slate-800 text-emerald-300' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'}`}>{savedLeadsCrm.length}</span>
+            <button onClick={() => { setActiveTab('crm'); setMobileSidebarOpen(false); }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${activeTab === 'crm' ? 'bg-olive-500 text-cream-50 font-semibold shadow-sm' : 'text-olive-700 hover:text-olive-900 hover:bg-cream-200'}`}>
+              <div className="flex items-center gap-2.5"><FontAwesomeIcon icon={faLayerGroup} className={`h-4 w-4 ${activeTab === 'crm' ? 'text-mint-200' : 'text-olive-500'}`} /><span>Pipeline CRM</span></div>
+              <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${activeTab === 'crm' ? 'bg-olive-400 text-mint-100' : 'bg-olive-100 text-olive-700 border border-olive-200'}`}>{savedLeadsCrm.length}</span>
             </button>
-            <button onClick={() => { setActiveTab('copilot'); setMobileSidebarOpen(false); }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${activeTab === 'copilot' ? 'bg-slate-900 text-white font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}>
-              <div className="flex items-center gap-2.5"><FontAwesomeIcon icon={faQuoteLeft} className={`h-4 w-4 ${activeTab === 'copilot' ? 'text-emerald-400' : 'text-slate-500'}`} /><span>AI Copilot</span></div>
-              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-200">AI</span>
+            <button onClick={() => { setActiveTab('copilot'); setMobileSidebarOpen(false); }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${activeTab === 'copilot' ? 'bg-olive-500 text-cream-50 font-semibold shadow-sm' : 'text-olive-700 hover:text-olive-900 hover:bg-cream-200'}`}>
+              <div className="flex items-center gap-2.5"><FontAwesomeIcon icon={faQuoteLeft} className={`h-4 w-4 ${activeTab === 'copilot' ? 'text-mint-200' : 'text-olive-500'}`} /><span>AI Copilot</span></div>
+              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-olive-100 text-olive-700 border border-olive-200">AI</span>
             </button>
-            <button onClick={() => { setActiveTab('templates'); setMobileSidebarOpen(false); }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${activeTab === 'templates' ? 'bg-slate-900 text-white font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}>
-              <div className="flex items-center gap-2.5"><FontAwesomeIcon icon={faMagic} className={`h-4 w-4 ${activeTab === 'templates' ? 'text-emerald-400' : 'text-slate-500'}`} /><span>Pitch Templates</span></div>
+            <button onClick={() => { setActiveTab('templates'); setMobileSidebarOpen(false); }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${activeTab === 'templates' ? 'bg-olive-500 text-cream-50 font-semibold shadow-sm' : 'text-olive-700 hover:text-olive-900 hover:bg-cream-200'}`}>
+              <div className="flex items-center gap-2.5"><FontAwesomeIcon icon={faMagic} className={`h-4 w-4 ${activeTab === 'templates' ? 'text-mint-200' : 'text-olive-500'}`} /><span>Pitch Templates</span></div>
             </button>
-            <button onClick={() => { setActiveTab('export'); setMobileSidebarOpen(false); }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${activeTab === 'export' ? 'bg-slate-900 text-white font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}>
-              <div className="flex items-center gap-2.5"><FontAwesomeIcon icon={faDownload} className={`h-4 w-4 ${activeTab === 'export' ? 'text-emerald-400' : 'text-slate-500'}`} /><span>Export & Database</span></div>
+            <button onClick={() => { setActiveTab('export'); setMobileSidebarOpen(false); }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${activeTab === 'export' ? 'bg-olive-500 text-cream-50 font-semibold shadow-sm' : 'text-olive-700 hover:text-olive-900 hover:bg-cream-200'}`}>
+              <div className="flex items-center gap-2.5"><FontAwesomeIcon icon={faDownload} className={`h-4 w-4 ${activeTab === 'export' ? 'text-mint-200' : 'text-olive-500'}`} /><span>Export & Database</span></div>
             </button>
           </nav>
 
-          <div className="pt-3 border-t border-slate-100">
+          <div className="pt-3 border-t border-olive-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">MK</div>
-                <div className="text-left"><p className="text-xs font-semibold text-slate-900 leading-tight">Mohammad Kevin</p><p className="text-[10px] text-slate-400">Operator</p></div>
+                <div className="w-7 h-7 rounded-full bg-olive-100 flex items-center justify-center text-xs font-bold text-olive-700">MK</div>
+                <div className="text-left"><p className="text-xs font-semibold text-olive-900 leading-tight">Mohammad Kevin</p><p className="text-[10px] text-olive-500">Operator</p></div>
               </div>
-              <button onClick={handleLogout} className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition" title="Logout"><FontAwesomeIcon icon={faSignOutAlt} className="h-4 w-4" /></button>
+              <button onClick={handleLogout} className="p-1.5 rounded-lg text-olive-500 hover:text-rose-600 hover:bg-rose-50 transition" title="Logout"><FontAwesomeIcon icon={faSignOutAlt} className="h-4 w-4" /></button>
             </div>
           </div>
         </div>
       </aside>
 
       <main className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-3.5 flex items-center justify-between gap-4">
+        <header className="sticky top-0 z-30 bg-cream-50/90 backdrop-blur-md border-b border-olive-200 px-6 py-3.5 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <button onClick={() => setMobileSidebarOpen(true)} className="md:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100"><FontAwesomeIcon icon={faBars} className="h-5 w-5" /></button>
+            <button onClick={() => setMobileSidebarOpen(true)} className="md:hidden p-1.5 rounded-lg text-olive-500 hover:bg-cream-200"><FontAwesomeIcon icon={faBars} className="h-5 w-5" /></button>
             <div>
-              <h1 className="text-sm font-bold text-slate-900 tracking-tight capitalize truncate">
+              <h1 className="text-sm font-bold text-olive-900 tracking-tight capitalize truncate">
                 {activeTab === 'search' && (marketMode === 'global' ? 'Global Prospecting' : 'Discovery & Lead Qualification')}
                 {activeTab === 'crm' && 'Pipeline CRM'}
                 {activeTab === 'copilot' && 'AI Copilot'}
                 {activeTab === 'templates' && 'Pitch Templates'}
                 {activeTab === 'export' && 'Export & Database'}
               </h1>
-              <p className="text-[11px] text-slate-400 truncate">
+              <p className="text-[11px] text-olive-600 truncate">
                 {activeTab === 'search' && 'Cari bisnis target dengan filter franchise, website, rating'}
                 {activeTab === 'crm' && 'Sinkron realtime ke Google Sheets'}
                 {activeTab === 'copilot' && 'Balas chat masuk dengan AI'}
@@ -884,8 +884,8 @@ export default function LeadFinderApp() {
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {activeTab === 'crm' && (
-              <button onClick={() => syncCrmFromSheet()} disabled={isSyncingCrm} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs cursor-pointer">
-                <FontAwesomeIcon icon={faSync} className={`h-3.5 w-3.5 text-slate-500 ${isSyncingCrm ? 'animate-spin' : ''}`} />
+              <button onClick={() => syncCrmFromSheet()} disabled={isSyncingCrm} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-olive-200 bg-cream-50 hover:bg-mint-50 text-olive-700 text-xs font-semibold shadow-sm cursor-pointer">
+                <FontAwesomeIcon icon={faSync} className={`h-3.5 w-3.5 text-olive-500 ${isSyncingCrm ? 'animate-spin' : ''}`} />
                 <span>{isSyncingCrm ? 'Syncing...' : 'Sync Sheet'}</span>
               </button>
             )}
@@ -897,20 +897,20 @@ export default function LeadFinderApp() {
           {/* ===================== SEARCH ===================== */}
           {activeTab === 'search' && (
             <div className="space-y-6">
-              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
+              <div className="bg-cream-50 border border-olive-200 rounded-xl p-5 shadow-sm space-y-4">
                 <form onSubmit={handleSearch} className="space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
                     <div className="md:col-span-4">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Kota / Wilayah (bisa pilih banyak)</label>
-                      <div className="space-y-1.5 max-h-48 overflow-y-auto border border-slate-200 rounded-lg p-1.5">
+                      <label className="block text-[10px] font-bold text-olive-700 uppercase tracking-wider mb-1">Kota / Wilayah (bisa pilih banyak)</label>
+                      <div className="space-y-1.5 max-h-48 overflow-y-auto border border-olive-200 rounded-lg p-1.5 bg-cream-50">
                         {(marketMode === 'indo' ? INDONESIA_REGIONS : GLOBAL_REGIONS).map((grp) => (
                           <div key={grp.region}>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase px-1 pt-1">{grp.region}</p>
+                            <p className="text-[9px] font-bold text-olive-500 uppercase px-1 pt-1">{grp.region}</p>
                             {grp.cities.map((city) => {
                               const isSelected = selectedCities.includes(city);
                               return (
-                                <label key={city} className={`flex items-center gap-1.5 px-2 py-0.5 rounded cursor-pointer text-[11px] hover:bg-slate-50 ${isSelected ? 'bg-emerald-50 font-semibold text-slate-900' : 'text-slate-600'}`}>
-                                  <input type="checkbox" checked={isSelected} onChange={() => { setSelectedCities((prev) => prev.includes(city) ? prev.filter((c) => c !== city) : [...prev, city]); }} className="rounded border-slate-300 text-emerald-600 focus:ring-0 cursor-pointer" />
+                                <label key={city} className={`flex items-center gap-1.5 px-2 py-0.5 rounded cursor-pointer text-[11px] hover:bg-cream-200 ${isSelected ? 'bg-olive-100 font-semibold text-olive-900' : 'text-olive-700'}`}>
+                                  <input type="checkbox" checked={isSelected} onChange={() => { setSelectedCities((prev) => prev.includes(city) ? prev.filter((c) => c !== city) : [...prev, city]); }} className="rounded border-olive-300 text-olive-500 focus:ring-0 cursor-pointer" />
                                   {city}
                                 </label>
                               );
@@ -922,16 +922,16 @@ export default function LeadFinderApp() {
                         <button type="button" onClick={() => {
                           const all = (marketMode === 'indo' ? INDONESIA_REGIONS : GLOBAL_REGIONS).flatMap((g) => g.cities);
                           setSelectedCities(all);
-                        }} className="text-[9px] font-semibold text-blue-600 hover:text-blue-800 cursor-pointer">Pilih Semua</button>
-                        <button type="button" onClick={() => setSelectedCities([])} className="text-[9px] font-semibold text-slate-400 hover:text-slate-600 cursor-pointer">Reset</button>
-                        <span className="text-[9px] text-slate-400 ml-auto">{selectedCities.length} kota</span>
+                        }} className="text-[9px] font-semibold text-olive-500 hover:text-olive-600 cursor-pointer">Pilih Semua</button>
+                        <button type="button" onClick={() => setSelectedCities([])} className="text-[9px] font-semibold text-olive-500 hover:text-olive-600 cursor-pointer">Reset</button>
+                        <span className="text-[9px] text-olive-500 ml-auto">{selectedCities.length} kota</span>
                       </div>
                     </div>
                     <div className="md:col-span-8">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Kata Kunci</label>
+                      <label className="block text-[10px] font-bold text-olive-700 uppercase tracking-wider mb-1">Kata Kunci</label>
                       <div className="relative flex items-center">
-                        <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={`Misal: ${selectedCategoryPreset !== 'ALL' ? selectedCategoryPreset : 'Kos'} di ${selectedCities[0] || 'Kota'}`} className="w-full text-xs font-medium py-2 pl-3 pr-24 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-900" />
-                        <button type="submit" disabled={isLoading || selectedCities.length === 0} className="absolute right-1 px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition cursor-pointer flex items-center gap-1.5">
+                        <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={`Misal: ${selectedCategoryPreset !== 'ALL' ? selectedCategoryPreset : 'Kos'} di ${selectedCities[0] || 'Kota'}`} className="w-full text-xs font-medium py-2 pl-3 pr-24 rounded-lg border border-olive-200 bg-cream-50 text-olive-900 placeholder:text-olive-400 focus:outline-none focus:border-olive-500" />
+                        <button type="submit" disabled={isLoading || selectedCities.length === 0} className="absolute right-1 px-3 py-1.5 rounded-md bg-olive-500 hover:bg-olive-600 text-cream-50 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5">
                           <FontAwesomeIcon icon={faSearch} className={`h-3 w-3 ${isLoading ? 'animate-spin' : ''}`} /><span>{isLoading ? 'Mencari...' : 'Cari Bulk'}</span>
                         </button>
                       </div>
@@ -939,29 +939,29 @@ export default function LeadFinderApp() {
                   </div>
 
                   {isLoading && batchProgress && (
-                    <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800 flex items-center gap-2">
+                    <div className="p-2 bg-mint-50 border border-mint-100 rounded-lg text-xs text-olive-700 flex items-center gap-2">
                       <FontAwesomeIcon icon={faSpinner} className="h-3 w-3 animate-spin" />
                       <span>Mencari di {batchProgress.current}/{batchProgress.total} kota...</span>
                     </div>
                   )}
 
                   <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase mr-1">Kategori:</span>
+                    <span className="text-[10px] font-bold text-olive-700 uppercase mr-1">Kategori:</span>
                     {(marketMode === 'indo' ? PRESET_CATEGORIES : GLOBAL_PRESET_CATEGORIES).map((cat) => (
                       <button key={cat.label} type="button" onClick={() => {
                         setSelectedCategoryPreset(cat.query);
                         if (cat.query !== 'ALL') {
                           setQuery(`${cat.query} di ${selectedCities[0] || ''}`);
                         }
-                      }} className={`text-[11px] px-2.5 py-1 rounded-md font-medium transition cursor-pointer ${selectedCategoryPreset === cat.query ? 'bg-slate-900 text-white font-semibold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>{cat.label}</button>
+                      }} className={`text-[11px] px-2.5 py-1 rounded-md font-medium transition cursor-pointer ${selectedCategoryPreset === cat.query ? 'bg-olive-500 text-cream-50 font-semibold' : 'bg-olive-100 text-olive-700 hover:bg-olive-200'}`}>{cat.label}</button>
                     ))}
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-4 pt-3 border-t border-slate-100 text-xs">
-                    <label className="flex items-center gap-2 cursor-pointer select-none"><input type="checkbox" checked={excludeFranchiseToggle} onChange={(e) => setExcludeFranchiseToggle(e.target.checked)} className="rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer" /><span className="font-semibold text-slate-800 flex items-center gap-1"><FontAwesomeIcon icon={faShieldAlt} className="h-3.5 w-3.5 text-emerald-600" /> Blokir Franchise</span></label>
-                    <label className="flex items-center gap-2 cursor-pointer select-none"><input type="checkbox" checked={filterIdealOnly} onChange={(e) => setFilterIdealOnly(e.target.checked)} className="rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer" /><span className="font-medium text-slate-700">Target Ideal (10-100 review & no web)</span></label>
-                    <label className="flex items-center gap-2 cursor-pointer select-none"><input type="checkbox" checked={filterNoWebsiteOnly} onChange={(e) => setFilterNoWebsiteOnly(e.target.checked)} className="rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer" /><span className="font-medium text-slate-700">Tanpa Website</span></label>
-                    <label className="flex items-center gap-2 cursor-pointer select-none"><input type="checkbox" checked={filterValidWaOnly} onChange={(e) => setFilterValidWaOnly(e.target.checked)} className="rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer" /><span className="font-medium text-slate-700">WA Valid Saja</span></label>
+                  <div className="flex flex-wrap items-center gap-4 pt-3 border-t border-olive-200 text-xs">
+                    <label className="flex items-center gap-2 cursor-pointer select-none"><input type="checkbox" checked={excludeFranchiseToggle} onChange={(e) => setExcludeFranchiseToggle(e.target.checked)} className="rounded border-olive-300 text-olive-500 focus:ring-0 cursor-pointer" /><span className="font-semibold text-olive-800 flex items-center gap-1"><FontAwesomeIcon icon={faShieldAlt} className="h-3.5 w-3.5 text-olive-500" /> Blokir Franchise</span></label>
+                    <label className="flex items-center gap-2 cursor-pointer select-none"><input type="checkbox" checked={filterIdealOnly} onChange={(e) => setFilterIdealOnly(e.target.checked)} className="rounded border-olive-300 text-olive-500 focus:ring-0 cursor-pointer" /><span className="font-medium text-olive-700">Target Ideal (10-100 review & no web)</span></label>
+                    <label className="flex items-center gap-2 cursor-pointer select-none"><input type="checkbox" checked={filterNoWebsiteOnly} onChange={(e) => setFilterNoWebsiteOnly(e.target.checked)} className="rounded border-olive-300 text-olive-500 focus:ring-0 cursor-pointer" /><span className="font-medium text-olive-700">Tanpa Website</span></label>
+                    <label className="flex items-center gap-2 cursor-pointer select-none"><input type="checkbox" checked={filterValidWaOnly} onChange={(e) => setFilterValidWaOnly(e.target.checked)} className="rounded border-olive-300 text-olive-500 focus:ring-0 cursor-pointer" /><span className="font-medium text-olive-700">WA Valid Saja</span></label>
                   </div>
                 </form>
               </div>
@@ -977,10 +977,10 @@ export default function LeadFinderApp() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-900">Hasil ({filteredLeads.length}/{leads.length})</span>
-                      {selectedLeadIds.length > 0 && <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold">{selectedLeadIds.length} dipilih</span>}
+                      <span className="text-xs font-bold text-olive-900">Hasil ({filteredLeads.length}/{leads.length})</span>
+                      {selectedLeadIds.length > 0 && <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-olive-100 text-olive-700 font-semibold">{selectedLeadIds.length} dipilih</span>}
                     </div>
-                    <button onClick={() => { if (selectedLeadIds.length === filteredLeads.length) setSelectedLeadIds([]); else setSelectedLeadIds(filteredLeads.map((l) => l.id)); }} className="text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer">{selectedLeadIds.length === filteredLeads.length ? 'Batal Pilih' : 'Pilih Semua'}</button>
+                    <button onClick={() => { if (selectedLeadIds.length === filteredLeads.length) setSelectedLeadIds([]); else setSelectedLeadIds(filteredLeads.map((l) => l.id)); }} className="text-xs font-semibold text-olive-500 hover:text-olive-600 cursor-pointer">{selectedLeadIds.length === filteredLeads.length ? 'Batal Pilih' : 'Pilih Semua'}</button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {filteredLeads.map((lead) => {
@@ -988,28 +988,28 @@ export default function LeadFinderApp() {
                       const cleanP = lead.phoneAnalysis?.cleaned || normalizeWhatsAppNumber(lead.nationalPhoneNumber);
                       const isContacted = lead.status === 'contacted';
                       return (
-                        <div key={lead.id} className={`bg-white border rounded-xl p-4 transition shadow-xs flex flex-col justify-between ${lead.isIdealTarget ? 'border-emerald-300 ring-1 ring-emerald-100' : isSelected ? 'border-slate-900 ring-1 ring-slate-900' : 'border-slate-200 hover:border-slate-300'}`}>
+                        <div key={lead.id} className={`bg-cream-50 border rounded-xl p-4 transition shadow-sm flex flex-col justify-between ${lead.isIdealTarget ? 'border-olive-500 ring-1 ring-mint-100' : isSelected ? 'border-olive-700 ring-1 ring-olive-500' : 'border-olive-200 hover:border-olive-300'}`}>
                           <div className="space-y-2">
                             <div className="flex items-start gap-2.5">
-                              <input type="checkbox" checked={isSelected} onChange={() => setSelectedLeadIds((prev) => prev.includes(lead.id) ? prev.filter((i) => i !== lead.id) : [...prev, lead.id])} className="mt-1 rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer" />
+                              <input type="checkbox" checked={isSelected} onChange={() => setSelectedLeadIds((prev) => prev.includes(lead.id) ? prev.filter((i) => i !== lead.id) : [...prev, lead.id])} className="mt-1 rounded border-olive-300 text-olive-500 focus:ring-0 cursor-pointer" />
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5 flex-wrap">
-                                  <h3 className="font-bold text-xs text-slate-900 truncate" title={lead.name}>{lead.name}</h3>
-                                  {lead.isIdealTarget && <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">Target Ideal</span>}
-                                  {isContacted && <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Sudah Di-Chat</span>}
+                                  <h3 className="font-bold text-xs text-olive-900 truncate" title={lead.name}>{lead.name}</h3>
+                                  {lead.isIdealTarget && <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-mint-50 text-olive-700 border border-mint-100">Target Ideal</span>}
+                                  {isContacted && <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-olive-100 text-olive-700 border border-olive-200">Sudah Di-Chat</span>}
                                 </div>
-                                <p className="text-[11px] text-slate-400 truncate mt-0.5" title={lead.formattedAddress}>{lead.formattedAddress}</p>
+                                <p className="text-[11px] text-olive-600 truncate mt-0.5" title={lead.formattedAddress}>{lead.formattedAddress}</p>
                               </div>
                             </div>
-                            <div className="grid grid-cols-3 gap-2 py-2 border-y border-slate-100 text-[11px]">
-                              <div><span className="block text-[9px] font-bold text-slate-400 uppercase">WA</span><span className="font-mono font-medium text-slate-800 truncate block">{cleanP || '-'}</span></div>
-                              <div><span className="block text-[9px] font-bold text-slate-400 uppercase">Website</span><span className="truncate block font-medium">{lead.websiteUri ? <a href={lead.websiteUri} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline inline-flex items-center gap-0.5"><span>Ada</span><FontAwesomeIcon icon={faExternalLinkSquare} className="h-2 w-2" /></a> : <span className="text-amber-800">Tanpa Web</span>}</span></div>
-                              <div><span className="block text-[9px] font-bold text-slate-400 uppercase">Rating</span><span className="font-mono font-medium text-slate-800">{lead.rating > 0 ? `${lead.rating} ★ (${lead.userRatingCount || 0})` : '-'}</span></div>
+                            <div className="grid grid-cols-3 gap-2 py-2 border-y border-olive-200 text-[11px]">
+                              <div><span className="block text-[9px] font-bold text-olive-600 uppercase">WA</span><span className="font-mono font-medium text-olive-900 truncate block">{cleanP || '-'}</span></div>
+                              <div><span className="block text-[9px] font-bold text-olive-600 uppercase">Website</span><span className="truncate block font-medium">{lead.websiteUri ? <a href={lead.websiteUri} target="_blank" rel="noreferrer" className="text-olive-500 hover:underline inline-flex items-center gap-0.5"><span>Ada</span><FontAwesomeIcon icon={faExternalLinkSquare} className="h-2 w-2" /></a> : <span className="text-olive-800">Tanpa Web</span>}</span></div>
+                              <div><span className="block text-[9px] font-bold text-olive-600 uppercase">Rating</span><span className="font-mono font-medium text-olive-900">{lead.rating > 0 ? `${lead.rating} ★ (${lead.userRatingCount || 0})` : '-'}</span></div>
                             </div>
-                            {lead.generatedPitch && <div className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-700 font-sans line-clamp-2">&quot;{lead.generatedPitch}&quot;</div>}
+                            {lead.generatedPitch && <div className="p-2 rounded-lg bg-olive-50 border border-olive-200 text-[11px] text-olive-700 font-sans line-clamp-2">&quot;{lead.generatedPitch}&quot;</div>}
                           </div>
                           <div className="pt-3">
-                            <button onClick={() => handleOpenPitchModal(lead)} disabled={pitchModalLoading && pitchModalLead?.id === lead.id} className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white text-xs font-semibold cursor-pointer shadow-xs">
+                            <button onClick={() => handleOpenPitchModal(lead)} disabled={pitchModalLoading && pitchModalLead?.id === lead.id} className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-olive-500 hover:bg-olive-600 disabled:opacity-50 text-cream-50 text-xs font-semibold cursor-pointer shadow-sm">
                               {pitchModalLoading && pitchModalLead?.id === lead.id ? (
                                 <><svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg><span>Memproses...</span></>
                               ) : (
@@ -1025,20 +1025,20 @@ export default function LeadFinderApp() {
               )}
 
               {selectedLeadIds.length > 0 && (
-                <div className="sticky bottom-4 z-30 bg-slate-900 text-white rounded-xl p-3 shadow-xl border border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-3 animate-in slide-in-from-bottom-3 duration-150">
+                <div className="sticky bottom-4 z-30 bg-olive-700 text-cream-50 rounded-xl p-3 shadow-sm border border-olive-500 flex flex-col sm:flex-row items-center justify-between gap-3 animate-in slide-in-from-bottom-3 duration-150">
                   <div className="flex items-center gap-2">
-                    <span className="h-5 w-5 rounded-full bg-emerald-500 text-slate-950 font-bold text-[11px] flex items-center justify-center font-mono">{selectedLeadIds.length}</span>
+                    <span className="h-5 w-5 rounded-full bg-olive-500 text-cream-50 font-bold text-[11px] flex items-center justify-center font-mono">{selectedLeadIds.length}</span>
                     <span className="text-xs font-semibold">Terpilih</span>
-                    {batchProgress && <span className="text-[11px] text-emerald-400 font-mono">(Proses {batchProgress.current}/{batchProgress.total} {batchProgress.currentDelay ? `| ${batchProgress.currentDelay}s` : ''})</span>}
+                    {batchProgress && <span className="text-[11px] text-mint-100 font-mono">(Proses {batchProgress.current}/{batchProgress.total} {batchProgress.currentDelay ? `| ${batchProgress.currentDelay}s` : ''})</span>}
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={handleBatchGenerateAi} disabled={isBatchGenerating || isBatchSending} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold cursor-pointer">
+                    <button onClick={handleBatchGenerateAi} disabled={isBatchGenerating || isBatchSending} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-olive-500 hover:bg-olive-400 text-cream-50 text-xs font-semibold cursor-pointer">
                       <FontAwesomeIcon icon={faRobot} className="h-3.5 w-3.5" /><span>Draf AI Semua</span>
                     </button>
-                    <button onClick={handleBatchSendWhatsApp} disabled={isBatchGenerating || isBatchSending} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold cursor-pointer">
+                    <button onClick={handleBatchSendWhatsApp} disabled={isBatchGenerating || isBatchSending} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-mint-200 hover:bg-mint-100 text-olive-900 text-xs font-bold cursor-pointer">
                       <FontAwesomeIcon icon={faBolt} className="h-3.5 w-3.5" /><span>Kirim WA Semua</span>
                     </button>
-                    <button onClick={() => setSelectedLeadIds([])} className="px-2.5 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-white text-xs cursor-pointer">Batal</button>
+                    <button onClick={() => setSelectedLeadIds([])} className="px-2.5 py-1.5 rounded-lg border border-olive-500 text-olive-400 hover:text-cream-50 text-xs cursor-pointer">Batal</button>
                   </div>
                 </div>
               )}
@@ -1048,40 +1048,40 @@ export default function LeadFinderApp() {
           {/* ===================== CRM PIPELINE ===================== */}
           {activeTab === 'crm' && (
             <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-cream-50 border border-olive-200 rounded-xl p-4 shadow-sm">
                 <div>
-                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Pipeline CRM</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Single Source of Truth — sinkron realtime ke Google Sheets</p>
+                  <h3 className="text-xs font-bold text-olive-900 uppercase tracking-wider">Pipeline CRM</h3>
+                  <p className="text-xs text-olive-600 mt-0.5">Single Source of Truth — sinkron realtime ke Google Sheets</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <button onClick={() => syncCrmFromSheet()} disabled={isSyncingCrm} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs cursor-pointer">
+                  <button onClick={() => syncCrmFromSheet()} disabled={isSyncingCrm} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-olive-200 bg-cream-50 hover:bg-mint-50 text-olive-700 text-xs font-semibold shadow-sm cursor-pointer">
                     <FontAwesomeIcon icon={faSync} className={`h-3.5 w-3.5 ${isSyncingCrm ? 'animate-spin' : ''}`} /><span>{isSyncingCrm ? 'Syncing...' : 'Sync'}</span>
                   </button>
-                  <button onClick={resetCacheAndSyncSheet} disabled={isSyncingCrm} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-800 text-xs font-semibold cursor-pointer">
+                  <button onClick={resetCacheAndSyncSheet} disabled={isSyncingCrm} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold cursor-pointer">
                     <FontAwesomeIcon icon={faSync} className="h-3.5 w-3.5 text-rose-600" /><span>Reset & Sync</span>
                   </button>
-                  <button onClick={handleDownloadWaList} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs cursor-pointer">
+                  <button onClick={handleDownloadWaList} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-olive-500 hover:bg-olive-600 text-cream-50 font-semibold text-xs cursor-pointer">
                     <FontAwesomeIcon icon={faDownload} className="h-3.5 w-3.5" /><span>WA List</span>
                   </button>
-                  <button onClick={handleDownloadCsv} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium cursor-pointer">
-                    <FontAwesomeIcon icon={faFileExcel} className="h-3.5 w-3.5 text-slate-400" /><span>CSV</span>
+                  <button onClick={handleDownloadCsv} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-olive-200 bg-cream-50 hover:bg-mint-50 text-olive-700 text-xs font-medium cursor-pointer">
+                    <FontAwesomeIcon icon={faFileExcel} className="h-3.5 w-3.5 text-olive-500" /><span>CSV</span>
                   </button>
                 </div>
               </div>
 
               {/* FUNNEL VISUALIZATION */}
-              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Funnel & Konversi</h4>
+              <div className="bg-cream-50 border border-olive-200 rounded-xl p-5 shadow-sm space-y-4">
+                <h4 className="text-xs font-bold text-olive-900 uppercase tracking-wider">Funnel & Konversi</h4>
                 <div className="space-y-2">
                   {(() => {
                     const total = savedLeadsCrm.length || 1;
                     const stages = [
                       { key: 'NEW', label: 'NEW', color: 'bg-amber-400' },
-                      { key: 'QUALIFIED', label: 'QUALIFIED', color: 'bg-blue-400' },
-                      { key: 'CONTACTED', label: 'CONTACTED', color: 'bg-emerald-400' },
-                      { key: 'INTERESTED', label: 'INTERESTED', color: 'bg-indigo-400' },
-                      { key: 'IN_PROGRESS', label: 'IN_PROGRESS', color: 'bg-cyan-400' },
-                      { key: 'CLOSED', label: 'CLOSED (DEAL)', color: 'bg-purple-400' },
+                      { key: 'QUALIFIED', label: 'QUALIFIED', color: 'bg-olive-400' },
+                      { key: 'CONTACTED', label: 'CONTACTED', color: 'bg-mint-300' },
+                      { key: 'INTERESTED', label: 'INTERESTED', color: 'bg-olive-500' },
+                      { key: 'IN_PROGRESS', label: 'IN_PROGRESS', color: 'bg-mint-400' },
+                      { key: 'CLOSED', label: 'CLOSED (DEAL)', color: 'bg-olive-700' },
                     ];
                     return stages.map((stage, idx) => {
                       const count = savedLeadsCrm.filter((l) => (l.leadStatus || 'NEW').toUpperCase() === stage.key).length;
