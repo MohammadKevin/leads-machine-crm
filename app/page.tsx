@@ -3,17 +3,12 @@
 import React, { useState, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faSearch, faPhone, faPaperPlane, faDownload, faCheckCircle, faTimesCircle,
-  faSync, faFileExcel, faBullseye, faMagic, faQuoteLeft, faUsers, faBolt,
-  faRobot, faClock, faCheckDouble, faBars, faTimes, faLock, faSignOutAlt,
+  faSearch, faPaperPlane, faDownload, faCheckCircle, faTimesCircle,
+  faSync, faFileExcel, faBullseye, faMagic, faQuoteLeft, faBolt,
+  faRobot, faClock, faBars, faTimes, faLock, faSignOutAlt,
   faLayerGroup, faExclamationTriangle, faExternalLinkSquare, faCopy,
-  faMapMarkerAlt, faStar, faEye, faMessage, faChevronDown, faMobileAlt,
-  faArrowRight, faEnvelope, faDatabase, faSlidersH, faFilter,
-  faCrosshairs, faShieldAlt, faChartLine, faHistory, faCog, faPlay,
-  faPause, faTrash, faEdit, faCheck, faSpinner,
+  faMapMarkerAlt, faMessage, faShieldAlt, faSpinner,
 } from '@fortawesome/free-solid-svg-icons';
-
-import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 
 import {
   generateOutreachMessage,
@@ -32,11 +27,10 @@ import {
 import {
   normalizeWhatsAppNumber,
   isPhoneContacted,
-  getInitialContactedRegistry,
 } from '@/lib/phone-utils';
 import { getRandomDelayMs } from '@/lib/whatsapp-queue';
 
-type ActiveTab = 'mission' | 'search' | 'crm' | 'copilot' | 'templates' | 'export';
+type ActiveTab = 'search' | 'crm' | 'copilot' | 'templates' | 'export';
 type OutreachStatus = 'new' | 'contacted' | 'followup' | 'closed' | 'rejected' | 'in_progress' | 'lost_franchise' | 'lost_rejected';
 type CrmFilterStatus = 'all' | 'NEW' | 'QUALIFIED' | 'CONTACTED' | 'INTERESTED' | 'IN_PROGRESS' | 'LOST_FRANCHISE' | 'LOST_REJECTED' | 'CLOSED';
 
@@ -119,7 +113,7 @@ export const GLOBAL_REGIONS: RegionGroup[] = [
 ];
 
 export const PRESET_CATEGORIES = [
-  { label: 'Semua Kategori', query: '' },
+  { label: 'Semua Kategori', query: 'ALL' },
   { label: 'Kos-Kosan & Homestay', query: 'Kos Kosan Homestay' },
   { label: 'Bimbel & Kursus Les', query: 'Bimbel Kursus Bimbingan Belajar' },
   { label: 'Klinik Dokter Gigi & Medis', query: 'Klinik Dokter Gigi' },
@@ -132,7 +126,7 @@ export const PRESET_CATEGORIES = [
 ];
 
 export const GLOBAL_PRESET_CATEGORIES = [
-  { label: 'All Global Categories', query: '' },
+  { label: 'All Global Categories', query: 'ALL' },
   { label: 'Emergency Plumbers & Heating', query: 'Plumber Heating Emergency' },
   { label: 'Dental & Orthodontic Clinics', query: 'Dentist Dental Clinic' },
   { label: 'Roofing & Solar Contractors', query: 'Roofing Solar Contractor' },
@@ -181,7 +175,7 @@ export default function LeadFinderApp() {
   const pinInputRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
 
   const [isAppLoading, setIsAppLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<ActiveTab>('mission');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('search');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [marketMode, setMarketMode] = useState<'indo' | 'global'>('indo');
 
@@ -193,12 +187,11 @@ export default function LeadFinderApp() {
   const [filterValidWaOnly, setFilterValidWaOnly] = useState(false);
   const [filterIdealOnly, setFilterIdealOnly] = useState(false);
   const [excludeFranchiseToggle, setExcludeFranchiseToggle] = useState(true);
-  const [minRatingFilter, setMinRatingFilter] = useState<number>(0);
+  const [minRatingFilter] = useState<number>(0);
 
   const [phoneRegistry, setPhoneRegistry] = useState<Record<string, ContactedPhoneRecord>>({});
 
   const [googleSheetsUrl] = useState(() => process.env.NEXT_PUBLIC_LEADS_SHEET_API || '');
-  const [dispatchCooldown, setDispatchCooldown] = useState<number>(0);
   const [serpApiKey] = useState(process.env.SERPAPI_API_KEY || '');
   const [geminiApiKey] = useState(process.env.GEMINI_API_KEY || '');
   const [fonnteToken] = useState(process.env.FONNTE_TOKEN || '');
@@ -206,8 +199,7 @@ export default function LeadFinderApp() {
   const [senderRole] = useState(process.env.SENDER_ROLE || 'freelance web developer');
 
   const [isLoading, setIsLoading] = useState(false);
-  const [sendingId, setSendingId] = useState<string | null>(null);
-  const [generatingAiId, setGeneratingAiId] = useState<string | null>(null);
+  const [, setGeneratingAiId] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -239,77 +231,7 @@ export default function LeadFinderApp() {
   const [pitchModalLoading, setPitchModalLoading] = useState(false);
   const [pitchModalMessage, setPitchModalMessage] = useState('');
   const [pitchModalError, setPitchModalError] = useState('');
-
-  // ---------- MISSION ----------
-  const [missionDailyTarget, setMissionDailyTarget] = useState(() => {
-    if (typeof window !== 'undefined') return Number(localStorage.getItem('leads_mission_target')) || 20;
-    return 20;
-  });
-  const [missionTodaySent, setMissionTodaySent] = useState(() => {
-    if (typeof window !== 'undefined') return Number(localStorage.getItem('leads_mission_today')) || 0;
-    return 0;
-  });
-  const [missionTodayReplies, setMissionTodayReplies] = useState(() => {
-    if (typeof window !== 'undefined') return Number(localStorage.getItem('leads_mission_replies')) || 0;
-    return 0;
-  });
-  const [missionWeekMeetings, setMissionWeekMeetings] = useState(() => {
-    if (typeof window !== 'undefined') return Number(localStorage.getItem('leads_mission_meetings')) || 0;
-    return 0;
-  });
-  const [isMissionSending, setIsMissionSending] = useState(false);
-
-  // ---------- SEND LOG ----------
-  const [sendLog, setSendLog] = useState<Array<{ phone: string; name: string; time: string; success: boolean; error?: string }>>([]);
-
-  // ---------- REVENUE TRACKER ----------
-  interface DealRecord {
-    id: string;
-    clientName: string;
-    amount: number;
-    date: string;
-    status: 'PAID' | 'PENDING' | 'DP';
-    notes?: string;
-  }
-
-  const [deals, setDeals] = useState<DealRecord[]>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('leads_deals');
-      return stored ? JSON.parse(stored) : [];
-    }
-    return [];
-  });
-
-  const weeklyRevenueTarget = 3000000;
-  const weeklyDealsTotal = useMemo(() => {
-    const now = new Date();
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay() + 1);
-    startOfWeek.setHours(0, 0, 0, 0);
-    return deals
-      .filter((d) => new Date(d.date) >= startOfWeek && (d.status === 'PAID' || d.status === 'DP'))
-      .reduce((sum, d) => sum + (d.status === 'DP' ? d.amount * 0.5 : d.amount), 0);
-  }, [deals]);
-
-  const dealsThisMonth = useMemo(() => {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    return deals
-      .filter((d) => new Date(d.date) >= startOfMonth && (d.status === 'PAID' || d.status === 'DP'))
-      .reduce((sum, d) => sum + d.amount, 0);
-  }, [deals]);
-
-  // ---------- FOLLOW-UP REMINDER ----------
-  const followUpReminders = useMemo(() => {
-    const now = Date.now();
-    const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
-    return savedLeadsCrm.filter((l) => {
-      if ((l.leadStatus || '').toUpperCase() !== 'INTERESTED') return false;
-      const lastSync = l.lastSyncAt ? new Date(l.lastSyncAt).getTime() : 0;
-      if (!lastSync) return true;
-      return (now - lastSync) > threeDaysMs;
-    }).slice(0, 10);
-  }, [savedLeadsCrm]);
+  const [, setPitchModalLeadId] = useState<string | null>(null);
 
   const handlePinInput = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
@@ -342,13 +264,6 @@ export default function LeadFinderApp() {
     setPinInputs(['', '', '', '']);
     setIsAuthenticated(false);
   };
-
-  useEffect(() => {
-    if (dispatchCooldown > 0) {
-      const interval = setInterval(() => setDispatchCooldown((prev) => Math.max(0, prev - 1)), 1000);
-      return () => clearInterval(interval);
-    }
-  }, [dispatchCooldown]);
 
   const showToast = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
@@ -542,7 +457,7 @@ export default function LeadFinderApp() {
 
     // Determine cities to search: multi-select or single
     const citiesToSearch = selectedCities.length > 0 ? selectedCities : [selectedCity];
-    const categoryQuery = selectedCategoryPreset || query;
+    const categoryQuery = selectedCategoryPreset === 'ALL' ? query : selectedCategoryPreset || query;
     if (!categoryQuery && !query) return;
 
     setIsLoading(true);
@@ -630,10 +545,7 @@ export default function LeadFinderApp() {
   };
 
   const handleOpenPitchModal = (lead: LeadWithMeta) => {
-    setPitchModalLead(lead);
-    setPitchModalLoading(true);
-    setPitchModalMessage('');
-    setPitchModalError('');
+    const leadId = lead.id;
 
     const fallbackMsg = generateOutreachMessage({
       businessName: cleanBizName(lead.name),
@@ -645,8 +557,14 @@ export default function LeadFinderApp() {
       address: lead.formattedAddress,
     });
 
+    setPitchModalLead(lead);
+    setPitchModalLeadId(leadId);
+    setPitchModalMessage(fallbackMsg);
+    setPitchModalError('');
+    setPitchModalLoading(true);
+
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
 
     fetch('/api/generate-pitch', {
       method: 'POST',
@@ -668,26 +586,43 @@ export default function LeadFinderApp() {
       .then((data) => {
         clearTimeout(timeoutId);
         if (data.success && data.message) {
-          setPitchModalMessage(data.message);
+          setPitchModalLeadId((currentLeadId) => {
+            if (currentLeadId !== leadId) return currentLeadId;
+            setPitchModalMessage((currentMsg) => {
+              if (currentMsg === fallbackMsg) return data.message;
+              return currentMsg;
+            });
+            return currentLeadId;
+          });
         } else {
-          setPitchModalMessage(fallbackMsg);
-          setPitchModalError(data.error || 'AI gagal menghasilkan pesan, template otomatis digunakan.');
+          setPitchModalLeadId((currentLeadId) => {
+            if (currentLeadId !== leadId) return currentLeadId;
+            setPitchModalError('AI gagal menghasilkan pesan, template otomatis digunakan.');
+            return currentLeadId;
+          });
         }
       })
       .catch(() => {
         clearTimeout(timeoutId);
-        setPitchModalMessage(fallbackMsg);
-        setPitchModalError('Koneksi terputus atau timeout, template otomatis digunakan.');
+        setPitchModalLeadId((currentLeadId) => {
+          if (currentLeadId !== leadId) return currentLeadId;
+          setPitchModalError('Koneksi terputus atau timeout, template otomatis digunakan.');
+          return currentLeadId;
+        });
       })
-      .finally(() => setPitchModalLoading(false));
+      .finally(() => {
+        setPitchModalLoading(false);
+      });
   };
 
   const handlePitchModalSendWa = () => {
     if (!pitchModalLead || !pitchModalMessage.trim()) return;
-    const cleanP = pitchModalLead.phoneAnalysis?.cleaned || normalizeWhatsAppNumber(pitchModalLead.nationalPhoneNumber);
-    if (!cleanP) return;
+    const rawPhone = pitchModalLead.phoneAnalysis?.cleaned || normalizeWhatsAppNumber(pitchModalLead.nationalPhoneNumber);
+    if (!rawPhone) return;
+    const digitsOnly = rawPhone.replace(/\D/g, '');
+    const cleanP = digitsOnly.startsWith('0') ? '62' + digitsOnly.slice(1) : digitsOnly.startsWith('62') ? digitsOnly : '62' + digitsOnly;
     const waUrl = `https://wa.me/${cleanP}?text=${encodeURIComponent(pitchModalMessage.trim())}`;
-    window.open(waUrl, '_blank');
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
     updateLeadStatus(pitchModalLead.id, 'CONTACTED');
     setPitchModalLead(null);
   };
@@ -712,24 +647,18 @@ export default function LeadFinderApp() {
     const cleanP = lead.phoneAnalysis?.cleaned || normalizeWhatsAppNumber(lead.nationalPhoneNumber);
     if (!cleanP) return;
     const message = validatePitchMessage(lead.generatedPitch || lead.aiMessage || '', cleanBizName(lead.name));
-    setSendingId(lead.id);
     try {
       const res = await fetch('/api/send-wa', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ target: cleanP, message, token: fonnteToken || undefined }) });
       const data = await res.json();
       if (res.ok && data.success) {
         updateLeadStatus(lead.id, 'CONTACTED');
-        setDispatchCooldown(15);
         showToast('success', `Pesan terkirim ke ${lead.name} (${cleanP}).`);
-        setSendLog((prev) => [...prev, { phone: cleanP, name: lead.name, time: new Date().toISOString(), success: true }]);
       } else {
         showToast('error', data.error || 'Gagal mengirim.');
-        setSendLog((prev) => [...prev, { phone: cleanP, name: lead.name, time: new Date().toISOString(), success: false, error: data.error }]);
       }
     } catch {
       showToast('error', 'Kesalahan jaringan.');
-      setSendLog((prev) => [...prev, { phone: cleanP, name: lead.name, time: new Date().toISOString(), success: false, error: 'Network error' }]);
     }
-    finally { setSendingId(null); }
   };
 
   const handleBatchGenerateAi = async () => {
@@ -901,10 +830,6 @@ export default function LeadFinderApp() {
           </div>
 
           <nav className="mt-4 space-y-1 flex-1">
-            <button onClick={() => { setActiveTab('mission'); setMobileSidebarOpen(false); }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${activeTab === 'mission' ? 'bg-slate-900 text-white font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}>
-              <div className="flex items-center gap-2.5"><FontAwesomeIcon icon={faBolt} className={`h-4 w-4 ${activeTab === 'mission' ? 'text-emerald-400' : 'text-slate-500'}`} /><span>Misi Harian</span></div>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">{Math.max(0, missionDailyTarget - missionTodaySent)}</span>
-            </button>
             <button onClick={() => { setActiveTab('search'); setMobileSidebarOpen(false); }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${activeTab === 'search' ? 'bg-slate-900 text-white font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}>
               <div className="flex items-center gap-2.5"><FontAwesomeIcon icon={faSearch} className={`h-4 w-4 ${activeTab === 'search' ? 'text-emerald-400' : 'text-slate-500'}`} /><span>Discovery & Search</span></div>
               {leads.length > 0 && <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${activeTab === 'search' ? 'bg-slate-800 text-emerald-300' : 'bg-slate-200 text-slate-700'}`}>{leads.length}</span>}
@@ -925,12 +850,7 @@ export default function LeadFinderApp() {
             </button>
           </nav>
 
-          <div className="pt-3 border-t border-slate-100 space-y-2">
-            <div className="grid grid-cols-3 gap-1 text-center">
-              <div className="p-1.5 rounded bg-emerald-50 border border-emerald-200"><p className="text-[9px] font-bold text-emerald-700">{missionTodaySent}</p><p className="text-[7px] text-emerald-500 uppercase">Terkirim</p></div>
-              <div className="p-1.5 rounded bg-blue-50 border border-blue-200"><p className="text-[9px] font-bold text-blue-700">{missionTodayReplies}</p><p className="text-[7px] text-blue-500 uppercase">Reply</p></div>
-              <div className="p-1.5 rounded bg-purple-50 border border-purple-200"><p className="text-[9px] font-bold text-purple-700">{missionWeekMeetings}</p><p className="text-[7px] text-purple-500 uppercase">Meeting</p></div>
-            </div>
+          <div className="pt-3 border-t border-slate-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">MK</div>
@@ -948,7 +868,6 @@ export default function LeadFinderApp() {
             <button onClick={() => setMobileSidebarOpen(true)} className="md:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100"><FontAwesomeIcon icon={faBars} className="h-5 w-5" /></button>
             <div>
               <h1 className="text-sm font-bold text-slate-900 tracking-tight capitalize truncate">
-                {activeTab === 'mission' && 'Misi Harian'}
                 {activeTab === 'search' && (marketMode === 'global' ? 'Global Prospecting' : 'Discovery & Lead Qualification')}
                 {activeTab === 'crm' && 'Pipeline CRM'}
                 {activeTab === 'copilot' && 'AI Copilot'}
@@ -956,7 +875,6 @@ export default function LeadFinderApp() {
                 {activeTab === 'export' && 'Export & Database'}
               </h1>
               <p className="text-[11px] text-slate-400 truncate">
-                {activeTab === 'mission' && `Target: ${missionDailyTarget}/hari | Kirim ${missionTodaySent} | Sisa ${Math.max(0, missionDailyTarget - missionTodaySent)}`}
                 {activeTab === 'search' && 'Cari bisnis target dengan filter franchise, website, rating'}
                 {activeTab === 'crm' && 'Sinkron realtime ke Google Sheets'}
                 {activeTab === 'copilot' && 'Balas chat masuk dengan AI'}
@@ -976,319 +894,6 @@ export default function LeadFinderApp() {
         </header>
 
         <div className="p-6 flex-1 space-y-6 max-w-7xl w-full mx-auto">
-
-          {/* ===================== MISSION ===================== */}
-          {activeTab === 'mission' && (
-            <div className="space-y-5">
-              <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                  <div className="p-4 bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-xl text-white text-center shadow-md">
-                    <p className="text-3xl font-mono font-bold">{missionTodaySent}</p>
-                    <p className="text-[10px] font-semibold uppercase opacity-80">Terkirim Hari Ini</p>
-                  </div>
-                  <div className="p-4 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl text-white text-center shadow-md">
-                    <p className="text-3xl font-mono font-bold">{missionTodayReplies}</p>
-                    <p className="text-[10px] font-semibold uppercase opacity-80">Balasan (Reply)</p>
-                  </div>
-                  <div className="p-4 bg-gradient-to-br from-purple-600 to-purple-800 rounded-xl text-white text-center shadow-md">
-                    <p className="text-3xl font-mono font-bold">{missionWeekMeetings}</p>
-                    <p className="text-[10px] font-semibold uppercase opacity-80">Meeting Minggu Ini</p>
-                  </div>
-                  <div className="p-4 bg-gradient-to-br from-slate-700 to-slate-900 rounded-xl text-white text-center shadow-md">
-                    <p className="text-3xl font-mono font-bold">{Math.max(0, missionDailyTarget - missionTodaySent)}</p>
-                    <p className="text-[10px] font-semibold uppercase opacity-80">Sisa Target</p>
-                  </div>
-                </div>
-                <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 transition-all duration-300" style={{ width: `${Math.min(100, (missionTodaySent / missionDailyTarget) * 100)}%` }} />
-                </div>
-                <div className="flex justify-between mt-1"><span className="text-[10px] text-slate-400">0</span><span className="text-[10px] font-semibold text-slate-500">{missionDailyTarget} target harian</span></div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs flex flex-col justify-between space-y-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[9px] font-bold uppercase">Rekomendasi</span>
-                      <span className="text-[10px] text-slate-400 font-mono">{savedLeadsCrm.filter(l => (l.leadStatus === 'NEW' || l.leadStatus === 'QUALIFIED') && l.phoneAnalysis?.isValid && l.phoneAnalysis?.isMobile && !phoneRegistry[l.phoneAnalysis.cleaned]).length} siap kirim</span>
-                    </div>
-                    <h3 className="text-sm font-bold text-slate-900">Kirim Prospek Baru</h3>
-                    <p className="text-[11px] text-slate-500 mt-1">Auto-pilih prospek NEW & QUALIFIED yang belum pernah dikontak. Generate pitch AI. Kirim batch WA dengan jeda aman. Update status otomatis.</p>
-                  </div>
-                  <button
-                    onClick={async () => {
-                      const remaining = Math.max(0, missionDailyTarget - missionTodaySent);
-                      if (remaining === 0) { showToast('success', 'Target sudah tercapai!'); return; }
-
-                      const candidates = savedLeadsCrm.filter((l) =>
-                        (l.leadStatus === 'NEW' || l.leadStatus === 'QUALIFIED') &&
-                        l.phoneAnalysis?.isValid && l.phoneAnalysis?.isMobile &&
-                        !phoneRegistry[l.phoneAnalysis.cleaned]
-                      ).slice(0, remaining);
-
-                      if (candidates.length === 0) { showToast('error', 'Tidak ada prospek baru. Cari dulu di tab Discovery.'); return; }
-
-                      setIsMissionSending(true);
-                      let sentCount = 0;
-
-                      for (let i = 0; i < candidates.length; i++) {
-                        const lead = candidates[i];
-                        const cleanP = lead.phoneAnalysis.cleaned;
-                        if (!cleanP) continue;
-
-                        const sanitized = cleanBizName(lead.name);
-
-                        let pitch = validatePitchMessage(
-                          lead.generatedPitch || lead.aiMessage || '',
-                          sanitized
-                        );
-
-                        if (!pitch || pitch.length < 40) {
-                          try {
-                            const res = await fetch('/api/generate-pitch', {
-                              method: 'POST', headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ businessName: sanitized, category: lead.selectedCategory, address: lead.formattedAddress, rating: lead.rating, userRatingCount: lead.userRatingCount, senderName, senderRole, marketMode, geminiKey: geminiApiKey || undefined }),
-                            });
-                            const data = await res.json();
-                            pitch = data.success && data.message ? validatePitchMessage(data.message, sanitized) : generateOutreachMessage({ businessName: sanitized, category: lead.selectedCategory });
-                          } catch {
-                            pitch = generateOutreachMessage({ businessName: sanitized, category: lead.selectedCategory });
-                          }
-                        }
-
-                        try {
-                          const res = await fetch('/api/send-wa', {
-                            method: 'POST', headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ target: cleanP, message: pitch, token: fonnteToken || undefined }),
-                          });
-                          const data = await res.json();
-                          if (res.ok && data.success) {
-                            updateLeadStatus(lead.id, 'CONTACTED');
-                            sentCount++;
-                            const newTotal = missionTodaySent + sentCount;
-                            setMissionTodaySent(newTotal);
-                            localStorage.setItem('leads_mission_today', String(newTotal));
-                          }
-                          setSendLog((prev) => [...prev, { phone: cleanP, name: lead.name, time: new Date().toISOString(), success: res.ok && data.success, error: data?.error }]);
-                        } catch {
-                          setSendLog((prev) => [...prev, { phone: cleanP, name: lead.name, time: new Date().toISOString(), success: false, error: 'Network error' }]);
-                        }
-
-                        if (i < candidates.length - 1) await new Promise((r) => setTimeout(r, getRandomDelayMs(45, 120)));
-                      }
-
-                      setIsMissionSending(false);
-                      showToast('success', `${sentCount} pesan terkirim. Total: ${missionTodaySent + sentCount}/${missionDailyTarget}`);
-                    }}
-                    disabled={isMissionSending}
-                    className="w-full py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-base flex items-center justify-center gap-3 cursor-pointer shadow-md transition-all active:scale-[0.98]"
-                  >
-                    <FontAwesomeIcon icon={faBolt} className={`h-5 w-5 ${isMissionSending ? 'animate-spin' : ''}`} />
-                    <span>{isMissionSending ? 'Mengirim...' : (() => { const a = savedLeadsCrm.filter((l: LeadWithMeta) => (l.leadStatus === 'NEW' || l.leadStatus === 'QUALIFIED') && l.phoneAnalysis?.isValid && l.phoneAnalysis?.isMobile && !phoneRegistry[l.phoneAnalysis.cleaned]).length; return 'Kirim Semua (' + Math.min(a, Math.max(0, missionDailyTarget - missionTodaySent)) + ')'; })()}</span>
-                  </button>
-                </div>
-
-                <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs flex flex-col justify-between space-y-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[9px] font-bold uppercase">Follow-up</span>
-                      <span className="text-[10px] text-slate-400 font-mono">{savedLeadsCrm.filter(l => l.leadStatus === 'INTERESTED').length} butuh follow-up</span>
-                    </div>
-                    <h3 className="text-sm font-bold text-slate-900">Follow-up INTERESTED</h3>
-                    <p className="text-[11px] text-slate-500 mt-1">Kirim follow-up ke prospek yang tertarik. Dorong ke meeting atau preview demo.</p>
-                  </div>
-                  <button
-                    onClick={async () => {
-                      const candidates = savedLeadsCrm.filter((l) => l.leadStatus === 'INTERESTED' && l.phoneAnalysis?.isValid && l.phoneAnalysis?.isMobile);
-                      if (candidates.length === 0) { showToast('error', 'Tidak ada INTERESTED.'); return; }
-                      setIsMissionSending(true);
-                      let sentCount = 0;
-                      for (let i = 0; i < candidates.length; i++) {
-                        const lead = candidates[i];
-                        const cleanP = lead.phoneAnalysis.cleaned;
-                        if (!cleanP) continue;
-                        const followUpMsg = 'Halo ' + lead.name.split(' ')[0] + ', saya Kevin. Ada yang bisa dibantu lebih lanjut? Saya siap jadwalkan meeting atau kirim preview demo. Terima kasih!';
-                        try {
-                          const res = await fetch('/api/send-wa', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ target: cleanP, message: followUpMsg, token: fonnteToken || undefined }) });
-                          const data = await res.json();
-                          if (res.ok && data.success) sentCount++;
-                        } catch {}
-                        if (i < candidates.length - 1) await new Promise((r) => setTimeout(r, getRandomDelayMs(45, 90)));
-                      }
-                      setIsMissionSending(false);
-                      showToast('success', sentCount + ' follow-up terkirim.');
-                    }}
-                    disabled={isMissionSending}
-                    className="w-full py-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-base flex items-center justify-center gap-3 cursor-pointer shadow-md transition-all active:scale-[0.98]"
-                  >
-                    <FontAwesomeIcon icon={faMessage} className={'h-5 w-5' + (isMissionSending ? ' animate-spin' : '')} />
-                    <span>{isMissionSending ? 'Mengirim...' : 'Follow-up (' + savedLeadsCrm.filter(l => l.leadStatus === 'INTERESTED').length + ')'}</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex items-center justify-between gap-4 flex-wrap">
-                <div className="flex items-center gap-3">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Target Harian</span>
-                  <div className="flex items-center gap-1">
-                    {[10, 20, 30, 50].map((n) => (
-                      <button key={n} onClick={() => { setMissionDailyTarget(n); localStorage.setItem('leads_mission_target', String(n)); }} className={'px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer transition ' + (missionDailyTarget === n ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')}>{n}</button>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => { if (confirm('Reset progres hari ini?')) { setMissionTodaySent(0); localStorage.setItem('leads_mission_today', '0'); showToast('success', 'Progres direset.'); } }} className="px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold cursor-pointer">Reset</button>
-                  <button onClick={() => setActiveTab('search')} className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold cursor-pointer">+ Cari Prospek</button>
-                </div>
-              </div>
-
-              {missionTodaySent >= missionDailyTarget && (
-                <div className="p-4 bg-emerald-100 border border-emerald-300 rounded-xl text-center">
-                  <p className="text-sm font-bold text-emerald-800">Target harian tercapai! Cari prospek baru untuk persiapan besok.</p>
-                </div>
-              )}
-
-              {/* DASHBOARD KINERJA */}
-              {sendLog.length > 0 && (
-                <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2"><FontAwesomeIcon icon={faChartLine} className="h-3.5 w-3.5 text-slate-500" /> Log Pengiriman Hari Ini</h4>
-                  <div className="overflow-x-auto max-h-48 overflow-y-auto text-[10px]">
-                    <table className="w-full text-left">
-                      <thead><tr className="text-slate-400 font-semibold"><th className="px-2 py-1">No</th><th className="px-2 py-1">Nama</th><th className="px-2 py-1">Status</th><th className="px-2 py-1">Jam</th></tr></thead>
-                      <tbody className="text-slate-700">
-                        {sendLog.map((log, i) => (
-                          <tr key={i} className="border-t border-slate-100">
-                            <td className="px-2 py-1 font-mono">{i + 1}</td>
-                            <td className="px-2 py-1 truncate max-w-[120px]">{log.name}</td>
-                            <td className="px-2 py-1">{log.success ? <span className="text-emerald-600 font-semibold">Berhasil</span> : <span className="text-rose-600 font-semibold" title={log.error}>Gagal</span>}</td>
-                            <td className="px-2 py-1 font-mono text-slate-400">{new Date(log.time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* MANUAL REPLY COUNTER */}
-              <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex items-center justify-between flex-wrap gap-3">
-                <div className="flex items-center gap-4">
-                  <div className="text-center">
-                    <p className="text-xs font-semibold text-slate-500 uppercase">Reply</p>
-                    <p className="text-lg font-mono font-bold text-blue-700">{missionTodayReplies}</p>
-                    <button onClick={() => { const v = missionTodayReplies + 1; setMissionTodayReplies(v); localStorage.setItem('leads_mission_replies', String(v)); }} className="mt-1 px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-[10px] font-semibold cursor-pointer">+1</button>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs font-semibold text-slate-500 uppercase">Meeting</p>
-                    <p className="text-lg font-mono font-bold text-purple-700">{missionWeekMeetings}</p>
-                    <button onClick={() => { const v = missionWeekMeetings + 1; setMissionWeekMeetings(v); localStorage.setItem('leads_mission_meetings', String(v)); }} className="mt-1 px-2 py-0.5 rounded bg-purple-100 text-purple-700 text-[10px] font-semibold cursor-pointer">+1</button>
-                  </div>
-                </div>
-                <p className="text-[10px] text-slate-400">Klik +1 setiap dapat reply/meeting untuk tracking otomatis</p>
-              </div>
-
-              {/* REVENUE TRACKER */}
-              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2"><FontAwesomeIcon icon={faChartLine} className="h-3.5 w-3.5 text-emerald-600" /> Revenue Tracker — Target Rp3.000.000/minggu</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                  <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200 text-center">
-                    <p className="text-[9px] font-bold text-emerald-600 uppercase">Minggu Ini</p>
-                    <p className="text-lg font-mono font-bold text-emerald-800">Rp {weeklyDealsTotal.toLocaleString('id-ID')}</p>
-                    <div className="w-full h-2 bg-emerald-200 rounded-full mt-1 overflow-hidden">
-                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min(100, (weeklyDealsTotal / weeklyRevenueTarget) * 100)}%` }} />
-                    </div>
-                    <p className="text-[10px] text-emerald-600 mt-0.5">{Math.round((weeklyDealsTotal / weeklyRevenueTarget) * 100)}% dari target</p>
-                  </div>
-                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 text-center">
-                    <p className="text-[9px] font-bold text-blue-600 uppercase">Bulan Ini</p>
-                    <p className="text-lg font-mono font-bold text-blue-800">Rp {dealsThisMonth.toLocaleString('id-ID')}</p>
-                    <p className="text-[10px] text-blue-600 mt-0.5">{deals.length} deal tercatat</p>
-                  </div>
-                  <div className="p-3 bg-purple-50 rounded-lg border border-purple-200 text-center">
-                    <p className="text-[9px] font-bold text-purple-600 uppercase">Sisa Target</p>
-                    <p className="text-lg font-mono font-bold text-purple-800">Rp {Math.max(0, weeklyRevenueTarget - weeklyDealsTotal).toLocaleString('id-ID')}</p>
-                    <p className="text-[10px] text-purple-600 mt-0.5">butuh {Math.ceil(Math.max(0, weeklyRevenueTarget - weeklyDealsTotal) / 1500000)} project @1.5jt</p>
-                  </div>
-                </div>
-
-                {/* Add Deal Form */}
-                <details className="text-xs">
-                  <summary className="cursor-pointer text-slate-600 hover:text-slate-900 font-semibold">+ Catat Deal Baru</summary>
-                  <div className="mt-2 p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
-                    <div className="grid grid-cols-4 gap-2">
-                      <input type="text" id="deal-name" placeholder="Nama client" className="col-span-2 text-xs py-1.5 px-2 rounded border border-slate-200 bg-white" />
-                      <input type="number" id="deal-amount" placeholder="Nominal (Rp)" className="text-xs py-1.5 px-2 rounded border border-slate-200 bg-white" />
-                      <select id="deal-status" className="text-xs py-1.5 px-2 rounded border border-slate-200 bg-white">
-                        <option value="PAID">Lunas</option>
-                        <option value="DP">DP</option>
-                        <option value="PENDING">Pending</option>
-                      </select>
-                    </div>
-                    <button onClick={() => {
-                      const nameInput = document.getElementById('deal-name') as HTMLInputElement;
-                      const amountInput = document.getElementById('deal-amount') as HTMLInputElement;
-                      const statusSelect = document.getElementById('deal-status') as HTMLSelectElement;
-                      const name = nameInput?.value?.trim();
-                      const amount = Number(amountInput?.value);
-                      if (!name || !amount) { showToast('error', 'Nama client & nominal wajib diisi.'); return; }
-                      const newDeal: DealRecord = { id: `deal-${Date.now()}`, clientName: name, amount, date: new Date().toISOString(), status: statusSelect?.value as 'PAID' | 'DP' | 'PENDING' };
-                      const updated = [...deals, newDeal];
-                      setDeals(updated);
-                      localStorage.setItem('leads_deals', JSON.stringify(updated));
-                      nameInput.value = ''; amountInput.value = '';
-                      showToast('success', `Deal ${name} — Rp ${amount.toLocaleString('id-ID')} tercatat!`);
-                    }} className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold cursor-pointer">Simpan Deal</button>
-                  </div>
-                </details>
-
-                {/* Deal List */}
-                {deals.length > 0 && (
-                  <div className="mt-2 max-h-36 overflow-y-auto text-[10px]">
-                    {[...deals].reverse().slice(0, 10).map((d) => (
-                      <div key={d.id} className="flex items-center justify-between py-1 border-t border-slate-100">
-                        <span className="font-medium text-slate-800">{d.clientName}</span>
-                        <span className="font-mono text-slate-600">Rp {d.amount.toLocaleString('id-ID')}</span>
-                        <span className={`px-1.5 py-0.2 rounded font-semibold ${d.status === 'PAID' ? 'bg-emerald-100 text-emerald-700' : d.status === 'DP' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>{d.status}</span>
-                        <span className="text-slate-400">{new Date(d.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* FOLLOW-UP REMINDER */}
-              {followUpReminders.length > 0 && (
-                <div className="bg-white border border-amber-200 rounded-xl p-5 shadow-xs">
-                  <h4 className="text-xs font-bold text-amber-800 uppercase tracking-wider mb-3 flex items-center gap-2">
-                    <FontAwesomeIcon icon={faClock} className="h-3.5 w-3.5 text-amber-600" />
-                    Follow-up Reminder — {followUpReminders.length} prospek INTERESTED belum di-follow-up {'>'}3 hari
-                  </h4>
-                  <div className="space-y-1.5">
-                    {followUpReminders.map((lead) => {
-                      const cleanP = lead.phoneAnalysis?.cleaned || normalizeWhatsAppNumber(lead.nationalPhoneNumber);
-                      const daysSince = lead.lastSyncAt ? Math.floor((Date.now() - new Date(lead.lastSyncAt).getTime()) / (24 * 60 * 60 * 1000)) : '?';
-                      return (
-                        <div key={lead.id} className="flex items-center justify-between text-xs p-2 rounded-lg bg-amber-50 border border-amber-200">
-                          <div className="flex-1">
-                            <span className="font-semibold text-slate-900">{lead.name}</span>
-                            <span className="text-slate-400 ml-2">{daysSince} hari</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <button onClick={() => { const msg = 'Halo ' + lead.name.split(' ')[0] + ', saya Kevin — masih tertarik dengan penawaran saya sebelumnya? Saya bisa kirimkan preview demo langsung. Terima kasih!'; if (cleanP) { navigator.clipboard.writeText(msg); showToast('success', 'Pesan follow-up disalin!'); } else { showToast('error', 'Nomor WA tidak valid.'); } }} className="px-2 py-0.5 rounded bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold text-[10px] cursor-pointer">
-                              <FontAwesomeIcon icon={faCopy} className="h-2.5 w-2.5 mr-0.5" />Salin
-                            </button>
-                            <button onClick={async () => { if (!cleanP) return; const msg = 'Halo ' + lead.name.split(' ')[0] + ', saya Kevin — masih tertarik dengan penawaran saya sebelumnya? Saya bisa kirimkan preview demo langsung. Terima kasih!'; try { const res = await fetch('/api/send-wa', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ target: cleanP, message: msg, token: fonnteToken || undefined }) }); if (res.ok) showToast('success', 'Follow-up terkirim!'); else showToast('error', 'Gagal kirim.'); } catch { showToast('error', 'Network error.'); } }} className="px-2 py-0.5 rounded bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-semibold text-[10px] cursor-pointer">
-                              <FontAwesomeIcon icon={faPaperPlane} className="h-2.5 w-2.5 mr-0.5" />Kirim
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
 
           {/* ===================== SEARCH ===================== */}
           {activeTab === 'search' && (
@@ -1326,7 +931,7 @@ export default function LeadFinderApp() {
                     <div className="md:col-span-8">
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Kata Kunci</label>
                       <div className="relative flex items-center">
-                        <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={`Misal: ${selectedCategoryPreset || 'Kos'} di ${selectedCities[0] || 'Kota'}`} className="w-full text-xs font-medium py-2 pl-3 pr-24 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-900" />
+                        <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={`Misal: ${selectedCategoryPreset !== 'ALL' ? selectedCategoryPreset : 'Kos'} di ${selectedCities[0] || 'Kota'}`} className="w-full text-xs font-medium py-2 pl-3 pr-24 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-900" />
                         <button type="submit" disabled={isLoading || selectedCities.length === 0} className="absolute right-1 px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition cursor-pointer flex items-center gap-1.5">
                           <FontAwesomeIcon icon={faSearch} className={`h-3 w-3 ${isLoading ? 'animate-spin' : ''}`} /><span>{isLoading ? 'Mencari...' : 'Cari Bulk'}</span>
                         </button>
@@ -1346,8 +951,10 @@ export default function LeadFinderApp() {
                     {(marketMode === 'indo' ? PRESET_CATEGORIES : GLOBAL_PRESET_CATEGORIES).map((cat) => (
                       <button key={cat.label} type="button" onClick={() => {
                         setSelectedCategoryPreset(cat.query);
-                        if (cat.query) {
+                        if (cat.query !== 'ALL') {
                           setQuery(`${cat.query} di ${selectedCities[0] || ''}`);
+                        } else {
+                          setQuery('');
                         }
                       }} className={`text-[11px] px-2.5 py-1 rounded-md font-medium transition cursor-pointer ${selectedCategoryPreset === cat.query ? 'bg-slate-900 text-white font-semibold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>{cat.label}</button>
                     ))}
@@ -1404,23 +1011,14 @@ export default function LeadFinderApp() {
                             </div>
                             {lead.generatedPitch && <div className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-700 font-sans line-clamp-2">&quot;{lead.generatedPitch}&quot;</div>}
                           </div>
-                          <div className="pt-3 flex items-center justify-between gap-2">
-                            <button onClick={() => handleOpenPitchModal(lead)} disabled={pitchModalLoading && pitchModalLead?.id === lead.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white text-xs font-semibold cursor-pointer shadow-xs">
+                          <div className="pt-3">
+                            <button onClick={() => handleOpenPitchModal(lead)} disabled={pitchModalLoading && pitchModalLead?.id === lead.id} className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white text-xs font-semibold cursor-pointer shadow-xs">
                               {pitchModalLoading && pitchModalLead?.id === lead.id ? (
                                 <><svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg><span>Memproses...</span></>
                               ) : (
                                 <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg><span>Buat Pesan</span></>
                               )}
                             </button>
-                            <div className="flex items-center gap-1.5">
-                              {lead.generatedPitch && <span className="text-[10px] text-slate-400 font-mono">Draf siap</span>}
-                              <button onClick={() => handleOpenWhatsAppManual(lead)} disabled={!cleanP} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-300 cursor-pointer">
-                                <FontAwesomeIcon icon={faPaperPlane} className="h-3 w-3 text-emerald-600" /><span>Chat WA</span>
-                              </button>
-                              <button onClick={() => handleSendSingleWhatsApp(lead)} disabled={!cleanP || sendingId === lead.id || dispatchCooldown > 0} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white text-xs font-semibold cursor-pointer shadow-xs">
-                                <FontAwesomeIcon icon={faBolt} className="h-3 w-3 text-emerald-400" /><span>{sendingId === lead.id ? 'Kirim...' : 'Kirim'}</span>
-                              </button>
-                            </div>
                           </div>
                         </div>
                       );
@@ -1712,47 +1310,47 @@ export default function LeadFinderApp() {
             </button>
           </div>
           <div className="px-6 py-4 min-h-[180px]">
-            {pitchModalLoading ? (
-              <div className="space-y-3 animate-pulse">
-                <div className="h-3 bg-slate-200 rounded w-3/4" />
-                <div className="h-3 bg-slate-200 rounded w-full" />
-                <div className="h-3 bg-slate-200 rounded w-5/6" />
-                <div className="h-3 bg-slate-200 rounded w-2/3" />
-                <div className="h-3 bg-slate-200 rounded w-4/5" />
-                <div className="h-3 bg-slate-200 rounded w-1/2" />
-                <div className="pt-2 flex items-center gap-2">
-                  <div className="h-3 w-3 bg-slate-200 rounded-full" />
-                  <div className="h-3 bg-slate-200 rounded w-1/3" />
-                </div>
+            {pitchModalError && (
+              <div className="flex items-center gap-2 mb-3 p-2 rounded-lg bg-amber-50 border border-amber-200">
+                <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+                <p className="text-[11px] text-amber-700 font-medium">{pitchModalError}</p>
               </div>
-            ) : (
-              <>
-                {pitchModalError && (
-                  <div className="flex items-center gap-2 mb-3 p-2 rounded-lg bg-amber-50 border border-amber-200">
-                    <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                    </svg>
-                    <p className="text-[11px] text-amber-700 font-medium">{pitchModalError}</p>
-                  </div>
-                )}
-                <textarea
-                  value={pitchModalMessage}
-                  onChange={(e) => setPitchModalMessage(e.target.value)}
-                  className="w-full h-40 p-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-slate-300"
-                  placeholder="Draf pesan akan muncul di sini..."
-                />
-              </>
             )}
+            {pitchModalLoading && (
+              <div className="flex items-center gap-2 mb-3 p-2 rounded-lg bg-blue-50 border border-blue-200">
+                <svg className="animate-spin h-3.5 w-3.5 text-blue-500" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                <p className="text-[11px] text-blue-700 font-medium">AI sedang menyempurnakan pesan...</p>
+              </div>
+            )}
+            <textarea
+              value={pitchModalMessage}
+              onChange={(e) => setPitchModalMessage(e.target.value)}
+              className="w-full h-40 p-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-slate-300"
+              placeholder="Draf pesan akan muncul di sini..."
+            />
           </div>
           {!pitchModalLoading && (
             <div className="flex items-center justify-end gap-2 px-6 pb-5 pt-2 border-t border-slate-100">
               <button onClick={() => setPitchModalLead(null)} className="px-4 py-2 rounded-lg text-[11px] font-semibold text-slate-600 hover:bg-slate-100 transition cursor-pointer">Batal</button>
-              <button onClick={handlePitchModalSendWa} disabled={!pitchModalMessage.trim()} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer">
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
-                </svg>
-                Kirim via WhatsApp
-              </button>
+              {(() => {
+                const rawPhone = pitchModalLead?.phoneAnalysis?.cleaned || normalizeWhatsAppNumber(pitchModalLead?.nationalPhoneNumber || '');
+                const hasValidPhone = Boolean(rawPhone && rawPhone.replace(/\D/g, '').length >= 6);
+                return hasValidPhone ? (
+                  <button onClick={handlePitchModalSendWa} disabled={!pitchModalMessage.trim()} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                    </svg>
+                    Kirim via WhatsApp
+                  </button>
+                ) : (
+                  <span className="px-4 py-2 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-400 border border-slate-200">Nomor WhatsApp tidak tersedia</span>
+                );
+              })()}
             </div>
           )}
         </div>

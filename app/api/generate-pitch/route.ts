@@ -12,7 +12,6 @@ export async function POST(req: NextRequest) {
       userRatingCount = 0,
       senderName = 'Mohammad Kevin',
       senderRole = 'freelance web developer',
-      senderEmail = 'mhmdkevin198@gmail.com',
       marketMode = 'indo',
       geminiKey: customGeminiKey,
     } = body;

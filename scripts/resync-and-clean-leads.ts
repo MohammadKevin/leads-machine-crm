@@ -1,7 +1,5 @@
 import {
   evaluateLeadQualification,
-  isFranchiseOrBlacklisted,
-  isCorporateWebsiteDomain,
   LeadEntity,
   LeadStatus,
 } from '../lib/lead-qualification';

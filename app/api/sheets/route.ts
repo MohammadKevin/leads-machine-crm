@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   normalizeWhatsAppNumber,
-  INITIAL_CONTACTED_NUMBERS,
-  INITIAL_CONTACTED_SET,
 } from '@/lib/phone-utils';
 import {
   evaluateLeadQualification,
