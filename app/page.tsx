@@ -467,34 +467,45 @@ export default function LeadFinderApp() {
     setIsLoading(true);
     setErrorMessage(null);
 
-    const fallbackKeyword = 'bisnis';
+    const keyword = query.trim();
+    const presets = marketMode === 'indo' ? PRESET_CATEGORIES : GLOBAL_PRESET_CATEGORIES;
+    const fallbackQueries = isAllCategories && !keyword
+      ? presets.filter((p) => p.query !== 'ALL').map((p) => p.query)
+      : [keyword || (isAllCategories ? 'bisnis' : selectedCategoryPreset)];
+
+    const totalJobs = citiesToSearch.length * fallbackQueries.length;
     let allPlaces: PlaceLead[] = [];
     let totalFranchiseBlocked = 0;
     let errors: string[] = [];
+    let jobIndex = 0;
 
     for (let ci = 0; ci < citiesToSearch.length; ci++) {
       const city = citiesToSearch[ci];
-      const keyword = query.trim() || (isAllCategories ? fallbackKeyword : selectedCategoryPreset);
-      const finalQuery = `${keyword} di ${city}`;
-      setBatchProgress({ current: ci + 1, total: citiesToSearch.length });
 
-      try {
-        const res = await fetch('/api/places', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: finalQuery, apiKey: serpApiKey || undefined, marketMode, excludeFranchise: excludeFranchiseToggle }),
+      for (let qi = 0; qi < fallbackQueries.length; qi++) {
+        const q = fallbackQueries[qi];
+        const finalQuery = `${q} di ${city}`;
+        jobIndex++;
+        setBatchProgress({ current: jobIndex, total: totalJobs });
+
+        try {
+          const res = await fetch('/api/places', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: finalQuery, apiKey: serpApiKey || undefined, marketMode, excludeFranchise: excludeFranchiseToggle }),
         });
         const data = await res.json();
         if (res.ok && Array.isArray(data.places)) {
           allPlaces.push(...data.places);
           totalFranchiseBlocked += data.excludedFranchiseCount || 0;
         } else if (!res.ok) {
-          errors.push(`${city}: ${data.error || 'Gagal'}`);
+            errors.push(`${city}/${q}: ${data.error || 'Gagal'}`);
+          }
+        } catch {
+          errors.push(`${city}/${q}: Network error`);
         }
-      } catch {
-        errors.push(`${city}: Network error`);
-      }
 
-      if (ci < citiesToSearch.length - 1) await new Promise((r) => setTimeout(r, 800));
+        if (jobIndex < totalJobs) await new Promise((r) => setTimeout(r, 600));
+      }
     }
 
     setBatchProgress(null);
