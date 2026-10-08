@@ -1114,37 +1114,37 @@ export default function LeadFinderApp() {
               </div>
 
               <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                <button onClick={() => setCrmStatusFilter('all')} className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer text-[11px] ${crmStatusFilter === 'all' ? 'bg-slate-900 text-white font-semibold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>Semua ({savedLeadsCrm.length})</button>
+                <button onClick={() => setCrmStatusFilter('all')} className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer text-[11px] ${crmStatusFilter === 'all' ? 'bg-olive-500 text-cream-50 font-semibold' : 'bg-olive-100 text-olive-700 hover:bg-olive-200'}`}>Semua ({savedLeadsCrm.length})</button>
                 <button onClick={() => setCrmStatusFilter('NEW')} className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer text-[11px] ${crmStatusFilter === 'NEW' ? 'bg-amber-600 text-white font-semibold' : 'bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-200'}`}>NEW ({savedLeadsCrm.filter(l => (l.leadStatus || '').toUpperCase() === 'NEW').length})</button>
-                <button onClick={() => setCrmStatusFilter('QUALIFIED')} className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer text-[11px] ${crmStatusFilter === 'QUALIFIED' ? 'bg-blue-600 text-white font-semibold' : 'bg-blue-50 text-blue-800 hover:bg-blue-100 border border-blue-200'}`}>QUALIFIED ({savedLeadsCrm.filter(l => (l.leadStatus || '').toUpperCase() === 'QUALIFIED').length})</button>
-                <button onClick={() => setCrmStatusFilter('CONTACTED')} className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer text-[11px] ${crmStatusFilter === 'CONTACTED' ? 'bg-emerald-600 text-white font-semibold' : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200'}`}>CONTACTED ({savedLeadsCrm.filter(l => (l.leadStatus || '').toUpperCase() === 'CONTACTED').length})</button>
-                <button onClick={() => setCrmStatusFilter('INTERESTED')} className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer text-[11px] ${crmStatusFilter === 'INTERESTED' ? 'bg-indigo-600 text-white font-semibold' : 'bg-indigo-50 text-indigo-800 hover:bg-indigo-100 border border-indigo-200'}`}>INTERESTED ({savedLeadsCrm.filter(l => (l.leadStatus || '').toUpperCase() === 'INTERESTED').length})</button>
-                <button onClick={() => setCrmStatusFilter('IN_PROGRESS')} className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer text-[11px] ${crmStatusFilter === 'IN_PROGRESS' ? 'bg-cyan-600 text-white font-semibold' : 'bg-cyan-50 text-cyan-800 hover:bg-cyan-100 border border-cyan-200'}`}>IN PROGRESS ({savedLeadsCrm.filter(l => (l.leadStatus || '').toUpperCase() === 'IN_PROGRESS').length})</button>
+                <button onClick={() => setCrmStatusFilter('QUALIFIED')} className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer text-[11px] ${crmStatusFilter === 'QUALIFIED' ? 'bg-olive-500 text-cream-50 font-semibold' : 'bg-olive-100 text-olive-700 hover:bg-olive-200'}`}>QUALIFIED ({savedLeadsCrm.filter(l => (l.leadStatus || '').toUpperCase() === 'QUALIFIED').length})</button>
+                <button onClick={() => setCrmStatusFilter('CONTACTED')} className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer text-[11px] ${crmStatusFilter === 'CONTACTED' ? 'bg-olive-500 text-cream-50 font-semibold' : 'bg-mint-50 text-olive-700 hover:bg-mint-100'}`}>CONTACTED ({savedLeadsCrm.filter(l => (l.leadStatus || '').toUpperCase() === 'CONTACTED').length})</button>
+                <button onClick={() => setCrmStatusFilter('INTERESTED')} className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer text-[11px] ${crmStatusFilter === 'INTERESTED' ? 'bg-olive-700 text-cream-50 font-semibold' : 'bg-olive-100 text-olive-700 hover:bg-olive-200'}`}>INTERESTED ({savedLeadsCrm.filter(l => (l.leadStatus || '').toUpperCase() === 'INTERESTED').length})</button>
+                <button onClick={() => setCrmStatusFilter('IN_PROGRESS')} className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer text-[11px] ${crmStatusFilter === 'IN_PROGRESS' ? 'bg-mint-400 text-olive-900 font-semibold' : 'bg-mint-50 text-olive-700 hover:bg-mint-100'}`}>IN PROGRESS ({savedLeadsCrm.filter(l => (l.leadStatus || '').toUpperCase() === 'IN_PROGRESS').length})</button>
                 <button onClick={() => setCrmStatusFilter('LOST_FRANCHISE')} className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer text-[11px] ${crmStatusFilter === 'LOST_FRANCHISE' ? 'bg-rose-600 text-white font-semibold' : 'bg-rose-50 text-rose-800 hover:bg-rose-100 border border-rose-200'}`}>FRANCHISE ({savedLeadsCrm.filter(l => (l.leadStatus || '').toUpperCase() === 'LOST_FRANCHISE' || (l.leadStatus || '').toUpperCase() === 'UNQUALIFIED_FRANCHISE').length})</button>
-                <button onClick={() => setCrmStatusFilter('LOST_REJECTED')} className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer text-[11px] ${crmStatusFilter === 'LOST_REJECTED' ? 'bg-slate-600 text-white font-semibold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300'}`}>REJECTED ({savedLeadsCrm.filter(l => (l.leadStatus || '').toUpperCase() === 'LOST_REJECTED').length})</button>
-                <button onClick={() => setCrmStatusFilter('CLOSED')} className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer text-[11px] ${crmStatusFilter === 'CLOSED' ? 'bg-purple-600 text-white font-semibold' : 'bg-purple-50 text-purple-800 hover:bg-purple-100 border border-purple-200'}`}>CLOSED ({savedLeadsCrm.filter(l => (l.leadStatus || '').toUpperCase() === 'CLOSED').length})</button>
+                <button onClick={() => setCrmStatusFilter('LOST_REJECTED')} className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer text-[11px] ${crmStatusFilter === 'LOST_REJECTED' ? 'bg-olive-700 text-cream-50 font-semibold' : 'bg-cream-200 text-olive-700 hover:bg-cream-300 border border-olive-200'}`}>REJECTED ({savedLeadsCrm.filter(l => (l.leadStatus || '').toUpperCase() === 'LOST_REJECTED').length})</button>
+                <button onClick={() => setCrmStatusFilter('CLOSED')} className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer text-[11px] ${crmStatusFilter === 'CLOSED' ? 'bg-olive-700 text-cream-50 font-semibold' : 'bg-olive-100 text-olive-700 hover:bg-olive-200 border border-olive-300'}`}>CLOSED ({savedLeadsCrm.filter(l => (l.leadStatus || '').toUpperCase() === 'CLOSED').length})</button>
               </div>
 
               {savedLeadsCrm.length === 0 ? (
-                <div className="text-center py-16 bg-white rounded-xl border border-slate-200 p-8">
-                  <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
-                    <FontAwesomeIcon icon={faFileExcel} className="h-6 w-6 text-slate-400" />
+                <div className="text-center py-16 bg-cream-50 rounded-xl border border-olive-200 p-8">
+                  <div className="w-12 h-12 rounded-full bg-olive-100 flex items-center justify-center mx-auto mb-3">
+                    <FontAwesomeIcon icon={faFileExcel} className="h-6 w-6 text-olive-500" />
                   </div>
-                  <h4 className="text-sm font-bold text-slate-800">Belum ada prospek</h4>
-                  <p className="text-xs text-slate-500 mt-1">Sync dari Google Sheets atau cari prospek baru.</p>
+                  <h4 className="text-sm font-bold text-olive-800">Belum ada prospek</h4>
+                  <p className="text-xs text-olive-600 mt-1">Sync dari Google Sheets atau cari prospek baru.</p>
                   <div className="mt-4 flex gap-2 justify-center">
-                    <button onClick={() => syncCrmFromSheet()} className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold cursor-pointer"><FontAwesomeIcon icon={faSync} className="h-3 w-3 mr-1" />Sync Sheet</button>
-                    <button onClick={() => setActiveTab('search')} className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"><FontAwesomeIcon icon={faSearch} className="h-3 w-3 mr-1" />Cari Prospek</button>
+                    <button onClick={() => syncCrmFromSheet()} className="px-3.5 py-1.5 rounded-lg bg-olive-500 hover:bg-olive-600 text-cream-50 text-xs font-semibold cursor-pointer"><FontAwesomeIcon icon={faSync} className="h-3 w-3 mr-1" />Sync Sheet</button>
+                    <button onClick={() => setActiveTab('search')} className="px-3.5 py-1.5 rounded-lg border border-olive-200 text-olive-700 text-xs font-semibold cursor-pointer"><FontAwesomeIcon icon={faSearch} className="h-3 w-3 mr-1" />Cari Prospek</button>
                   </div>
                 </div>
               ) : (
-                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+                <div className="bg-cream-50 rounded-xl border border-olive-200 overflow-hidden shadow-sm">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs text-slate-700">
-                      <thead className="bg-slate-50 text-slate-500 border-b border-slate-200 uppercase text-[10px] font-bold">
+                    <table className="w-full text-left text-xs text-olive-700">
+                      <thead className="bg-olive-100 text-olive-700 border-b border-olive-200 uppercase text-[10px] font-bold">
                         <tr><th className="px-3 py-3">Nama Bisnis</th><th className="px-3 py-3">Kategori</th><th className="px-3 py-3">No Telepon</th><th className="px-3 py-3">Maps</th><th className="px-3 py-3">Rating</th><th className="px-3 py-3">Website</th><th className="px-3 py-3">Status</th><th className="px-3 py-3">Alasan</th><th className="px-3 py-3">Pitch</th><th className="px-3 py-3">Sync</th><th className="px-3 py-3 text-right">Aksi</th></tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
+                      <tbody className="divide-y divide-olive-100">
                         {savedLeadsCrm.filter((l) => {
                           const cs = (l.leadStatus || 'NEW').toUpperCase();
                           if (crmStatusFilter === 'all') return true;
@@ -1160,34 +1160,34 @@ export default function LeadFinderApp() {
                           const cleanP = lead.phoneAnalysis?.cleaned || normalizeWhatsAppNumber(lead.nationalPhoneNumber);
                           const cs = (lead.leadStatus || 'NEW').toUpperCase();
                           return (
-                            <tr key={lead.id} className="hover:bg-slate-50/70 transition text-[11px]">
-                              <td className="px-3 py-2.5 font-semibold text-slate-900 max-w-[180px]">
-                                <div className="font-semibold text-slate-900 truncate" title={lead.name}>{lead.name}</div>
-                                <div className="text-[10px] text-slate-400 font-normal truncate">{lead.formattedAddress}</div>
+                            <tr key={lead.id} className="hover:bg-cream-100/70 transition text-[11px]">
+                              <td className="px-3 py-2.5 font-semibold text-olive-900 max-w-[180px]">
+                                <div className="font-semibold text-olive-900 truncate" title={lead.name}>{lead.name}</div>
+                                <div className="text-[10px] text-olive-600 font-normal truncate">{lead.formattedAddress}</div>
                               </td>
-                              <td className="px-3 py-2.5"><span className="px-1.5 py-0.5 rounded bg-slate-100 font-medium text-[10px]">{lead.selectedCategory || lead.primaryType || 'general'}</span></td>
-                              <td className="px-3 py-2.5 font-mono">{cleanP ? <span className="text-emerald-700 font-medium">{cleanP}</span> : <span className="text-slate-400">-</span>}</td>
-                              <td className="px-3 py-2.5"><a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${lead.name} ${lead.formattedAddress}`)}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800" title="Buka Maps"><FontAwesomeIcon icon={faMapMarkerAlt} className="h-3 w-3" /><span>Maps</span></a></td>
+                              <td className="px-3 py-2.5"><span className="px-1.5 py-0.5 rounded bg-olive-100 font-medium text-[10px] text-olive-700">{lead.selectedCategory || lead.primaryType || 'general'}</span></td>
+                              <td className="px-3 py-2.5 font-mono">{cleanP ? <span className="text-olive-700 font-medium">{cleanP}</span> : <span className="text-olive-500">-</span>}</td>
+                              <td className="px-3 py-2.5"><a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${lead.name} ${lead.formattedAddress}`)}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-olive-500 hover:text-olive-600" title="Buka Maps"><FontAwesomeIcon icon={faMapMarkerAlt} className="h-3 w-3" /><span>Maps</span></a></td>
                               <td className="px-3 py-2.5 font-mono">{lead.rating > 0 ? `${lead.rating}★ (${lead.userRatingCount || 0})` : '-'}</td>
-                              <td className="px-3 py-2.5">{lead.websiteUri || lead.website ? <a href={lead.websiteUri || lead.website || '#'} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline inline-flex items-center gap-0.5 truncate max-w-[100px]"><span className="truncate">{lead.websiteUri || lead.website}</span><FontAwesomeIcon icon={faExternalLinkSquare} className="h-2.5 w-2.5 shrink-0" /></a> : <span className="text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded font-medium text-[10px] border border-amber-200">Tanpa Web</span>}</td>
+                              <td className="px-3 py-2.5">{lead.websiteUri || lead.website ? <a href={lead.websiteUri || lead.website || '#'} target="_blank" rel="noreferrer" className="text-olive-500 hover:underline inline-flex items-center gap-0.5 truncate max-w-[100px]"><span className="truncate">{lead.websiteUri || lead.website}</span><FontAwesomeIcon icon={faExternalLinkSquare} className="h-2.5 w-2.5 shrink-0" /></a> : <span className="text-olive-800 bg-olive-100 px-1.5 py-0.5 rounded font-medium text-[10px] border border-olive-200">Tanpa Web</span>}</td>
                               <td className="px-3 py-2.5">
-                                <select aria-label="Status" value={cs} onChange={(e) => updateLeadStatus(lead.id, e.target.value)} className={`text-[10px] font-semibold py-1 px-1.5 rounded border focus:outline-none cursor-pointer ${STATUS_CONFIG[cs]?.bg || 'bg-slate-50'} ${STATUS_CONFIG[cs]?.border || 'border-slate-200'}`}>
+                                <select aria-label="Status" value={cs} onChange={(e) => updateLeadStatus(lead.id, e.target.value)} className={`text-[10px] font-semibold py-1 px-1.5 rounded border focus:outline-none cursor-pointer ${STATUS_CONFIG[cs]?.bg || 'bg-olive-50'} ${STATUS_CONFIG[cs]?.border || 'border-olive-200'}`}>
                                   <option value="NEW">NEW</option><option value="QUALIFIED">QUALIFIED</option><option value="CONTACTED">CONTACTED</option><option value="INTERESTED">INTERESTED</option><option value="IN_PROGRESS">IN PROGRESS</option><option value="LOST_FRANCHISE">LOST FRANCHISE</option><option value="LOST_REJECTED">LOST REJECTED</option><option value="CLOSED">CLOSED</option>
                                 </select>
                               </td>
                               <td className="px-3 py-2.5">
-                                <select aria-label="Alasan" value={lead.rejectionReason || ''} onChange={(e) => updateLeadStatus(lead.id, cs, (e.target.value as RejectionReason) || null)} className="text-[10px] py-1 px-1.5 rounded border border-slate-200 bg-white text-slate-700 cursor-pointer">
+                                <select aria-label="Alasan" value={lead.rejectionReason || ''} onChange={(e) => updateLeadStatus(lead.id, cs, (e.target.value as RejectionReason) || null)} className="text-[10px] py-1 px-1.5 rounded border border-olive-200 bg-cream-50 text-olive-700 cursor-pointer">
                                   <option value="">-</option><option value="Franchise">Franchise</option><option value="No Budget">No Budget</option><option value="Already Has Vendor">Already Has Vendor</option><option value="No Response">No Response</option><option value="Corporate">Corporate</option>
                                 </select>
                               </td>
                               <td className="px-3 py-2.5">
-                                <button onClick={() => { const p = lead.generatedPitch || lead.aiMessage || generateOutreachMessage({ businessName: lead.name, category: lead.selectedCategory, rating: lead.rating, userRatingCount: lead.userRatingCount, address: lead.formattedAddress }); navigator.clipboard.writeText(p); showToast('success', `Pitch ${lead.name} disalin!`); }} className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-medium border border-slate-200 cursor-pointer" title="Salin pitch"><FontAwesomeIcon icon={faCopy} className="h-2.5 w-2.5" /><span>Salin</span></button>
+                                <button onClick={() => { const p = lead.generatedPitch || lead.aiMessage || generateOutreachMessage({ businessName: lead.name, category: lead.selectedCategory, rating: lead.rating, userRatingCount: lead.userRatingCount, address: lead.formattedAddress }); navigator.clipboard.writeText(p); showToast('success', `Pitch ${lead.name} disalin!`); }} className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-olive-100 hover:bg-olive-200 text-olive-700 text-[10px] font-medium border border-olive-200 cursor-pointer" title="Salin pitch"><FontAwesomeIcon icon={faCopy} className="h-2.5 w-2.5" /><span>Salin</span></button>
                               </td>
-                              <td className="px-3 py-2.5 text-[10px] text-slate-400">{lead.lastSyncAt ? new Date(lead.lastSyncAt).toLocaleDateString('id-ID', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+                              <td className="px-3 py-2.5 text-[10px] text-olive-600">{lead.lastSyncAt ? new Date(lead.lastSyncAt).toLocaleDateString('id-ID', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</td>
                               <td className="px-3 py-2.5 text-right">
                                 <div className="inline-flex items-center gap-1">
-                                  <button onClick={() => handleOpenWhatsAppManual(lead)} disabled={!cleanP} className="inline-flex items-center gap-1 px-2 py-1 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold text-[10px] border border-emerald-300 cursor-pointer"><FontAwesomeIcon icon={faPaperPlane} className="h-2.5 w-2.5" /><span>WA</span></button>
-                                  <button onClick={() => { setCopilotClientName(lead.name); setCopilotPhone(cleanP || ''); setCopilotCategory(lead.selectedCategory); setActiveTab('copilot'); }} className="inline-flex items-center gap-1 px-2 py-1 rounded bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold text-[10px] border border-purple-200 cursor-pointer"><FontAwesomeIcon icon={faQuoteLeft} className="h-2.5 w-2.5" /><span>AI</span></button>
+                                  <button onClick={() => handleOpenWhatsAppManual(lead)} disabled={!cleanP} className="inline-flex items-center gap-1 px-2 py-1 rounded bg-olive-100 hover:bg-olive-200 text-olive-700 font-semibold text-[10px] border border-olive-300 cursor-pointer"><FontAwesomeIcon icon={faPaperPlane} className="h-2.5 w-2.5" /><span>WA</span></button>
+                                  <button onClick={() => { setCopilotClientName(lead.name); setCopilotPhone(cleanP || ''); setCopilotCategory(lead.selectedCategory); setActiveTab('copilot'); }} className="inline-flex items-center gap-1 px-2 py-1 rounded bg-olive-100 hover:bg-olive-200 text-olive-700 font-semibold text-[10px] border border-olive-300 cursor-pointer"><FontAwesomeIcon icon={faQuoteLeft} className="h-2.5 w-2.5" /><span>AI</span></button>
                                 </div>
                               </td>
                             </tr>
@@ -1204,33 +1204,33 @@ export default function LeadFinderApp() {
           {/* ===================== COPILOT ===================== */}
           {activeTab === 'copilot' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
+              <div className="bg-cream-50 border border-olive-200 rounded-xl p-5 shadow-sm space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5"><FontAwesomeIcon icon={faMessage} className="h-4 w-4 text-purple-600" />Pesan Masuk</h3>
-                  {copilotIntent && <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${copilotIntent === 'LOST_FRANCHISE' ? 'bg-rose-50 text-rose-700 border-rose-200' : copilotIntent === 'INTERESTED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-blue-50 text-blue-700 border-blue-200'}`}>Intent: {copilotIntent}</span>}
+                  <h3 className="text-xs font-bold text-olive-900 uppercase tracking-wider flex items-center gap-1.5"><FontAwesomeIcon icon={faMessage} className="h-4 w-4 text-olive-500" />Pesan Masuk</h3>
+                  {copilotIntent && <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${copilotIntent === 'LOST_FRANCHISE' ? 'bg-rose-50 text-rose-700 border-rose-200' : copilotIntent === 'INTERESTED' ? 'bg-mint-50 text-olive-700 border-mint-100' : 'bg-olive-100 text-olive-700 border-olive-200'}`}>Intent: {copilotIntent}</span>}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Nama Klien</label><input type="text" value={copilotClientName} onChange={(e) => setCopilotClientName(e.target.value)} placeholder="Nama bisnis" className="w-full text-xs py-2 px-3 rounded-lg border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-slate-900" /></div>
-                  <div><label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">No WhatsApp</label><input type="text" value={copilotPhone} onChange={(e) => setCopilotPhone(e.target.value)} placeholder="08123456789" className="w-full text-xs font-mono py-2 px-3 rounded-lg border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-slate-900" /></div>
+                  <div><label className="block text-[10px] font-bold text-olive-700 uppercase mb-1">Nama Klien</label><input type="text" value={copilotClientName} onChange={(e) => setCopilotClientName(e.target.value)} placeholder="Nama bisnis" className="w-full text-xs py-2 px-3 rounded-lg border border-olive-200 bg-cream-50 text-olive-900 focus:outline-none focus:border-olive-500" /></div>
+                  <div><label className="block text-[10px] font-bold text-olive-700 uppercase mb-1">No WhatsApp</label><input type="text" value={copilotPhone} onChange={(e) => setCopilotPhone(e.target.value)} placeholder="08123456789" className="w-full text-xs font-mono py-2 px-3 rounded-lg border border-olive-200 bg-cream-50 text-olive-900 focus:outline-none focus:border-olive-500" /></div>
                 </div>
-                <div><label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Chat dari Klien</label><textarea rows={6} value={copilotIncomingMessage} onChange={(e) => setCopilotIncomingMessage(e.target.value)} placeholder="Tempel chat dari klien di sini..." className="w-full text-xs py-2.5 px-3 rounded-lg border border-slate-200 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 resize-none" /></div>
-                <button onClick={handleGenerateCopilotReply} disabled={isGeneratingCopilot || !copilotIncomingMessage.trim()} className="w-full py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs">
-                  <FontAwesomeIcon icon={faRobot} className={`h-4 w-4 ${isGeneratingCopilot ? 'animate-spin text-purple-400' : ''}`} />
+                <div><label className="block text-[10px] font-bold text-olive-700 uppercase mb-1">Chat dari Klien</label><textarea rows={6} value={copilotIncomingMessage} onChange={(e) => setCopilotIncomingMessage(e.target.value)} placeholder="Tempel chat dari klien di sini..." className="w-full text-xs py-2.5 px-3 rounded-lg border border-olive-200 bg-cream-50 text-olive-900 placeholder:text-olive-400 focus:outline-none focus:border-olive-500 resize-none" /></div>
+                <button onClick={handleGenerateCopilotReply} disabled={isGeneratingCopilot || !copilotIncomingMessage.trim()} className="w-full py-2.5 rounded-lg bg-olive-500 hover:bg-olive-600 disabled:opacity-50 text-cream-50 font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                  <FontAwesomeIcon icon={faRobot} className={`h-4 w-4 ${isGeneratingCopilot ? 'animate-spin text-mint-200' : ''}`} />
                   <span>{isGeneratingCopilot ? 'Menganalisis & Draf...' : 'Buat Balasan AI'}</span>
                 </button>
               </div>
-              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4 flex flex-col justify-between">
+              <div className="bg-cream-50 border border-olive-200 rounded-xl p-5 shadow-sm space-y-4 flex flex-col justify-between">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5"><FontAwesomeIcon icon={faMagic} className="h-4 w-4 text-emerald-600" />Draf Balasan</h3>
+                    <h3 className="text-xs font-bold text-olive-900 uppercase tracking-wider flex items-center gap-1.5"><FontAwesomeIcon icon={faMagic} className="h-4 w-4 text-olive-500" />Draf Balasan</h3>
                   </div>
-                  <textarea rows={9} value={copilotGeneratedReply} onChange={(e) => setCopilotGeneratedReply(e.target.value)} placeholder="Hasil balasan AI akan muncul di sini. Edit sebelum kirim." className="w-full text-xs font-sans py-2.5 px-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 focus:bg-white focus:outline-none focus:border-slate-900 resize-none leading-relaxed" />
+                  <textarea rows={9} value={copilotGeneratedReply} onChange={(e) => setCopilotGeneratedReply(e.target.value)} placeholder="Hasil balasan AI akan muncul di sini. Edit sebelum kirim." className="w-full text-xs font-sans py-2.5 px-3 rounded-lg border border-olive-200 bg-cream-100 text-olive-900 focus:bg-cream-50 focus:outline-none focus:border-olive-500 resize-none leading-relaxed" />
                 </div>
                 <div className="flex items-center gap-2 pt-2">
-                  <button onClick={() => { if (!copilotGeneratedReply) return; navigator.clipboard.writeText(copilotGeneratedReply); showToast('success', 'Disalin!'); }} disabled={!copilotGeneratedReply} className="flex-1 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer">
+                  <button onClick={() => { if (!copilotGeneratedReply) return; navigator.clipboard.writeText(copilotGeneratedReply); showToast('success', 'Disalin!'); }} disabled={!copilotGeneratedReply} className="flex-1 py-2 rounded-lg border border-olive-200 bg-cream-50 hover:bg-mint-50 text-olive-700 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer">
                     <FontAwesomeIcon icon={faCopy} className="h-3.5 w-3.5" /><span>Salin</span>
                   </button>
-                  <button onClick={handleSendCopilotReply} disabled={isSendingCopilot || !copilotGeneratedReply || !copilotPhone} className="flex-1 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs">
+                  <button onClick={handleSendCopilotReply} disabled={isSendingCopilot || !copilotGeneratedReply || !copilotPhone} className="flex-1 py-2 rounded-lg bg-olive-500 hover:bg-olive-600 disabled:opacity-50 text-cream-50 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-sm">
                     <FontAwesomeIcon icon={faPaperPlane} className={`h-3.5 w-3.5 ${isSendingCopilot ? 'animate-spin' : ''}`} /><span>{isSendingCopilot ? 'Mengirim...' : 'Kirim WA'}</span>
                   </button>
                 </div>
@@ -1241,22 +1241,22 @@ export default function LeadFinderApp() {
           {/* ===================== TEMPLATES ===================== */}
           {activeTab === 'templates' && (
             <div className="space-y-4">
-              <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Koleksi Template Value-First</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Template 60-80 kata tanpa klise sales untuk outreach WA efektif.</p>
+              <div className="bg-cream-50 border border-olive-200 rounded-xl p-4 shadow-sm">
+                <h3 className="text-xs font-bold text-olive-900 uppercase tracking-wider">Koleksi Template Value-First</h3>
+                <p className="text-xs text-olive-600 mt-0.5">Template 60-80 kata tanpa klise sales untuk outreach WA efektif.</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {OUTREACH_CATEGORIES.map((cat) => {
                   const samplePitch = generateOutreachMessage({ businessName: `Contoh Bisnis ${cat.label.split(' ')[0]}`, category: cat.id });
                   return (
-                    <div key={cat.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex flex-col justify-between space-y-3">
+                    <div key={cat.id} className="bg-cream-50 border border-olive-200 rounded-xl p-4 shadow-sm flex flex-col justify-between space-y-3">
                       <div>
-                        <div className="flex items-center justify-between"><span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-800">{cat.badge}</span><span className="text-[10px] font-mono text-slate-400">~65 kata</span></div>
-                        <h4 className="text-xs font-bold text-slate-900 mt-2">{cat.label}</h4>
-                        <p className="text-[11px] text-slate-500 mt-1">{cat.description}</p>
+                        <div className="flex items-center justify-between"><span className="text-[10px] font-bold px-2 py-0.5 rounded bg-olive-100 text-olive-700">{cat.badge}</span><span className="text-[10px] font-mono text-olive-500">~65 kata</span></div>
+                        <h4 className="text-xs font-bold text-olive-900 mt-2">{cat.label}</h4>
+                        <p className="text-[11px] text-olive-600 mt-1">{cat.description}</p>
                       </div>
-                      <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-700 font-sans leading-relaxed whitespace-pre-wrap">{samplePitch}</div>
-                      <button onClick={() => { navigator.clipboard.writeText(samplePitch); showToast('success', `Template "${cat.label}" disalin!`); }} className="w-full py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs">
+                      <div className="p-2.5 rounded-lg bg-cream-100 border border-olive-200 text-[11px] text-olive-700 font-sans leading-relaxed whitespace-pre-wrap">{samplePitch}</div>
+                      <button onClick={() => { navigator.clipboard.writeText(samplePitch); showToast('success', `Template "${cat.label}" disalin!`); }} className="w-full py-1.5 rounded-lg border border-olive-200 bg-cream-50 hover:bg-mint-50 text-olive-700 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer shadow-sm">
                         <FontAwesomeIcon icon={faCopy} className="h-3 w-3" /><span>Salin Template</span>
                       </button>
                     </div>
@@ -1269,20 +1269,20 @@ export default function LeadFinderApp() {
           {/* ===================== EXPORT ===================== */}
           {activeTab === 'export' && (
             <div className="max-w-2xl mx-auto space-y-5">
-              <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
+              <div className="bg-cream-50 border border-olive-200 rounded-xl p-6 shadow-sm space-y-4">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">Ekspor Data Prospek</h3>
-                  <p className="text-xs text-slate-500 mt-1">Unduh database prospek yang sudah difilter.</p>
+                  <h3 className="text-sm font-bold text-olive-900">Ekspor Data Prospek</h3>
+                  <p className="text-xs text-olive-600 mt-1">Unduh database prospek yang sudah difilter.</p>
                 </div>
-                <div className="grid grid-cols-2 gap-3 py-3 border-y border-slate-100">
-                  <div className="p-3 bg-slate-50 rounded-lg text-center"><span className="text-[10px] font-bold text-slate-400 uppercase">Pipeline CRM</span><p className="text-xl font-mono font-bold text-slate-900 mt-0.5">{savedLeadsCrm.length}</p></div>
-                  <div className="p-3 bg-slate-50 rounded-lg text-center"><span className="text-[10px] font-bold text-slate-400 uppercase">Hasil Pencarian</span><p className="text-xl font-mono font-bold text-slate-900 mt-0.5">{filteredLeads.length}</p></div>
+                <div className="grid grid-cols-2 gap-3 py-3 border-y border-olive-200">
+                  <div className="p-3 bg-cream-100 rounded-lg text-center"><span className="text-[10px] font-bold text-olive-600 uppercase">Pipeline CRM</span><p className="text-xl font-mono font-bold text-olive-900 mt-0.5">{savedLeadsCrm.length}</p></div>
+                  <div className="p-3 bg-cream-100 rounded-lg text-center"><span className="text-[10px] font-bold text-olive-600 uppercase">Hasil Pencarian</span><p className="text-xl font-mono font-bold text-olive-900 mt-0.5">{filteredLeads.length}</p></div>
                 </div>
                 <div className="space-y-2.5">
-                  <button onClick={handleDownloadCsv} className="w-full py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs">
-                    <FontAwesomeIcon icon={faFileExcel} className="h-4 w-4 text-emerald-400" /><span>Unduh CSV Lengkap (11 Kolom)</span>
+                  <button onClick={handleDownloadCsv} className="w-full py-2.5 rounded-lg bg-olive-500 hover:bg-olive-600 text-cream-50 font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                    <FontAwesomeIcon icon={faFileExcel} className="h-4 w-4 text-mint-200" /><span>Unduh CSV Lengkap (11 Kolom)</span>
                   </button>
-                  <button onClick={handleDownloadWaList} className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs">
+                  <button onClick={handleDownloadWaList} className="w-full py-2.5 rounded-lg bg-olive-700 hover:bg-olive-600 text-cream-50 font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-sm">
                     <FontAwesomeIcon icon={faDownload} className="h-4 w-4" /><span>Unduh Daftar WA (.txt)</span>
                   </button>
                 </div>
@@ -1295,14 +1295,14 @@ export default function LeadFinderApp() {
     </div>
 
     {pitchModalLead && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setPitchModalLead(null)}>
-        <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-slate-100">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-olive-900/40 backdrop-blur-sm" onClick={() => setPitchModalLead(null)}>
+        <div className="w-full max-w-lg bg-cream-50 rounded-2xl shadow-lg border border-olive-200" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-olive-200">
             <div>
-              <h2 className="text-sm font-bold text-slate-900">Buat Pesan Penawaran</h2>
-              <p className="text-[11px] text-slate-500 mt-0.5">{pitchModalLead.name} — {pitchModalLead.selectedCategory}</p>
+              <h2 className="text-sm font-bold text-olive-900">Buat Pesan Penawaran</h2>
+              <p className="text-[11px] text-olive-600 mt-0.5">{pitchModalLead.name} — {pitchModalLead.selectedCategory}</p>
             </div>
-            <button onClick={() => setPitchModalLead(null)} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer">
+            <button onClick={() => setPitchModalLead(null)} className="p-1.5 rounded-lg text-olive-500 hover:text-olive-800 hover:bg-cream-200 transition cursor-pointer">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
@@ -1316,36 +1316,36 @@ export default function LeadFinderApp() {
               </div>
             )}
             {pitchModalLoading && (
-              <div className="flex items-center gap-2 mb-3 p-2 rounded-lg bg-blue-50 border border-blue-200">
-                <svg className="animate-spin h-3.5 w-3.5 text-blue-500" viewBox="0 0 24 24" fill="none">
+              <div className="flex items-center gap-2 mb-3 p-2 rounded-lg bg-mint-50 border border-mint-100">
+                <svg className="animate-spin h-3.5 w-3.5 text-olive-500" viewBox="0 0 24 24" fill="none">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                <p className="text-[11px] text-blue-700 font-medium">AI sedang menyempurnakan pesan...</p>
+                <p className="text-[11px] text-olive-700 font-medium">AI sedang menyempurnakan pesan...</p>
               </div>
             )}
             <textarea
               value={pitchModalMessage}
               onChange={(e) => setPitchModalMessage(e.target.value)}
-              className="w-full h-40 p-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-slate-300"
+              className="w-full h-40 p-3 rounded-xl border border-olive-200 bg-cream-50 text-xs text-olive-900 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-mint-100 focus:border-olive-500"
               placeholder="Draf pesan akan muncul di sini..."
             />
           </div>
           {!pitchModalLoading && (
-            <div className="flex items-center justify-end gap-2 px-6 pb-5 pt-2 border-t border-slate-100">
-              <button onClick={() => setPitchModalLead(null)} className="px-4 py-2 rounded-lg text-[11px] font-semibold text-slate-600 hover:bg-slate-100 transition cursor-pointer">Batal</button>
+            <div className="flex items-center justify-end gap-2 px-6 pb-5 pt-2 border-t border-olive-200">
+              <button onClick={() => setPitchModalLead(null)} className="px-4 py-2 rounded-lg text-[11px] font-semibold text-olive-600 hover:bg-cream-200 transition cursor-pointer">Batal</button>
               {(() => {
                 const rawPhone = pitchModalLead?.phoneAnalysis?.cleaned || normalizeWhatsAppNumber(pitchModalLead?.nationalPhoneNumber || '');
                 const hasValidPhone = Boolean(rawPhone && rawPhone.replace(/\D/g, '').length >= 6);
                 return hasValidPhone ? (
-                  <button onClick={handlePitchModalSendWa} disabled={!pitchModalMessage.trim()} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer">
+                  <button onClick={handlePitchModalSendWa} disabled={!pitchModalMessage.trim()} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-semibold bg-olive-500 text-cream-50 hover:bg-olive-600 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer">
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
                     </svg>
                     Kirim via WhatsApp
                   </button>
                 ) : (
-                  <span className="px-4 py-2 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-400 border border-slate-200">Nomor WhatsApp tidak tersedia</span>
+                  <span className="px-4 py-2 rounded-lg text-[11px] font-semibold bg-cream-200 text-olive-500 border border-olive-200">Nomor WhatsApp tidak tersedia</span>
                 );
               })()}
             </div>
