@@ -458,18 +458,23 @@ export default function LeadFinderApp() {
     // Determine cities to search: multi-select or single
     const citiesToSearch = selectedCities.length > 0 ? selectedCities : [selectedCity];
     const categoryQuery = selectedCategoryPreset === 'ALL' ? query : selectedCategoryPreset || query;
-    if (!categoryQuery && !query) return;
+    if (!categoryQuery && !query) {
+      showToast('error', 'Isi kata kunci atau pilih kategori terlebih dahulu.');
+      return;
+    }
 
     setIsLoading(true);
     setErrorMessage(null);
 
+    const fallbackKeyword = 'bisnis';
     let allPlaces: PlaceLead[] = [];
     let totalFranchiseBlocked = 0;
     let errors: string[] = [];
 
     for (let ci = 0; ci < citiesToSearch.length; ci++) {
       const city = citiesToSearch[ci];
-      const finalQuery = query.trim() ? `${query} di ${city}` : `${categoryQuery} di ${city}`;
+      const keyword = query.trim() || categoryQuery.trim() || fallbackKeyword;
+      const finalQuery = `${keyword} di ${city}`;
       setBatchProgress({ current: ci + 1, total: citiesToSearch.length });
 
       try {
@@ -953,8 +958,6 @@ export default function LeadFinderApp() {
                         setSelectedCategoryPreset(cat.query);
                         if (cat.query !== 'ALL') {
                           setQuery(`${cat.query} di ${selectedCities[0] || ''}`);
-                        } else {
-                          setQuery('');
                         }
                       }} className={`text-[11px] px-2.5 py-1 rounded-md font-medium transition cursor-pointer ${selectedCategoryPreset === cat.query ? 'bg-slate-900 text-white font-semibold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>{cat.label}</button>
                     ))}
