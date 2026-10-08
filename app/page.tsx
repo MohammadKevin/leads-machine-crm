@@ -138,15 +138,6 @@ export const GLOBAL_PRESET_CATEGORIES = [
   { label: 'Veterinary Clinics', query: 'Veterinary Clinic Vet' },
 ];
 
-export const RECOMMENDATIONS = [
-  { id: 'kos-malang', title: 'Kos Mahasiswa & Homestay', city: 'Malang', query: 'Kos Kosan di Malang', category: 'kos', categoryName: 'Properti & Hunian', tag: 'Tinggi Mahasiswa', opportunityBadge: 'Katalog Kamar & KTP', description: 'Pemilik kos butuh alur booking online aman dengan upload KTP penyewa dan auto-reminder tagihan WA.' },
-  { id: 'konveksi-surabaya', title: 'Konveksi & Sablon Kaos', city: 'Surabaya', query: 'Konveksi Kaos di Surabaya', category: 'umkm', categoryName: 'Industri Kreatif', tag: 'Pusat Bisnis', opportunityBadge: 'Katalog Visual WA', description: 'Konveksi butuh katalog visual instan dan daftar harga.' },
-  { id: 'wedding-solo', title: 'Wedding Organizer & MUA', city: 'Solo', query: 'Wedding Organizer di Solo', category: 'wedding', categoryName: 'Jasa Pernikahan', tag: 'Portofolio Mewah', opportunityBadge: 'Showcase Portofolio', description: 'WO butuh galeri foto/video HD dan rincian paket pricelist.' },
-  { id: 'klinik-jogja', title: 'Klinik Dokter Gigi & Estetika', city: 'Jogja', query: 'Klinik Dokter Gigi di Jogja', category: 'jasa', categoryName: 'Kesehatan & Medis', tag: 'Tinggi Kepercayaan', opportunityBadge: 'Profil & Jadwal Dokter', description: 'Klinik butuh landing page resmi dengan jadwal praktek.' },
-  { id: 'rental-bandung', title: 'Rental Mobil & Sewa Motor', city: 'Bandung', query: 'Rental Mobil di Bandung', category: 'rental', categoryName: 'Pariwisata & Transportasi', tag: 'Wisata Ramai', opportunityBadge: 'Katalog Armada & Jadwal', description: 'Rental butuh katalog unit kendaraan live dengan tarif harian.' },
-  { id: 'arsitek-semarang', title: 'Kontraktor & Desain Interior', city: 'Semarang', query: 'Kontraktor Bangun Rumah di Semarang', category: 'properti', categoryName: 'Properti & Konstruksi', tag: 'Tiket Proyek Besar', opportunityBadge: 'Portofolio & Estimasi RAB', description: 'Kontraktor butuh galeri proyek Before & After.' },
-];
-
 export const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string; icon: any }> = {
   NEW: { label: 'NEW', bg: 'bg-amber-50 text-amber-800', text: 'text-amber-800', border: 'border-amber-200', icon: faMagic },
   QUALIFIED: { label: 'QUALIFIED', bg: 'bg-sky-50 text-sky-800', text: 'text-sky-800', border: 'border-sky-200', icon: faBullseye },
@@ -231,7 +222,7 @@ export default function LeadFinderApp() {
   const [pitchModalLoading, setPitchModalLoading] = useState(false);
   const [pitchModalMessage, setPitchModalMessage] = useState('');
   const [pitchModalError, setPitchModalError] = useState('');
-  const [, setPitchModalLeadId] = useState<string | null>(null);
+  const pitchModalLeadRef = useRef<string | null>(null);
 
   const handlePinInput = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
@@ -575,7 +566,7 @@ export default function LeadFinderApp() {
     });
 
     setPitchModalLead(lead);
-    setPitchModalLeadId(leadId);
+    pitchModalLeadRef.current = leadId;
     setPitchModalMessage(fallbackMsg);
     setPitchModalError('');
     setPitchModalLoading(true);
@@ -603,29 +594,20 @@ export default function LeadFinderApp() {
       .then((data) => {
         clearTimeout(timeoutId);
         if (data.success && data.message) {
-          setPitchModalLeadId((currentLeadId) => {
-            if (currentLeadId !== leadId) return currentLeadId;
-            setPitchModalMessage((currentMsg) => {
-              if (currentMsg === fallbackMsg) return data.message;
-              return currentMsg;
-            });
-            return currentLeadId;
+          if (pitchModalLeadRef.current !== leadId) return;
+          setPitchModalMessage((currentMsg) => {
+            if (currentMsg === fallbackMsg) return data.message;
+            return currentMsg;
           });
         } else {
-          setPitchModalLeadId((currentLeadId) => {
-            if (currentLeadId !== leadId) return currentLeadId;
-            setPitchModalError('AI gagal menghasilkan pesan, template otomatis digunakan.');
-            return currentLeadId;
-          });
+          if (pitchModalLeadRef.current !== leadId) return;
+          setPitchModalError('AI gagal menghasilkan pesan, template otomatis digunakan.');
         }
       })
       .catch(() => {
         clearTimeout(timeoutId);
-        setPitchModalLeadId((currentLeadId) => {
-          if (currentLeadId !== leadId) return currentLeadId;
-          setPitchModalError('Koneksi terputus atau timeout, template otomatis digunakan.');
-          return currentLeadId;
-        });
+        if (pitchModalLeadRef.current !== leadId) return;
+        setPitchModalError('Koneksi terputus atau timeout, template otomatis digunakan.');
       })
       .finally(() => {
         setPitchModalLoading(false);
