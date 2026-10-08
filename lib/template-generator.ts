@@ -267,58 +267,93 @@ export function generateOutreachMessage({
   const name = sanitizeBusinessName(businessName) || 'Bapak/Ibu';
 
   if (category === 'kos') {
-    return `Halo Kak/Pak di ${name}, salam kenal! Saya perhatikan ulasan dan lokasi kosnya di Google Maps sudah sangat strategis.
+    return `Halo Kak, salam kenal! Saya lihat ${name} di Google Maps memiliki lokasi yang cukup strategis dan ulasan yang positif.
 
-Biar calon penghuni tidak bolak-balik tanya kamar kosong dan verifikasi KTP lebih rapi, saya bisa bantu siapkan katalog kamar live & alur booking otomatis. Plus desain stand akrilik QR review di resepsionis.
+Saya membayangkan mungkin admin sering kerepotan menjawab chat tanya ketersediaan kamar kosong, syarat sewa, dan verifikasi KTP secara manual satu per satu — apalagi kalau calon penghuni ramai bertanya di jam yang sama.
 
-Boleh saya buatkan demo alur/sistemnya dulu tanpa biaya Kak?`;
+Saya bisa bantu ringankan dengan:
+• Tampilan katalog kamar yang bisa diakses langsung — calon penghuni bisa lihat kamar kosong tanpa perlu tanya dulu
+• Alur booking dan upload KTP langsung via WhatsApp tanpa admin harus forward data manual
+• Stand akrilik QR review Google Maps di resepsionis agar testimoni positif makin terkumpul otomatis
+
+Kira-kira boleh saya buatkan preview demo alur/sistemnya dulu tanpa biaya Kak? Jika cocok bisa kita diskusikan, jika belum tidak masalah sama sekali.`;
   }
 
   if (category === 'wedding') {
-    return `Halo Kak di ${name}, salam kenal! Saya lihat hasil karya dan review ${name} di Google Maps sangat estetik dan berkelas.
+    return `Halo Kak, salam kenal! Saya melihat portofolio ${name} di Google Maps — hasil karya yang ditampilkan cukup menarik dan berkualitas.
 
-Biar calon pengantin bisa langsung cek pricelist dan booking jadwal tanpa chat manual panjang, saya bisa bantu siapkan showcase portofolio interaktif langsung ke WhatsApp.
+Saya paham di bisnis wedding, calon pengantin biasanya bertanya paket harga berulang kali, minta lihat galeri, dan tanya ketersediaan tanggal secara manual — yang menghabiskan banyak waktu admin.
 
-Boleh saya buatkan demo alur/sistemnya dulu tanpa biaya Kak?`;
+Saya bisa bantu sederhanakan dengan:
+• Galeri portofolio interaktif yang bisa langsung diakses tanpa kirim PDF bolak-balik
+• Tampilan paket pricelist dan jadwal booking otomatis yang terhubung ke WhatsApp
+• Stand akrilik QR review Google Maps di booth pameran atau studio agar testimoni mudah terkumpul
+
+Kira-kira boleh saya buatkan preview demo alur/sistemnya dulu tanpa biaya Kak? Jika cocok bisa kita diskusikan, jika belum tidak masalah sama sekali.`;
   }
 
   if (category === 'properti') {
-    return `Halo Pak/Bu di ${name}, salam kenal! Portofolio pengerjaan ${name} di Google Maps terlihat sangat rapi dan kredibel.
+    return `Halo Pak/Bu, salam kenal! Saya lihat pengerjaan proyek ${name} di Google Maps cukup rapi dan meyakinkan.
 
-Biar calon klien proyek bisa langsung lihat galeri hasil renovasi & estimasi konsultasi anggaran dengan cepat, saya bisa siapkan halaman portofolio interaktif.
+Saya perhatikan, di bidang properti dan kontraktor, seringkali calon klien bertanya portofolio, minta estimasi RAB, dan tanya jadwal proyek secara manual — yang kadang membuat repot saat sedang banyak penawaran.
 
-Boleh saya buatkan demo alur/sistemnya dulu tanpa biaya Bapak/Ibu?`;
+Saya bisa bantu rapikan dengan:
+• Halaman portofolio interaktif untuk show hasil renovasi atau bangunan yang sudah dikerjakan
+• Alur konsultasi dan permintaan estimasi RAB yang langsung terhubung ke WhatsApp
+• Integrasi QR review Google Maps di showroom atau kantor agar testimoni proyek mudah terkumpul
+
+Kira-kira boleh saya buatkan preview demo alur/sistemnya dulu tanpa biaya Pak/Bu? Jika cocok bisa kita diskusikan, jika belum tidak masalah sama sekali.`;
   }
 
   if (category === 'rental') {
-    return `Halo Kak/Pak di ${name}, salam kenal! Saya perhatikan rental ${name} di Google Maps rating ulasannya sangat bagus.
+    return `Halo Kak, salam kenal! Saya lihat ${name} di Google Maps memiliki rating yang cukup baik.
 
-Biar calon penyewa bisa langsung cek ketersediaan armada & syarat sewa tanpa bolak-balik tanya admin, saya bisa bantu siapkan katalog booking otomatis ke WhatsApp.
+Bisnis rental biasanya punya kendala klasik: calon penyewa bertanya unit yang tersedia, syarat sewa, dan harga berulang kali — belum lagi tanya ketersediaan jadwal yang harus di-cek manual dulu ke buku.
 
-Boleh saya buatkan demo alur/sistemnya dulu tanpa biaya Kak?`;
+Saya bisa bantu atasi dengan:
+• Katalog armada/unit interaktif yang bisa diakses langsung — calon penyewa lihat unit ready tanpa nanya dulu
+• Alur booking dan syarat sewa otomatis yang langsung masuk ke WhatsApp operasional
+• Stand akrilik QR review Google Maps di lokasi agar ulasan positif makin banyak dan otomatis
+
+Kira-kira boleh saya buatkan preview demo alur/sistemnya dulu tanpa biaya Kak? Jika cocok bisa kita diskusikan, jika belum tidak masalah sama sekali.`;
   }
 
   if (category === 'umkm') {
-    return `Halo Kak/Pak di ${name}, salam kenal! Saya perhatikan ulasan ${name} di Google Maps sangat ramai dan positif.
+    return `Halo Kak, salam kenal! Saya lihat ulasan ${name} di Google Maps cukup ramai — artinya bisnisnya sudah punya tempat di hati pelanggan.
 
-Supaya admin tidak kewalahan balas chat tanya menu & harga berulang kali, saya bisa bantu buatkan katalog order instan langsung ke WA plus stand akrilik QR review untuk di meja kasir.
+Yang sering saya dengar dari pengusaha kuliner dan retail, admin sering kewalahan membalas chat menanyakan menu, harga, dan stok berulang kali — bahkan sampai ada calon pelanggan yang kabur karena respon lambat.
 
-Boleh saya buatkan demo alur/sistemnya dulu tanpa biaya Kak?`;
+Saya bisa bantu dengan:
+• Katalog menu/produk interaktif langsung via link — pelanggan bisa lihat sendiri tanpa perlu tanya
+• Alur order otomatis yang terhubung ke WhatsApp operasional, mengurangi chat manual
+• Stand akrilik QR review Google Maps di meja kasir agar pelanggan mudah meninggalkan ulasan bintang 5
+
+Kira-kira boleh saya buatkan preview demo alur/sistemnya dulu tanpa biaya Kak? Jika cocok bisa kita diskusikan, jika belum tidak masalah sama sekali.`;
   }
 
   if (category === 'jasa') {
-    return `Halo Kak/Pak di ${name}, salam kenal! Saya lihat reputasi layanan ${name} di Google Maps sudah sangat bagus.
+    return `Halo Kak, salam kenal! Saya lihat reputasi layanan ${name} di Google Maps cukup baik dan banyak ulasan positif.
 
-Biar jadwal reservasi dan info layanan bisa dicek otomatis tanpa antre chat, saya bisa siapkan alur booking ringkas plus stand akrilik QR Google review di kasir/resepsionis.
+Bisnis jasa seperti klinik, bimbel, atau bengkel sering menghadapi tantangan yang mirip: jadwal harus di-cek manual, pasien/siswa harus chat dulu untuk booking, dan seringkali ada informasi dasar yang ditanyakan berulang kali.
 
-Boleh saya buatkan demo alur/sistemnya dulu tanpa biaya Kak?`;
+Saya bisa bantu sederhanakan dengan:
+• Tampilan jadwal layanan yang bisa diakses langsung tanpa perlu tanya-tanya dulu
+• Alur reservasi/booking otomatis yang terhubung ke WhatsApp operasional
+• Stand akrilik QR review Google Maps di meja resepsionis agar testimoni positif pelanggan mudah terkumpul
+
+Kira-kira boleh saya buatkan preview demo alur/sistemnya dulu tanpa biaya Kak? Jika cocok bisa kita diskusikan, jika belum tidak masalah sama sekali.`;
   }
 
-  return `Halo Kak/Pak di ${name}, salam kenal! Saya lihat profil dan ulasan ${name} di Google Maps sangat positif di area sekitar.
+  return `Halo Kak, salam kenal! Saya lihat profil ${name} di Google Maps memiliki reputasi yang cukup baik di area sekitar.
 
-Biar alur order pelanggan tidak manual dan bisa tambah ulasan bintang 5 lewat stand akrilik QR di kasir, saya bisa bantu buatkan sistem alur praktis langsung terhubung ke WhatsApp.
+Banyak bisnis lokal menghadapi masalah yang serupa: admin sibuk membalas chat pertanyaan berulang, pelanggan harus menunggu lama untuk info sederhana, dan promosi dari mulut ke mulut susah berkembang karena testimoni tidak terkumpul dengan rapi.
 
-Boleh saya buatkan demo alur/sistemnya dulu tanpa biaya Kak?`;
+Saya bisa bantu dengan:
+• Tampilan profil bisnis interaktif dan katalog produk/layanan yang bisa diakses langsung
+• Alur pemesanan atau pertanyaan yang otomatis terhubung ke WhatsApp admin
+• Stand akrilik QR review Google Maps untuk meja kasir agar ulasan bintang 5 mudah terkumpul
+
+Kira-kira boleh saya buatkan preview demo alur/sistemnya dulu tanpa biaya Kak? Jika cocok bisa kita diskusikan, jika belum tidak masalah sama sekali.`;
 }
 
 export function createWhatsAppOutreachUrl(

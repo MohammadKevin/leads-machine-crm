@@ -32,16 +32,16 @@ export async function POST(req: NextRequest) {
       );
 
     const fallbackText = isGlobal
-      ? `Hi ${businessName} Team,
+      ? `Hello, warm greetings! I came across ${businessName} on Google Maps and was impressed by your ${rating > 0 ? `${rating}-star ` : 'positive'} reputation.
 
-I noticed your positive ${rating > 0 ? `${rating}-star ` : ''}reputation on Google Maps around ${address || 'your area'}.
+I often see businesses like yours where staff spend a lot of time replying to the same catalog/price questions repeatedly, confirming bookings manually, or losing customers who get tired of waiting for a reply.
 
-To help you capture direct orders/bookings automatically and boost more 5-star reviews with a dedicated QR stand system, I can help set up a lightweight custom flow.
+I can help streamline this with something simple:
+• An interactive catalog/portfolio that customers can browse directly — no manual PDF sharing
+• An automatic booking/reservation flow connected straight to your WhatsApp
+• A Google Maps 5-star review QR stand for your counter/reception area
 
-Could I prepare a quick, zero-cost preview demo for ${businessName}?
-
-Best regards,
-${senderName}`
+Kira-kira boleh saya buatkan preview demo alur/sistemnya dulu tanpa biaya? Jika cocok bisa kita diskusikan, jika belum tidak masalah sama sekali.`
       : generateOutreachMessage({
           businessName,
           category,
@@ -62,33 +62,46 @@ ${senderName}`
     }
 
     const prompt = isGlobal
-      ? `You are an expert B2B cold outreach copywriter crafting high-converting, value-first messages for freelance developer "${senderName}".
-Target:
-- Business: ${businessName} (${category})
-- Location: ${address || 'Local area'}
-- Reviews: ${rating > 0 ? `${rating} stars (${userRatingCount} reviews)` : 'Good reputation'}
+      ? `Write a professional cold outreach WhatsApp message as a freelance developer "Kevin" to the business owner of "${businessName}" (${category}) in ${address || 'local area'}. The business has a ${rating > 0 ? `${rating}-star` : 'positive'} reputation on Google Maps.
+
+REQUIRED STRUCTURE (4 paragraphs, separated by double newline \n\n):
+
+1. Greeting & appreciation — Polite opener mentioning the business naturally. Appreciate their Google Maps presence.
+
+2. Pain-point context — Gently highlight common operational struggles: staff busy replying to the same price/catalog questions repeatedly, manual booking confirmation, or slow response causing lost customers.
+
+3. Solution with WhatsApp integration — Present 2-3 concise bullet points using the "•" character (each on a separate line):
+• Interactive catalog/portfolio — no more manual PDF sharing via chat
+• Direct booking/reservation flow connected to WhatsApp
+• Google Maps 5-star review QR stand for the counter/reception area
+
+4. Hook / zero-risk CTA — Warm closing with a free preview offer: "Kira-kira boleh saya buatkan preview demo alur/sistemnya dulu tanpa biaya? Jika cocok bisa kita diskusikan, jika belum tidak masalah sama sekali."
 
 STRICT RULES:
-1. NO robotic sales cliches (never say "We are a software house", "Cheap website services", "Do you need a website?").
-2. Max 60-80 words total. Warm, natural, and value-first.
-3. Light audit: Praise their Google Maps reputation, then highlight automation (streamlined booking/catalog) or a cashier Google Review QR acrylic stand to boost 5-star reviews.
-4. Soft frictionless CTA: "Could I put together a free demo flow for you to preview first?"
-5. Output ONLY the ready-to-send message text.`
-      : `Anda adalah copywriter outreach B2B profesional di Indonesia yang ahli dalam pesan pembuka bernilai tinggi (value-first).
-Target Prospek:
-- Nama Bisnis: ${businessName}
-- Kategori Usaha: ${category}
-- Lokasi: ${address || 'Indonesia'}
-- Rating Google Maps: ${rating > 0 ? `${rating} bintang (${userRatingCount} ulasan)` : 'Reputasi aktif'}
+- Language: English. Polite, professional, warm — not salesy, not robotic.
+- NEVER mention "website", "web developer", "software house", "cheap services".
+- Format clearly with \n\n paragraph breaks for readability on mobile WhatsApp.
+- Output ONLY the ready-to-send message. No quotes, no explanation, no signature.`
+      : `Buat pesan WhatsApp cold outreach profesional atas nama freelance developer "Kevin" kepada pemilik "${businessName}" (kategori: ${category}) di ${address || 'Indonesia'}. Bisnis ini memiliki rating ${rating > 0 ? `${rating} bintang (${userRatingCount} ulasan)` : 'positif'} di Google Maps.
 
-ATURAN KETAT (WAJIB DIPATUHI):
-1. DILARANG KERAS menggunakan frasa klise sales robotik seperti: "Perkenalkan kami dari software house", "Kami menawarkan jasa website murah", "Apakah Anda butuh web?".
-2. Pendekatan VALUE-FIRST (Audit Ringan):
-   - Puji hal positif lokalnya (reputasi/lokasi di Google Maps).
-   - Tunjukkan pain point spesifik: alur reservasi/katalog yang masih manual via chat ATAU kebutuhan stand akrilik QR review Google Maps di meja kasir/resepsionis untuk mendongkrak bintang 5.
-3. Akhiri dengan Call-to-Action (CTA) santai tanpa risiko/beban: "Boleh saya buatkan demo alur/sistemnya dulu tanpa biaya Kak?" (atau variasi serupa yang sangat ramah).
-4. Panjang pesan WAJIB antara 60–80 KATA. Bahasa Indonesia sopan, santai, dan fleksibel (Kak/Pak/Bu).
-5. Output HANYA teks pesan yang siap dikirim tanpa tanda kutip pembuka atau penjelas tambahan.`;
+STRUKTUR WAJIB (4 paragraf, pisahkan dengan \n\n):
+
+1. Salam & Apresiasi — Sapaan sopan dengan menyebut nama bisnis secara natural. Apresiasi reputasi positif mereka di Google Maps.
+
+2. Pain-Point & Konteks — Angkat kendala yang umum di bidang ini: admin kerepotan balas chat tanya harga/katalog berulang kali, konfirmasi jadwal/booking manual, atau calon pelanggan kabur karena respon lama.
+
+3. Solusi Terintegrasi WhatsApp — Jabarkan 2-3 poin ringkas menggunakan bullet "•" (tiap poin di baris terpisah):
+• Tampilan katalog/portofolio interaktif — tidak perlu kirim PDF manual via chat
+• Alur pemesanan/reservasi langsung otomatis terhubung ke WhatsApp operasional
+• Dukungan stand akrilik QR review Google Maps di meja kasir/resepsionis
+
+4. Hook / CTA Tanpa Beban — Penutup ramah dengan tawaran preview/demo gratis tanpa risiko: "Kira-kira boleh saya buatkan preview demo alur/sistemnya dulu tanpa biaya Kak? Jika cocok bisa kita diskusikan, jika belum tidak masalah sama sekali."
+
+ATURAN KETAT:
+- Bahasa Indonesia sopan, profesional, hangat — jangan seperti sales template, jangan kaku.
+- DILARANG: menyebut "website", "web developer", "software house", "jasa website murah".
+- Format rapi dengan spasi antar paragraf (\n\n) agar mudah dibaca di HP.
+- Output HANYA teks pesan siap kirim. Tanpa tanda kutip, tanpa penjelasan, tanpa tanda tangan.`;
 
     const modelsToTry = [
       'gemini-2.0-flash',
@@ -112,7 +125,7 @@ ATURAN KETAT (WAJIB DIPATUHI):
               contents: [{ parts: [{ text: prompt }] }],
               generationConfig: {
                 temperature: 0.6,
-                maxOutputTokens: 150,
+                maxOutputTokens: 350,
               },
             }),
             signal: controller.signal,

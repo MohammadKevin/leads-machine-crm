@@ -222,6 +222,7 @@ export default function LeadFinderApp() {
   const [pitchModalLoading, setPitchModalLoading] = useState(false);
   const [pitchModalMessage, setPitchModalMessage] = useState('');
   const [pitchModalError, setPitchModalError] = useState('');
+  const [pitchModalSending, setPitchModalSending] = useState(false);
   const pitchModalLeadRef = useRef<string | null>(null);
 
   const handlePinInput = (index: number, value: string) => {
@@ -614,16 +615,42 @@ export default function LeadFinderApp() {
       });
   };
 
-  const handlePitchModalSendWa = () => {
-    if (!pitchModalLead || !pitchModalMessage.trim()) return;
+  const handlePitchModalSendWa = async () => {
+    if (!pitchModalLead || !pitchModalMessage.trim() || pitchModalSending) return;
     const rawPhone = pitchModalLead.phoneAnalysis?.cleaned || normalizeWhatsAppNumber(pitchModalLead.nationalPhoneNumber);
     if (!rawPhone) return;
     const digitsOnly = rawPhone.replace(/\D/g, '');
     const cleanP = digitsOnly.startsWith('0') ? '62' + digitsOnly.slice(1) : digitsOnly.startsWith('62') ? digitsOnly : '62' + digitsOnly;
-    const waUrl = `https://wa.me/${cleanP}?text=${encodeURIComponent(pitchModalMessage.trim())}`;
-    window.open(waUrl, '_blank', 'noopener,noreferrer');
-    updateLeadStatus(pitchModalLead.id, 'CONTACTED');
-    setPitchModalLead(null);
+    const message = pitchModalMessage.trim();
+
+    const openWebFallback = () => {
+      window.open(`https://wa.me/${cleanP}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
+      updateLeadStatus(pitchModalLead.id, 'CONTACTED');
+      setPitchModalLead(null);
+    };
+
+    setPitchModalSending(true);
+    try {
+      const res = await fetch('/api/send-wa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target: cleanP, message, token: fonnteToken || undefined }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        updateLeadStatus(pitchModalLead.id, 'CONTACTED');
+        showToast('success', `Pesan terkirim ke ${pitchModalLead.name}.`);
+        setPitchModalLead(null);
+      } else {
+        showToast('error', data.error || 'Gagal mengirim via Fonnte, membuka WhatsApp Web...');
+        openWebFallback();
+      }
+    } catch {
+      showToast('error', 'Koneksi gagal, membuka WhatsApp Web...');
+      openWebFallback();
+    } finally {
+      setPitchModalSending(false);
+    }
   };
 
   const handleGenerateAiPitch = async (lead: LeadWithMeta) => {
@@ -1338,11 +1365,14 @@ export default function LeadFinderApp() {
                 const rawPhone = pitchModalLead?.phoneAnalysis?.cleaned || normalizeWhatsAppNumber(pitchModalLead?.nationalPhoneNumber || '');
                 const hasValidPhone = Boolean(rawPhone && rawPhone.replace(/\D/g, '').length >= 6);
                 return hasValidPhone ? (
-                  <button onClick={handlePitchModalSendWa} disabled={!pitchModalMessage.trim()} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-semibold bg-olive-500 text-cream-50 hover:bg-olive-600 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
-                    </svg>
-                    Kirim via WhatsApp
+                  <button onClick={handlePitchModalSendWa} disabled={!pitchModalMessage.trim() || pitchModalSending} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-semibold bg-olive-500 text-cream-50 hover:bg-olive-600 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer">
+                    {pitchModalSending ? (
+                      <><svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg><span>Mengirim...</span></>
+                    ) : (
+                      <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                      </svg>Kirim via WhatsApp</>
+                    )}
                   </button>
                 ) : (
                   <span className="px-4 py-2 rounded-lg text-[11px] font-semibold bg-cream-200 text-olive-500 border border-olive-200">Nomor WhatsApp tidak tersedia</span>
