@@ -635,19 +635,50 @@ export default function LeadFinderApp() {
     setPitchModalMessage('');
     setPitchModalError('');
 
+    const fallbackMsg = generateOutreachMessage({
+      businessName: cleanBizName(lead.name),
+      category: lead.selectedCategory,
+      senderName,
+      senderRole,
+      rating: lead.rating,
+      userRatingCount: lead.userRatingCount,
+      address: lead.formattedAddress,
+    });
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     fetch('/api/generate-pitch', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ businessName: cleanBizName(lead.name), category: lead.selectedCategory, address: lead.formattedAddress, rating: lead.rating, userRatingCount: lead.userRatingCount, senderName, senderRole, marketMode, geminiKey: geminiApiKey || undefined }),
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        businessName: cleanBizName(lead.name),
+        category: lead.selectedCategory,
+        address: lead.formattedAddress,
+        rating: lead.rating,
+        userRatingCount: lead.userRatingCount,
+        senderName,
+        senderRole,
+        marketMode,
+        geminiKey: geminiApiKey || undefined,
+      }),
+      signal: controller.signal,
     })
       .then((r) => r.json())
       .then((data) => {
+        clearTimeout(timeoutId);
         if (data.success && data.message) {
           setPitchModalMessage(data.message);
         } else {
-          setPitchModalError(data.error || 'Gagal menghasilkan pesan.');
+          setPitchModalMessage(fallbackMsg);
+          setPitchModalError(data.error || 'AI gagal menghasilkan pesan, template otomatis digunakan.');
         }
       })
-      .catch(() => setPitchModalError('Terjadi kesalahan jaringan.'))
+      .catch(() => {
+        clearTimeout(timeoutId);
+        setPitchModalMessage(fallbackMsg);
+        setPitchModalError('Koneksi terputus atau timeout, template otomatis digunakan.');
+      })
       .finally(() => setPitchModalLoading(false));
   };
 
@@ -1694,26 +1725,26 @@ export default function LeadFinderApp() {
                   <div className="h-3 bg-slate-200 rounded w-1/3" />
                 </div>
               </div>
-            ) : pitchModalError ? (
-              <div className="flex flex-col items-center gap-3 py-6">
-                <div className="p-2 rounded-full bg-rose-50">
-                  <svg className="w-6 h-6 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                  </svg>
-                </div>
-                <p className="text-xs text-rose-600 font-medium">{pitchModalError}</p>
-                <button onClick={() => setPitchModalLead(null)} className="px-4 py-1.5 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer">Tutup</button>
-              </div>
             ) : (
-              <textarea
-                value={pitchModalMessage}
-                onChange={(e) => setPitchModalMessage(e.target.value)}
-                className="w-full h-40 p-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-slate-300"
-                placeholder="Draf pesan akan muncul di sini..."
-              />
+              <>
+                {pitchModalError && (
+                  <div className="flex items-center gap-2 mb-3 p-2 rounded-lg bg-amber-50 border border-amber-200">
+                    <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>
+                    <p className="text-[11px] text-amber-700 font-medium">{pitchModalError}</p>
+                  </div>
+                )}
+                <textarea
+                  value={pitchModalMessage}
+                  onChange={(e) => setPitchModalMessage(e.target.value)}
+                  className="w-full h-40 p-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-slate-300"
+                  placeholder="Draf pesan akan muncul di sini..."
+                />
+              </>
             )}
           </div>
-          {!pitchModalLoading && !pitchModalError && (
+          {!pitchModalLoading && (
             <div className="flex items-center justify-end gap-2 px-6 pb-5 pt-2 border-t border-slate-100">
               <button onClick={() => setPitchModalLead(null)} className="px-4 py-2 rounded-lg text-[11px] font-semibold text-slate-600 hover:bg-slate-100 transition cursor-pointer">Batal</button>
               <button onClick={handlePitchModalSendWa} disabled={!pitchModalMessage.trim()} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer">

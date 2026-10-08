@@ -92,16 +92,18 @@ ATURAN KETAT (WAJIB DIPATUHI):
 5. Output HANYA teks pesan yang siap dikirim tanpa tanda kutip pembuka atau penjelas tambahan.`;
 
     const modelsToTry = [
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
       'gemini-2.5-flash-lite',
-      'gemini-3.8-flash',
-      'gemini-flash-latest',
-      'gemini-3.5-flash',
-      'gemini-3.1-flash-lite',
     ];
     let generatedText = '';
+    const GEMINI_TIMEOUT_MS = 7000;
 
     for (const model of modelsToTry) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+
         const geminiRes = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
           {
@@ -111,11 +113,14 @@ ATURAN KETAT (WAJIB DIPATUHI):
               contents: [{ parts: [{ text: prompt }] }],
               generationConfig: {
                 temperature: 0.6,
-                maxOutputTokens: 300,
+                maxOutputTokens: 150,
               },
             }),
+            signal: controller.signal,
           }
         );
+
+        clearTimeout(timeoutId);
 
         if (geminiRes.ok) {
           const data = await geminiRes.json();
@@ -126,6 +131,7 @@ ATURAN KETAT (WAJIB DIPATUHI):
           }
         }
       } catch {
+        // model failed or timed out, try next
       }
     }
 
@@ -139,8 +145,18 @@ ATURAN KETAT (WAJIB DIPATUHI):
       source: generatedText ? 'gemini_ai' : 'template_fallback',
     });
   } catch (error: unknown) {
-    const errorMsg =
-      error instanceof Error ? error.message : 'Terjadi kesalahan server saat generate AI pitch.';
-    return NextResponse.json({ error: errorMsg }, { status: 500 });
+    const fallbackNow = generateOutreachMessage({
+      businessName: 'Bapak/Ibu',
+      category: 'general',
+      senderName: 'Mohammad Kevin',
+      senderRole: 'freelance web developer',
+    });
+    return NextResponse.json({
+      success: true,
+      businessName: 'Bapak/Ibu',
+      message: fallbackNow,
+      source: 'template_fallback',
+      error: error instanceof Error ? error.message : 'Server error, fallback template digunakan.',
+    });
   }
 }
