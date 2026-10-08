@@ -455,10 +455,11 @@ export default function LeadFinderApp() {
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
-    // Determine cities to search: multi-select or single
     const citiesToSearch = selectedCities.length > 0 ? selectedCities : [selectedCity];
-    const categoryQuery = selectedCategoryPreset === 'ALL' ? query : selectedCategoryPreset || query;
-    if (!categoryQuery && !query) {
+    const isAllCategories = selectedCategoryPreset === 'ALL';
+    const hasKeyword = Boolean(query.trim());
+
+    if (!isAllCategories && !hasKeyword) {
       showToast('error', 'Isi kata kunci atau pilih kategori terlebih dahulu.');
       return;
     }
@@ -473,7 +474,7 @@ export default function LeadFinderApp() {
 
     for (let ci = 0; ci < citiesToSearch.length; ci++) {
       const city = citiesToSearch[ci];
-      const keyword = query.trim() || categoryQuery.trim() || fallbackKeyword;
+      const keyword = query.trim() || (isAllCategories ? fallbackKeyword : selectedCategoryPreset);
       const finalQuery = `${keyword} di ${city}`;
       setBatchProgress({ current: ci + 1, total: citiesToSearch.length });
 
