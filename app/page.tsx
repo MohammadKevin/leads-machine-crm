@@ -177,6 +177,7 @@ export default function LeadFinderApp() {
   const [filterNoWebsiteOnly, setFilterNoWebsiteOnly] = useState(false);
   const [filterValidWaOnly, setFilterValidWaOnly] = useState(false);
   const [filterIdealOnly, setFilterIdealOnly] = useState(false);
+  const [filterHideContacted, setFilterHideContacted] = useState(false);
   const [excludeFranchiseToggle, setExcludeFranchiseToggle] = useState(true);
   const [minRatingFilter] = useState<number>(0);
 
@@ -213,7 +214,7 @@ export default function LeadFinderApp() {
   const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
   const [isBatchGenerating, setIsBatchGenerating] = useState(false);
   const [isBatchSending, setIsBatchSending] = useState(false);
-  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number; currentDelay?: number } | null>(null);
+  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number; currentDelay?: number; city?: string; currentCatIndex?: number; totalCats?: number; multiCityMode?: boolean; allCatMode?: boolean } | null>(null);
 
   const [existingCrmPhones, setExistingCrmPhones] = useState<Set<string>>(new Set());
 
@@ -466,6 +467,8 @@ export default function LeadFinderApp() {
       : [keyword || (isAllCategories ? 'bisnis' : selectedCategoryPreset)];
 
     const totalJobs = citiesToSearch.length * fallbackQueries.length;
+    const multiCityMode = citiesToSearch.length > 1;
+    const allCatMode = isAllCategories && !keyword;
     let allPlaces: PlaceLead[] = [];
     let totalFranchiseBlocked = 0;
     let errors: string[] = [];
@@ -478,7 +481,15 @@ export default function LeadFinderApp() {
         const q = fallbackQueries[qi];
         const finalQuery = `${q} di ${city}`;
         jobIndex++;
-        setBatchProgress({ current: jobIndex, total: totalJobs });
+        setBatchProgress({
+          current: jobIndex,
+          total: totalJobs,
+          city,
+          currentCatIndex: qi + 1,
+          totalCats: fallbackQueries.length,
+          multiCityMode,
+          allCatMode,
+        });
 
         try {
           const res = await fetch('/api/places', {
