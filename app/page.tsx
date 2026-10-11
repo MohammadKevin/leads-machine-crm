@@ -29,8 +29,9 @@ import {
   isPhoneContacted,
 } from '@/lib/phone-utils';
 import { getRandomDelayMs } from '@/lib/whatsapp-queue';
+import OutreachDashboard from '@/components/admin/OutreachDashboard';
 
-type ActiveTab = 'search' | 'crm' | 'copilot' | 'templates' | 'export';
+type ActiveTab = 'search' | 'crm' | 'copilot' | 'templates' | 'export' | 'outreach';
 type OutreachStatus = 'new' | 'contacted' | 'followup' | 'closed' | 'rejected' | 'in_progress' | 'lost_franchise' | 'lost_rejected';
 type CrmFilterStatus = 'all' | 'NEW' | 'QUALIFIED' | 'CONTACTED' | 'INTERESTED' | 'IN_PROGRESS' | 'LOST_FRANCHISE' | 'LOST_REJECTED' | 'CLOSED';
 
@@ -885,6 +886,10 @@ export default function LeadFinderApp() {
             <button onClick={() => { setActiveTab('export'); setMobileSidebarOpen(false); }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${activeTab === 'export' ? 'bg-olive-500 text-cream-50 font-semibold shadow-sm' : 'text-olive-700 hover:text-olive-900 hover:bg-cream-200'}`}>
               <div className="flex items-center gap-2.5"><FontAwesomeIcon icon={faDownload} className={`h-4 w-4 ${activeTab === 'export' ? 'text-mint-200' : 'text-olive-500'}`} /><span>Export & Database</span></div>
             </button>
+            <button onClick={() => { setActiveTab('outreach'); setMobileSidebarOpen(false); }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${activeTab === 'outreach' ? 'bg-olive-500 text-cream-50 font-semibold shadow-sm' : 'text-olive-700 hover:text-olive-900 hover:bg-cream-200'}`}>
+              <div className="flex items-center gap-2.5"><FontAwesomeIcon icon={faBolt} className={`h-4 w-4 ${activeTab === 'outreach' ? 'text-mint-200' : 'text-olive-500'}`} /><span>Auto Outreach 75</span></div>
+              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-mint-50 text-olive-700 border border-mint-100">A1</span>
+            </button>
           </nav>
 
           <div className="pt-3 border-t border-olive-200">
@@ -910,6 +915,7 @@ export default function LeadFinderApp() {
                 {activeTab === 'copilot' && 'AI Copilot'}
                 {activeTab === 'templates' && 'Pitch Templates'}
                 {activeTab === 'export' && 'Export & Database'}
+                {activeTab === 'outreach' && 'Auto Outreach 75'}
               </h1>
               <p className="text-[11px] text-olive-600 truncate">
                 {activeTab === 'search' && 'Cari bisnis target dengan filter franchise, website, rating'}
@@ -917,6 +923,7 @@ export default function LeadFinderApp() {
                 {activeTab === 'copilot' && 'Balas chat masuk dengan AI'}
                 {activeTab === 'templates' && 'Koleksi template value-first'}
                 {activeTab === 'export' && 'Unduh CSV & daftar WA'}
+                {activeTab === 'outreach' && 'Auto-discovery 75 prospek A1 & pengiriman Fonnte berjeda manusiawi'}
               </p>
             </div>
           </div>
@@ -1327,6 +1334,9 @@ export default function LeadFinderApp() {
               </div>
             </div>
           )}
+
+          {/* ===================== AUTO OUTREACH 75 ===================== */}
+          {activeTab === 'outreach' && <OutreachDashboard />}
 
         </div>
       </main>
