@@ -12,10 +12,10 @@ const allLeads = [
     pitch: 'Jadwal Live Demo via Google Meet: Rabu 30 Sept 2026 jam 15.30 WIB. Deal Paket Pro PMS Kos Rp 1.500.000 (35 Kamar, KYC KTP, Cash/QRIS, Rekap Bulanan).',
   },
   {
-    name: 'Mas Poer Klinik MMC',
+    name: 'Apotek dan Klinik Madyopuro Medical Center (MMC) - Mas Poer',
     category: 'Klinik & Apotek',
-    phone: '+6281333469032',
-    mapsUrl: '-',
+    phone: '+628113666555',
+    mapsUrl: 'Jl. Ki Ageng Gribig L-24, Madyopuro, Kec. Kedungkandang, Kota Malang',
     rating: '4.8',
     reviews: '25',
     website: null,

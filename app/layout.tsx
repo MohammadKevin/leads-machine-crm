@@ -1,29 +1,29 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const inter = Inter({
+  variable: '--font-inter',
+  subsets: ['latin'],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: "Lead Finder & Outreach Assistant",
-  description: "Cari data prospek bisnis tanpa website via Google Places API & WhatsApp outreach generator.",
+  title: 'Outreach Engine — Leads Machine',
+  description:
+    'Temukan prospek bisnis lokal, buat pesan personal dengan AI, dan kirim via WhatsApp otomatis — 100% anti-duplikasi berbasis Google Sheets.',
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="id" className={inter.variable}>
+      <body className="h-full w-full overflow-hidden bg-slate-50 text-slate-900 antialiased font-sans">
+        {children}
+      </body>
     </html>
   );
 }

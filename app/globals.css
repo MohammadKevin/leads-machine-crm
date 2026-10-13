@@ -1,62 +1,59 @@
 @import "tailwindcss";
 
-:root {
-  --background: #FCF0DA;
-  --foreground: #2B3A1A;
+/* ── Reset & Base ─────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-
-  --color-cream-50: #FEFAF3;
-  --color-cream-100: #FCF0DA;
-  --color-cream-200: #F7E4C1;
-  --color-cream-300: #EFD3A0;
-
-  --color-mint-50: #F0FBF5;
-  --color-mint-100: #AEEED3;
-  --color-mint-200: #8CE3C1;
-  --color-mint-300: #5FD3A8;
-  --color-mint-400: #3BC08F;
-
-  --color-olive-50: #F2F5EA;
-  --color-olive-100: #E1E9CF;
-  --color-olive-200: #C3D3A2;
-  --color-olive-300: #9DB873;
-  --color-olive-400: #7CA04E;
-  --color-olive-500: #597928;
-  --color-olive-600: #47611F;
-  --color-olive-700: #374B18;
-  --color-olive-800: #2B3A1A;
-  --color-olive-900: #1E2911;
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  letter-spacing: -0.01em;
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background-color: #f8fafc; /* slate-50 */
+  color: #0f172a; /* slate-900 */
+  font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbar */
+/* ── Custom Scrollbar (Light Modern Slate) ─────────────────── */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
-
 ::-webkit-scrollbar-track {
-  background: #FCF0DA;
+  background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #AEEED3;
+  background: #cbd5e1; /* slate-300 */
   border-radius: 9999px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: #597928;
+  background: #94a3b8; /* slate-400 */
+}
+
+/* ── Terminal Custom Scrollbar ────────────────────────────── */
+.terminal-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.terminal-scroll::-webkit-scrollbar-track {
+  background: #020617; /* slate-950 */
+}
+.terminal-scroll::-webkit-scrollbar-thumb {
+  background: #1e293b; /* slate-800 */
+  border-radius: 9999px;
+}
+.terminal-scroll::-webkit-scrollbar-thumb:hover {
+  background: #334155; /* slate-700 */
+}
+
+/* ── Animations ──────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

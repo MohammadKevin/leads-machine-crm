@@ -27,6 +27,7 @@ const STATUS_BADGE: Record<LeadStatus, { label: string; className: string }> = {
   generating: { label: 'Generating', className: 'bg-amber-50 text-amber-800 border-amber-200' },
   ready: { label: 'Ready', className: 'bg-olive-100 text-olive-700 border-olive-200' },
   in_queue: { label: 'In Queue', className: 'bg-amber-100 text-amber-900 border-amber-300' },
+  sending: { label: 'Sending', className: 'bg-blue-100 text-blue-900 border-blue-300' },
   sent: { label: 'Sent', className: 'bg-mint-100 text-olive-800 border-mint-200' },
   failed: { label: 'Failed', className: 'bg-rose-50 text-rose-800 border-rose-200' },
   skipped: { label: 'Skipped', className: 'bg-cream-200 text-olive-600 border-cream-300' },
@@ -276,7 +277,7 @@ export default function OutreachDashboard() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-[420px] overflow-y-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-olive-100 text-olive-700 border-b border-olive-200 uppercase text-[10px] font-bold">
                 <tr>

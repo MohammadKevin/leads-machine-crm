@@ -103,7 +103,7 @@ function toLeadTarget(seed: CuratedClinicSeed, index: number): LeadTarget {
 }
 
 const RAW_SEEDS: CuratedClinicSeed[] = [
-  { clinicName: 'Klinik Pratama MMC Medika', city: 'Kediri', province: 'Jawa Timur', category: 'Klinik Pratama', whatsappNumber: '081333469032', painPointNotes: '' },
+  { clinicName: 'Apotek dan Klinik Madyopuro Medical Center (MMC)', city: 'Malang', province: 'Jawa Timur', category: 'Apotek & Praktik Dokter', whatsappNumber: '08113666555', painPointNotes: 'Jl. Ki Ageng Gribig L-24, Madyopuro, Kec. Kedungkandang, Kota Malang' },
   { clinicName: 'DRG Arif Setiawan Dental Studio', city: 'Kediri', province: 'Jawa Timur', category: 'Klinik Gigi', whatsappNumber: '081252859295', painPointNotes: '' },
   { clinicName: 'My Family Dental Care Kediri', city: 'Kediri', province: 'Jawa Timur', category: 'Klinik Gigi', whatsappNumber: '081336915939', painPointNotes: '' },
   { clinicName: 'Klinik Gigi Toothie Dent', city: 'Malang', province: 'Jawa Timur', category: 'Klinik Gigi', whatsappNumber: '081392142255', painPointNotes: '' },

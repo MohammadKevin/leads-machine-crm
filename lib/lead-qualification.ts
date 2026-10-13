@@ -1,3 +1,5 @@
+import { normalizeIndonesianPhone, isValidIndonesianWhatsApp } from './defensive-client';
+
 export type LeadStatus =
   | 'NEW'
   | 'QUALIFIED'
@@ -57,13 +59,23 @@ export const FRANCHISE_BLACKLIST_KEYWORDS = [
   'kemitraan',
   'alfamart',
   'indomaret',
+  'alfamidi',
+  'kimia farma',
+  'k24',
+  'k-24',
+  'apotek k-24',
+  'apotek k24',
+  'century',
+  'guardian',
+  'watsons',
   'kumon',
   'sakamoto',
   'mixue',
   'kopi kenangan',
   'spbu',
   'pertamina',
-  'apf',
+  'shell',
+  'bp akr',
   'j&t',
   'jne',
   'lawson',
@@ -80,7 +92,6 @@ export const FRANCHISE_BLACKLIST_KEYWORDS = [
   'solaria',
   'fore coffee',
   'indomaret point',
-  'alfamidi',
   'si cepat',
   'sicepat',
   'anteraja',
@@ -92,17 +103,47 @@ export const FRANCHISE_BLACKLIST_KEYWORDS = [
   'teh solo',
   'esteh indonesia',
   'es teh indonesia',
+  'mie gacoan',
+  'gacoan',
+  'optik melawai',
+  'optik seis',
+  'optik tunggal',
+  'pizza hut',
+  'dominos',
+  'subway',
+  'burger king',
+  'a&w',
+  'jco',
+  'roti o',
+  "roti'o",
+  'bca',
+  'mandiri',
+  'bni',
+  'bri',
+  'prudential',
+  'allianz',
 ];
 
 export const FREE_WEBSITE_DOMAINS = [
+  'linktr.ee',
+  'facebook.com',
+  'instagram.com',
+  'tiktok.com',
+  'wa.me',
+  'api.whatsapp.com',
+  'bit.ly',
+  'carrd.co',
+  'canva.site',
+  'bio.link',
+  'heylink.me',
+  'beacons.ai',
+  'lynx.id',
+  'desty.page',
   'blogspot.com',
   'wordpress.com',
-  'linktr.ee',
   'site.google.com',
   'sites.google.com',
   'wixsite.com',
-  'carrd.co',
-  'canva.site',
   'myshopify.com',
   'tokoko.id',
   'biolinky.co',
@@ -110,6 +151,8 @@ export const FREE_WEBSITE_DOMAINS = [
   'weebly.com',
   'yolasite.com',
   'strikingly.com',
+  'shopee.co.id',
+  'tokopedia.com',
 ];
 
 export const CORPORATE_DOMAINS = [
@@ -151,6 +194,87 @@ export function isCorporateWebsiteDomain(website?: string | null): boolean {
   if (!website || typeof website !== 'string') return false;
   const lower = website.toLowerCase();
   return CORPORATE_DOMAINS.some((domain) => lower.includes(domain));
+}
+
+/**
+ * Evaluasi Prospek Tier A1 Ketat:
+ * 1. Tanpa website resmi (website null/kosong atau hanya medsos/free linktree).
+ * 2. Bisnis aktif & berjalan (ulasan minimal 3-5 ulasan atau rating aktif).
+ * 3. Nomor WhatsApp seluler Indonesia valid (berawalan 628/08, drop nomor kabel 0341, 031, dll).
+ * 4. Bukan jaringan franchise/waralaba multinasional.
+ */
+export function checkStrictA1Qualification(params: {
+  businessName: string;
+  rawPhone?: string | null;
+  website?: string | null;
+  rating?: number;
+  reviewsCount?: number;
+}): {
+  isA1: boolean;
+  cleanPhone: string;
+  hasOfficialWebsite: boolean;
+  isFreeOrSocialLink: boolean;
+  rejectionReason?: string;
+} {
+  const { businessName, rawPhone, website, rating = 0, reviewsCount = 0 } = params;
+
+  // 1. Validasi Telepon Seluler (WhatsApp Valid 628)
+  const cleanPhone = normalizeIndonesianPhone(rawPhone);
+  if (!cleanPhone || !isValidIndonesianWhatsApp(cleanPhone)) {
+    return {
+      isA1: false,
+      cleanPhone: cleanPhone || '',
+      hasOfficialWebsite: false,
+      isFreeOrSocialLink: false,
+      rejectionReason: 'Bukan nomor WhatsApp seluler Indonesia (08/628)',
+    };
+  }
+
+  // 2. Filter Franchise
+  const franchiseCheck = isFranchiseOrBlacklisted(businessName);
+  if (franchiseCheck.isFranchise) {
+    return {
+      isA1: false,
+      cleanPhone,
+      hasOfficialWebsite: false,
+      isFreeOrSocialLink: false,
+      rejectionReason: `Waralaba/Franchise terdeteksi (${franchiseCheck.matchedKeyword})`,
+    };
+  }
+
+  // 3. Website Check
+  const cleanWebsite = typeof website === 'string' ? website.trim() : '';
+  const isFreeOrSocial = Boolean(cleanWebsite && isFreeWebsiteDomain(cleanWebsite));
+  const hasOfficialWebsite = Boolean(cleanWebsite && !isFreeOrSocial);
+
+  if (hasOfficialWebsite) {
+    return {
+      isA1: false,
+      cleanPhone,
+      hasOfficialWebsite: true,
+      isFreeOrSocialLink: false,
+      rejectionReason: 'Sudah memiliki website resmi mandiri',
+    };
+  }
+
+  // 4. Bisnis Aktif & Berjalan (Reviews >= 3 atau Rating >= 3.5)
+  const isActivelyOperating = reviewsCount >= 3 || rating >= 3.5;
+  if (!isActivelyOperating) {
+    return {
+      isA1: false,
+      cleanPhone,
+      hasOfficialWebsite: false,
+      isFreeOrSocialLink: isFreeOrSocial,
+      rejectionReason: 'Kurang dari 3 ulasan atau reputasi tidak aktif',
+    };
+  }
+
+  return {
+    isA1: true,
+    cleanPhone,
+    hasOfficialWebsite: false,
+    isFreeOrSocialLink: isFreeOrSocial,
+  };
 }
 
 export function evaluateLeadQualification(params: {
@@ -195,8 +319,8 @@ export function evaluateLeadQualification(params: {
   const isFreeWeb = hasWebsite && isFreeWebsiteDomain(cleanWebsite);
   const noWebsiteOrFree = !hasWebsite || isFreeWeb;
 
-  const isIdealReviewCount = reviewCount >= 10 && reviewCount <= 100;
-  const isGrowingBusiness = reviewCount >= 5 && reviewCount <= 250;
+  const isIdealReviewCount = reviewCount >= 5 && reviewCount <= 100;
+  const isGrowingBusiness = reviewCount >= 3 && reviewCount <= 250;
 
   let priorityScore: PriorityScore = 'LOW';
   let isIdealTarget = false;
@@ -205,23 +329,19 @@ export function evaluateLeadQualification(params: {
   if (noWebsiteOrFree && isIdealReviewCount) {
     priorityScore = 'HIGH';
     isIdealTarget = true;
-    notes = `Target Ideal: ${!hasWebsite ? 'Tanpa Website' : 'Domain Gratisan'} + ${reviewCount} ulasan (${rating}⭐) - Potensi tinggi otomasi alur/stand akrilik QR`;
+    notes = `Target Ideal A1: ${!hasWebsite ? 'Tanpa Website' : 'Hanya Link Medsos/Free'} + ${reviewCount} ulasan (${rating}★)`;
   } else if (noWebsiteOrFree && isGrowingBusiness) {
     priorityScore = 'HIGH';
     isIdealTarget = true;
-    notes = `Prioritas Tinggi: ${!hasWebsite ? 'Belum Ada Website' : 'Domain Gratisan'} & bisnis aktif (${reviewCount} ulasan)`;
+    notes = `Prioritas Tinggi A1: ${!hasWebsite ? 'Belum Ada Website' : 'Link Medsos/Free'} & bisnis aktif (${reviewCount} ulasan)`;
   } else if (noWebsiteOrFree) {
     priorityScore = 'HIGH';
     isIdealTarget = false;
-    notes = `Prioritas Tinggi: ${!hasWebsite ? 'Belum Memiliki Website' : 'Memakai Domain Gratisan'}`;
-  } else if (isIdealReviewCount) {
-    priorityScore = 'MEDIUM';
-    isIdealTarget = false;
-    notes = `Review Ideal (${reviewCount} ulasan), sudah ada website mandiri (potensi redesign/add-on otomasi)`;
+    notes = `A1: ${!hasWebsite ? 'Belum Memiliki Website' : 'Link Medsos/Free'}`;
   } else {
     priorityScore = 'LOW';
     isIdealTarget = false;
-    notes = `Sudah memiliki website dan ${reviewCount} ulasan`;
+    notes = `Sudah memiliki website resmi dan ${reviewCount} ulasan`;
   }
 
   return {
