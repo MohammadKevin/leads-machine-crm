@@ -27,6 +27,7 @@ import {
   Filter,
   Zap,
   Coffee,
+  X,
 } from 'lucide-react';
 import {
   OutreachLead,
@@ -92,12 +93,22 @@ export default function OutreachMachine({
   const runningRef = useRef(false);
   const pausedRef = useRef(false);
   const abortRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const leadsRef = useRef<OutreachLead[]>([]);
   const logEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     leadsRef.current = leads;
   }, [leads]);
+
+  // Cleanup abort controller on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // Restore persisted queue & logs
   useEffect(() => {
@@ -187,9 +198,21 @@ export default function OutreachMachine({
     setSelectedCategories([NICHE_CATEGORIES[0].label]);
   };
 
+  // ── Cancel Search Handler ───────────────────────────────────────────────────
+  const handleCancelSearch = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsSearching(false);
+    addLog('info', '[INFO] Pencarian prospek dibatalkan oleh operator.');
+    showToast('warn', 'Pencarian prospek dibatalkan oleh operator.');
+  };
+
   // ── 1. Search Leads (Discovery Engine) ───────────────────────────────────────
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (isSearching) return;
     if (selectedCities.length === 0) {
       showToast('error', 'Pilih minimal satu kota target.');
       return;
@@ -198,69 +221,110 @@ export default function OutreachMachine({
       showToast('error', 'Pilih minimal satu kategori niche.');
       return;
     }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
     setIsSearching(true);
+
     addLog(
       'info',
       `[DISCOVERY] Memulai pencarian ${selectedCategories.length} kategori di ${selectedCities.length} wilayah target…`
     );
+
+    let collectedLeads: OutreachLead[] = [];
+    let totalSkipped = 0;
+
     try {
-      const res = await fetch('/api/outreach/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cities: selectedCities,
-          categories: selectedCategories,
-          category: selectedCategories.join(', '),
-          customQuery,
-          onlyWithoutWebsite: noWebsite,
-          excludeFranchise: noFranchise,
-          onlyValidWhatsApp: validWA,
-          strictA1,
-          blacklist: Array.from(blacklist),
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'Pencarian gagal.');
+      for (let i = 0; i < selectedCategories.length; i++) {
+        if (controller.signal.aborted) break;
 
-      const fetched: OutreachLead[] = data.leads || [];
-      const skipped: Array<{ phone: string; businessName: string; reason: string }> =
-        data.skippedLogs || [];
+        const currentCat = selectedCategories[i];
 
-      // Log telemetry discovery results
-      fetched.forEach((lead) => {
-        addLog(
-          'info',
-          `[DISCOVERY] Menemukan ${lead.businessName} di ${lead.city} (Status: A1 Valid)`,
-          lead.phone,
-          lead.businessName
+        const res = await fetch('/api/discovery', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            cities: selectedCities,
+            categories: [currentCat],
+            category: currentCat,
+            customQuery,
+            onlyWithoutWebsite: noWebsite,
+            excludeFranchise: noFranchise,
+            onlyValidWhatsApp: validWA,
+            strictA1,
+            blacklist: [
+              ...Array.from(blacklist),
+              ...collectedLeads.map((l) => l.phone),
+            ],
+          }),
+        });
+
+        if (controller.signal.aborted) break;
+
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Pencarian gagal.');
+
+        const fetched: OutreachLead[] = data.leads || [];
+        const skipped: Array<{ phone: string; businessName: string; reason: string }> =
+          data.skippedLogs || [];
+        totalSkipped += skipped.length;
+
+        // Log telemetry discovery results
+        fetched.forEach((lead) => {
+          addLog(
+            'info',
+            `[DISCOVERY] Menemukan ${lead.businessName} di ${lead.city} (Status: A1 Valid)`,
+            lead.phone,
+            lead.businessName
+          );
+        });
+
+        skipped.forEach((s) =>
+          addLog('skip', `[DUPLICATE-CHECK] ${s.phone} ${s.reason} → SKIPPED`, s.phone, s.businessName)
         );
-      });
 
-      skipped.forEach((s) =>
-        addLog('skip', `[DUPLICATE-CHECK] ${s.phone} ${s.reason} → SKIPPED`, s.phone, s.businessName)
-      );
+        if (fetched.length > 0) {
+          const existingPhones = new Set(collectedLeads.map((l) => l.phone));
+          const newItems = fetched.filter((l) => !existingPhones.has(l.phone));
+          if (newItems.length > 0) {
+            collectedLeads = [...collectedLeads, ...newItems].slice(0, 100);
+            // Simpan prospek yang sudah sempat terjaring sebelum dibatalkan ke antrean
+            saveQueue(collectedLeads);
+          }
+        }
+      }
 
-      if (fetched.length === 0) {
+      if (controller.signal.aborted) {
+        return;
+      }
+
+      if (collectedLeads.length === 0) {
         showToast(
           'warn',
           'Tidak ada lead baru — semua nomor sudah ada di Sheets atau tidak lolos kualifikasi A1.'
         );
         addLog('warn', '[DISCOVERY] Selesai: 0 prospek baru memenuhi syarat Tier A1.');
       } else {
-        const batch = fetched.slice(0, 100);
-        saveQueue(batch);
-        showToast('success', `${batch.length} prospek Tier A1 siap — anti-duplikasi aktif.`);
+        showToast('success', `${collectedLeads.length} prospek Tier A1 siap — anti-duplikasi aktif.`);
         addLog(
           'success',
-          `[DISCOVERY] Berhasil mengumpulkan ${batch.length} prospek A1 (${skipped.length} dilewati).`
+          `[DISCOVERY] Berhasil mengumpulkan ${collectedLeads.length} prospek A1 (${totalSkipped} dilewati).`
         );
       }
-    } catch (err: unknown) {
+    } catch (err: any) {
+      if (err?.name === 'AbortError' || controller.signal.aborted) {
+        // Abaikan error pembatalan normal
+        return;
+      }
       const msg = err instanceof Error ? err.message : 'Kesalahan jaringan.';
       showToast('error', msg);
       addLog('error', `[ERROR] Pencarian gagal: ${msg}`);
     } finally {
       setIsSearching(false);
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
+      }
     }
   };
 
@@ -759,24 +823,36 @@ export default function OutreachMachine({
                 </div>
               </div>
 
-              {/* Main Action Button */}
-              <button
-                type="submit"
-                disabled={isSearching}
-                className="w-full h-10 px-4 rounded-lg bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-xs transition active:scale-[0.99] cursor-pointer"
-              >
-                {isSearching ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Mengecek Serper &amp; Memfilter A1…</span>
-                  </>
-                ) : (
-                  <>
-                    <Search className="w-4 h-4" />
-                    <span>🔍 Cari Prospek Bersih Tier A1</span>
-                  </>
-                )}
-              </button>
+              {/* Main Action Button / Cancel Button Group */}
+              {!isSearching ? (
+                <button
+                  type="submit"
+                  className="w-full h-10 px-4 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-xs transition active:scale-[0.99] cursor-pointer"
+                >
+                  <Search className="w-4 h-4" />
+                  <span>🔍 Cari Prospek Bersih Tier A1</span>
+                </button>
+              ) : (
+                <div className="flex items-center gap-2 w-full">
+                  <button
+                    type="button"
+                    disabled
+                    className="flex-1 h-10 px-3 rounded-lg bg-slate-800 text-white text-xs font-semibold flex items-center justify-center gap-2 cursor-not-allowed opacity-90 shadow-xs"
+                  >
+                    <Loader2 className="w-4 h-4 animate-spin text-slate-300 shrink-0" />
+                    <span className="truncate">⏳ Mengecek Serper &amp; Memfilter A1...</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCancelSearch}
+                    className="h-10 px-4 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium transition-colors flex items-center gap-1.5 shrink-0 shadow-xs active:scale-[0.98] cursor-pointer"
+                    title="Batalkan proses pencarian"
+                  >
+                    <X className="w-4 h-4" />
+                    <span>✕ Batal</span>
+                  </button>
+                </div>
+              )}
             </div>
 
           </div>
