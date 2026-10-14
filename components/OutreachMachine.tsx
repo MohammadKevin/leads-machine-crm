@@ -29,6 +29,7 @@ import {
   Coffee,
   X,
   RefreshCw,
+  Upload,
 } from 'lucide-react';
 import {
   OutreachLead,
@@ -39,7 +40,11 @@ import {
   KORIDOR_UTAMA_JAWA,
   ALL_AVAILABLE_CITIES,
 } from '@/types/outreach';
-import { formatPhoneDisplay } from '@/lib/defensive-client';
+import {
+  formatPhoneDisplay,
+  normalizeIndonesianPhone,
+  isValidIndonesianWhatsApp,
+} from '@/lib/defensive-client';
 import { getDynamicFallbackPitch } from '@/lib/gemini-pitch';
 
 interface Props {
@@ -81,7 +86,10 @@ export default function OutreachMachine({
 
   // ── Queue & Logs State ───────────────────────────────────────────────────────
   const [isSearching, setIsSearching] = useState(false);
-  const [isSyncingWa, setIsSyncingWa] = useState(false);
+  const [searchProgress, setSearchProgress] = useState('');
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
   const [leads, setLeads] = useState<OutreachLead[]>([]);
   const [logs, setLogs] = useState<BatchLogEntry[]>([]);
   const [queueSearch, setQueueSearch] = useState('');
@@ -202,22 +210,39 @@ export default function OutreachMachine({
     setSelectedCategories([NICHE_CATEGORIES[0].label]);
   };
 
-  // ── Sync WA History Handler ─────────────────────────────────────────────────
-  const handleSyncWaHistory = async () => {
-    if (isSyncingWa) return;
-    setIsSyncingWa(true);
-    addLog('info', '[SYNC WA] Memulai sinkronisasi riwayat pesan WhatsApp dari Fonnte…');
-    showToast('warn', 'Menghubungkan ke Fonnte & memeriksa riwayat WhatsApp...');
+  // ── Bulk Import WA Lama (Anti-Duplikasi Sheets) ─────────────────────────────
+  const detectedValidNumbers = React.useMemo(() => {
+    if (!importText.trim()) return [];
+    const items = importText.split(/[\r\n,;]+/).map((s) => s.trim()).filter(Boolean);
+    const valid = new Set<string>();
+    for (const item of items) {
+      const clean = normalizeIndonesianPhone(item);
+      if (clean && isValidIndonesianWhatsApp(clean)) {
+        valid.add(clean);
+      }
+    }
+    return Array.from(valid);
+  }, [importText]);
+
+  const handleBulkImportWa = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (detectedValidNumbers.length === 0) {
+      showToast('warn', 'Masukkan minimal satu nomor WhatsApp valid (format seluler 08xx / 628xx).');
+      return;
+    }
+    setIsImporting(true);
+    addLog('info', `[IMPORT WA] Memulai impor ${detectedValidNumbers.length} nomor ke database Google Sheets…`);
+    showToast('warn', `Menyimpan ${detectedValidNumbers.length} nomor ke Google Sheets...`);
 
     try {
       const res = await fetch('/api/sync-wa-history', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ numbers: detectedValidNumbers }),
       });
       const data = await res.json();
-
       if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Gagal sinkronisasi riwayat WhatsApp.');
+        throw new Error(data.error || 'Gagal mengimpor nomor ke Google Sheets.');
       }
 
       if (data.newImported > 0) {
@@ -227,33 +252,27 @@ export default function OutreachMachine({
         );
         showToast(
           'success',
-          `Berhasil mengimpor ${data.newImported} nomor riwayat WhatsApp ke Google Sheets!`
+          `Berhasil menyimpan ${data.newImported} nomor ke database anti-duplikasi Sheets!`
         );
         if (onSyncSuccess) {
           onSyncSuccess();
         }
-      } else if (data.totalFonnte > 0) {
-        addLog(
-          'info',
-          `[SYNC WA] Selesai: Semua nomor riwayat WhatsApp (${data.totalFonnte} nomor) sudah terdaftar di Google Sheets.`
-        );
-        showToast(
-          'warn',
-          `Semua ${data.totalFonnte} nomor riwayat WA sudah terproteksi di Google Sheets (0 baru).`
-        );
       } else {
         addLog(
           'info',
-          `[SYNC WA] Selesai: 0 nomor baru dari Fonnte (${data.fonnteResponseStatus || 'OK'}). Database anti-duplikasi aman.`
+          `[SYNC WA] Selesai: Semua ${detectedValidNumbers.length} nomor sudah ada di Sheets (0 baru).`
         );
-        showToast('warn', 'Pemeriksaan riwayat pesan WA selesai.');
+        showToast('warn', 'Semua nomor tersebut sudah terdaftar di Google Sheets.');
       }
+
+      setIsImportModalOpen(false);
+      setImportText('');
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Kesalahan jaringan.';
-      addLog('error', `[SYNC WA] Gagal: ${msg}`);
+      const msg = err instanceof Error ? err.message : 'Gagal menyimpan ke Sheets.';
+      addLog('error', `[IMPORT WA] Gagal: ${msg}`);
       showToast('error', msg);
     } finally {
-      setIsSyncingWa(false);
+      setIsImporting(false);
     }
   };
 
@@ -284,10 +303,21 @@ export default function OutreachMachine({
     const controller = new AbortController();
     abortControllerRef.current = controller;
     setIsSearching(true);
+    setSearchProgress('Memulai…');
+
+    // Pecah kota target ke dalam batch kecil (2-3 kota per request) untuk menghindari timeout Vercel
+    const CITY_CHUNK_SIZE = 2;
+    const cityChunks: string[][] = [];
+    for (let c = 0; c < selectedCities.length; c += CITY_CHUNK_SIZE) {
+      cityChunks.push(selectedCities.slice(c, c + CITY_CHUNK_SIZE));
+    }
+
+    const totalSteps = selectedCategories.length * cityChunks.length;
+    let currentStep = 0;
 
     addLog(
       'info',
-      `[DISCOVERY] Memulai pencarian ${selectedCategories.length} kategori di ${selectedCities.length} wilayah target…`
+      `[DISCOVERY] Memulai pencarian ${selectedCategories.length} kategori di ${selectedCities.length} wilayah target (${cityChunks.length} batch kota)…`
     );
 
     let collectedLeads: OutreachLead[] = [];
@@ -296,60 +326,83 @@ export default function OutreachMachine({
     try {
       for (let i = 0; i < selectedCategories.length; i++) {
         if (controller.signal.aborted) break;
-
         const currentCat = selectedCategories[i];
 
-        const res = await fetch('/api/discovery', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: controller.signal,
-          body: JSON.stringify({
-            cities: selectedCities,
-            categories: [currentCat],
-            category: currentCat,
-            customQuery,
-            onlyWithoutWebsite: noWebsite,
-            excludeFranchise: noFranchise,
-            onlyValidWhatsApp: validWA,
-            strictA1,
-            blacklist: [
-              ...Array.from(blacklist),
-              ...collectedLeads.map((l) => l.phone),
-            ],
-          }),
-        });
+        for (let j = 0; j < cityChunks.length; j++) {
+          if (controller.signal.aborted) break;
+          const currentChunk = cityChunks[j];
+          currentStep++;
 
-        if (controller.signal.aborted) break;
-
-        const data = await res.json();
-        if (!res.ok || !data.success) throw new Error(data.error || 'Pencarian gagal.');
-
-        const fetched: OutreachLead[] = data.leads || [];
-        const skipped: Array<{ phone: string; businessName: string; reason: string }> =
-          data.skippedLogs || [];
-        totalSkipped += skipped.length;
-
-        // Log telemetry discovery results
-        fetched.forEach((lead) => {
+          const stepLabel = `${currentChunk.join(', ')} (${currentStep}/${totalSteps})`;
+          setSearchProgress(stepLabel);
           addLog(
             'info',
-            `[DISCOVERY] Menemukan ${lead.businessName} di ${lead.city} (Status: A1 Valid)`,
-            lead.phone,
-            lead.businessName
+            `[DISCOVERY] [${currentStep}/${totalSteps}] Memeriksa ${currentCat} di ${currentChunk.join(', ')}…`
           );
-        });
 
-        skipped.forEach((s) =>
-          addLog('skip', `[DUPLICATE-CHECK] ${s.phone} ${s.reason} → SKIPPED`, s.phone, s.businessName)
-        );
+          try {
+            const res = await fetch('/api/discovery', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              signal: controller.signal,
+              body: JSON.stringify({
+                cities: currentChunk,
+                categories: [currentCat],
+                category: currentCat,
+                customQuery,
+                onlyWithoutWebsite: noWebsite,
+                excludeFranchise: noFranchise,
+                onlyValidWhatsApp: validWA,
+                strictA1,
+                blacklist: [
+                  ...Array.from(blacklist),
+                  ...collectedLeads.map((l) => l.phone),
+                ],
+              }),
+            });
 
-        if (fetched.length > 0) {
-          const existingPhones = new Set(collectedLeads.map((l) => l.phone));
-          const newItems = fetched.filter((l) => !existingPhones.has(l.phone));
-          if (newItems.length > 0) {
-            collectedLeads = [...collectedLeads, ...newItems].slice(0, 100);
-            // Simpan prospek yang sudah sempat terjaring sebelum dibatalkan ke antrean
-            saveQueue(collectedLeads);
+            if (controller.signal.aborted) break;
+
+            const data = await res.json().catch(() => null);
+            if (!res.ok || !data?.success) {
+              const errMsg = data?.error || data?.warning || `HTTP ${res.status}`;
+              addLog('warn', `[DISCOVERY] Kendala pada ${currentChunk.join(', ')}: ${errMsg} (melanjutkan...)`);
+              continue;
+            }
+
+            const fetched: OutreachLead[] = data.leads || [];
+            const skipped: Array<{ phone: string; businessName: string; reason: string }> =
+              data.skippedLogs || [];
+            totalSkipped += skipped.length;
+
+            // Log telemetry discovery results
+            fetched.forEach((lead) => {
+              addLog(
+                'info',
+                `[DISCOVERY] Menemukan ${lead.businessName} di ${lead.city} (Status: A1 Valid)`,
+                lead.phone,
+                lead.businessName
+              );
+            });
+
+            skipped.forEach((s) =>
+              addLog('skip', `[DUPLICATE-CHECK] ${s.phone} ${s.reason} → SKIPPED`, s.phone, s.businessName)
+            );
+
+            if (fetched.length > 0) {
+              const existingPhones = new Set(collectedLeads.map((l) => l.phone));
+              const newItems = fetched.filter((l) => !existingPhones.has(l.phone));
+              if (newItems.length > 0) {
+                collectedLeads = [...collectedLeads, ...newItems].slice(0, 100);
+                saveQueue(collectedLeads);
+              }
+            }
+          } catch (chunkErr: any) {
+            if (chunkErr?.name === 'AbortError' || controller.signal.aborted) {
+              throw chunkErr;
+            }
+            const chunkMsg = chunkErr instanceof Error ? chunkErr.message : 'Gangguan koneksi sementara.';
+            addLog('warn', `[DISCOVERY] Chunk ${currentChunk.join(', ')} dilewati: ${chunkMsg}`);
           }
         }
       }
@@ -381,6 +434,7 @@ export default function OutreachMachine({
       addLog('error', `[ERROR] Pencarian gagal: ${msg}`);
     } finally {
       setIsSearching(false);
+      setSearchProgress('');
       if (abortControllerRef.current === controller) {
         abortControllerRef.current = null;
       }
@@ -899,7 +953,7 @@ export default function OutreachMachine({
                     className="flex-1 h-10 px-3 rounded-lg bg-slate-800 text-white text-xs font-semibold flex items-center justify-center gap-2 cursor-not-allowed opacity-90 shadow-xs"
                   >
                     <Loader2 className="w-4 h-4 animate-spin text-slate-300 shrink-0" />
-                    <span className="truncate">⏳ Mengecek Serper &amp; Memfilter A1...</span>
+                    <span className="truncate">⏳ {searchProgress || 'Mengecek Serper & Memfilter A1...'}</span>
                   </button>
                   <button
                     type="button"
@@ -1034,13 +1088,12 @@ export default function OutreachMachine({
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
-              onClick={handleSyncWaHistory}
-              disabled={isSyncingWa}
-              className="h-9 px-3 rounded-lg border border-slate-200 hover:bg-slate-100 disabled:opacity-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
-              title="Sinkronkan riwayat pesan WhatsApp Fonnte ke Google Sheets untuk proteksi anti-duplikasi"
+              onClick={() => setIsImportModalOpen(true)}
+              className="h-9 px-3.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+              title="Import daftar nomor WhatsApp yang pernah di-chat sebelumnya agar tidak terduplikasi"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isSyncingWa ? 'animate-spin text-emerald-600' : 'text-slate-500'}`} />
-              <span>{isSyncingWa ? 'Sinkron WA…' : 'Sinkron Riwayat WA'}</span>
+              <Upload className="w-3.5 h-3.5 text-slate-500" />
+              <span>📥 Import Nomor WA Lama</span>
             </button>
 
             {!isRunning ? (
@@ -1409,6 +1462,98 @@ export default function OutreachMachine({
         </div>
 
       </section>
+
+      {/* ═════════════════════════════════════════════════════════════
+          MODAL: BULK IMPORT NOMOR WA LAMA (ANTI-DUPLIKASI SHEETS)
+      ═════════════════════════════════════════════════════════════ */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                  <Upload className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Import Nomor WA Lama (Anti-Duplikasi)
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Nomor akan ditandai sebagai EXISTING_CHAT di Sheets agar dilewati otomatis.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isImporting) setIsImportModalOpen(false);
+                }}
+                disabled={isImporting}
+                className="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleBulkImportWa} className="p-5 flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-slate-800">
+                    Tempel Daftar Nomor WhatsApp:
+                  </label>
+                  {detectedValidNumbers.length > 0 && (
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      ✓ {detectedValidNumbers.length} nomor valid terdeteksi
+                    </span>
+                  )}
+                </div>
+                <textarea
+                  value={importText}
+                  onChange={(e) => setImportText(e.target.value)}
+                  disabled={isImporting}
+                  rows={6}
+                  placeholder={`Tempel daftar nomor HP/WA yang sudah pernah di-chat sebelumnya (pisahkan dengan koma atau baris baru enter)...\n\nContoh:\n081234567890\n082198765432, 6285712345678\n+62 813-4567-8901`}
+                  className="w-full text-xs font-mono p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900 focus:bg-white resize-none"
+                />
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Semua format (08xx, +62xx, 62xx) otomatis dibersihkan dan dinormalisasi ke standar <strong>628xxx</strong>.
+                </p>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsImportModalOpen(false)}
+                  disabled={isImporting}
+                  className="h-9 px-4 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isImporting || detectedValidNumbers.length === 0}
+                  className="h-9 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 text-white text-xs font-semibold flex items-center gap-2 shadow-xs transition active:scale-[0.99] cursor-pointer"
+                >
+                  {isImporting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Menyimpan ke Sheets…</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <span>Simpan ke Blacklist Sheets ({detectedValidNumbers.length})</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

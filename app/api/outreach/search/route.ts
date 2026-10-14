@@ -11,6 +11,7 @@ import {
 import { OutreachLead } from '@/types/outreach';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 interface SerperPlaceItem {
   position?: number;
@@ -91,8 +92,8 @@ export async function POST(req: NextRequest) {
               gl: 'id',
               hl: 'id',
             }),
-            timeoutMs: 12000,
-            retries: 2,
+            timeoutMs: 9000,
+            retries: 1,
           });
 
           if (!response.ok) {
@@ -225,7 +226,14 @@ export async function POST(req: NextRequest) {
       skippedLogs,
     });
   } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : 'Terjadi kesalahan pada pencarian Serper.';
-    return NextResponse.json({ success: false, error: errorMsg }, { status: 500 });
+    const errorMsg = err instanceof Error ? err.message : 'Terjadi kendala saat menghubungi Serper.';
+    // Jangan lempar 500 fatal; kembalikan array kosong agar client tidak Failed to fetch
+    return NextResponse.json({
+      success: true,
+      totalFound: 0,
+      leads: [],
+      skippedLogs: [],
+      warning: errorMsg,
+    });
   }
 }

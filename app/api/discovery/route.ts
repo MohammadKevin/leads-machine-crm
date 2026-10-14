@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { POST as searchHandler } from '@/app/api/outreach/search/route';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   return searchHandler(req);
