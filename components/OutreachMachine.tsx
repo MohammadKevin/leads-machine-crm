@@ -181,6 +181,30 @@ export default function OutreachMachine({
     []
   );
 
+  // Listen for telemetry logs dispatched externally (e.g. from top header sync)
+  useEffect(() => {
+    const handleCustomLog = (e: Event) => {
+      const ce = e as CustomEvent<{
+        type: BatchLogEntry['type'];
+        message: string;
+        phone?: string;
+        businessName?: string;
+      }>;
+      if (ce.detail) {
+        addLog(
+          ce.detail.type || 'info',
+          ce.detail.message,
+          ce.detail.phone,
+          ce.detail.businessName
+        );
+      }
+    };
+    window.addEventListener('add-telemetry-log', handleCustomLog);
+    return () => {
+      window.removeEventListener('add-telemetry-log', handleCustomLog);
+    };
+  }, [addLog]);
+
   // Auto-scroll log to top on new entry
   useEffect(() => {
     if (logEndRef.current) {
@@ -1387,6 +1411,7 @@ export default function OutreachMachine({
                 const isCooldownLog = log.message.includes('COOLDOWN');
                 const isErr = log.type === 'error' || log.message.includes('ERROR');
                 const isWarn = log.type === 'warn' || log.message.includes('WARN');
+                const isSuccess = log.type === 'success' || log.message.includes('SUCCESS');
 
                 return (
                   <div
@@ -1412,6 +1437,8 @@ export default function OutreachMachine({
                       <span className="text-rose-400 font-semibold shrink-0">[ERROR]</span>
                     ) : isWarn ? (
                       <span className="text-amber-300 font-semibold shrink-0">[WARN]</span>
+                    ) : isSuccess ? (
+                      <span className="text-emerald-400 font-semibold shrink-0">[SUCCESS]</span>
                     ) : (
                       <span className="text-slate-400 font-semibold shrink-0">[INFO]</span>
                     )}
@@ -1422,7 +1449,7 @@ export default function OutreachMachine({
                           ? 'text-rose-300'
                           : isDup
                           ? 'text-amber-200'
-                          : isFonnte || isSheets
+                          : isFonnte || isSheets || isSuccess
                           ? 'text-emerald-300'
                           : isAiGen
                           ? 'text-purple-200'
@@ -1434,7 +1461,7 @@ export default function OutreachMachine({
                       }
                     >
                       {log.message.replace(
-                        /^\[(DISCOVERY|AI GENERATING|GEMINI-AI|FONNTE OUTREACH|FONNTE-SUCCESS|SHEETS RECORD|COOLDOWN|COOLDOWN SELESAI|DUPLICATE-CHECK|ERROR|WARN|INFO|START|WAIT|DONE)\]\s*/,
+                        /^\[(DISCOVERY|AI GENERATING|GEMINI-AI|FONNTE OUTREACH|FONNTE-SUCCESS|SHEETS RECORD|COOLDOWN|COOLDOWN SELESAI|DUPLICATE-CHECK|ERROR|WARN|INFO|SUCCESS|START|WAIT|DONE)\]\s*/,
                         ''
                       )}
                     </span>

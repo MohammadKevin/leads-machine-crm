@@ -19,6 +19,7 @@ import {
   Upload,
   X,
   Loader2,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { normalizeIndonesianPhone, isValidIndonesianWhatsApp } from '@/lib/defensive-client';
 import OutreachMachine from '@/components/OutreachMachine';
@@ -56,6 +57,7 @@ function AppInner() {
     rejectedCount: 0,
   });
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isSyncingFonnte, setIsSyncingFonnte] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importText, setImportText] = useState('');
   const [isImporting, setIsImporting] = useState(false);
@@ -76,6 +78,36 @@ function AppInner() {
     const id = Date.now();
     setToasts((prev) => [...prev.slice(-3), { type, message, id }]);
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000);
+  }, []);
+
+  // ── Dispatch Telemetry Logs (Live Terminal & Persistence) ───────────────────
+  const logTelemetry = useCallback((type: 'info' | 'success' | 'warn' | 'error', message: string) => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('add-telemetry-log', {
+          detail: { type, message },
+        })
+      );
+      try {
+        const LOG_KEY = 'leads_logs_v5';
+        const existing = localStorage.getItem(LOG_KEY);
+        const parsed = existing ? JSON.parse(existing) : [];
+        const entry = {
+          id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          timestamp: new Date().toLocaleTimeString('id-ID', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          }),
+          type,
+          message,
+        };
+        const updated = [entry, ...(Array.isArray(parsed) ? parsed : [])].slice(0, 300);
+        localStorage.setItem(LOG_KEY, JSON.stringify(updated));
+      } catch {
+        /* ignore storage error */
+      }
+    }
   }, []);
 
   // ── Sync Sheets (blacklist + records) ───────────────────────────────────────
@@ -107,6 +139,47 @@ function AppInner() {
     syncFromSheets();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ── Auto-Sync Nomor Lama dari public/fonnte-history.xlsx ke Sheets ───────────
+  const handleSyncFonnteFile = useCallback(async () => {
+    if (isSyncingFonnte) return;
+    setIsSyncingFonnte(true);
+
+    logTelemetry('info', '[INFO] Membaca dan memproses public/fonnte-history.xlsx...');
+
+    try {
+      const res = await fetch('/api/sync-fonnte-file', {
+        method: 'POST',
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        logTelemetry(
+          'success',
+          `[SUCCESS] Berhasil membaca ${data.totalInFile} nomor dari fonnte-history.xlsx! ${data.newInserted} nomor baru disinkronkan ke Google Sheets.`
+        );
+
+        // Refresh counter blacklist anti-duplikasi di sidebar kiri
+        await syncFromSheets();
+
+        showToast(
+          'success',
+          `Berhasil membaca ${data.totalInFile} nomor dari fonnte-history.xlsx! ${data.newInserted} nomor baru disinkronkan ke Google Sheets.`
+        );
+      } else {
+        const errMsg = data.message || 'Gagal memproses file fonnte-history.xlsx.';
+        logTelemetry('error', `[ERROR] Gagal membaca fonnte-history.xlsx: ${errMsg}`);
+        showToast('error', errMsg);
+      }
+    } catch (err: unknown) {
+      const errMsg =
+        err instanceof Error ? err.message : 'Kesalahan jaringan saat memproses fonnte-history.xlsx.';
+      logTelemetry('error', `[ERROR] ${errMsg}`);
+      showToast('error', errMsg);
+    } finally {
+      setIsSyncingFonnte(false);
+    }
+  }, [isSyncingFonnte, logTelemetry, syncFromSheets, showToast]);
 
   // ── Bulk Import WA Lama to Sheets ──────────────────────────────────────────
   const detectedValidNumbers = React.useMemo(() => {
@@ -405,8 +478,23 @@ function AppInner() {
 
             <button
               type="button"
+              onClick={handleSyncFonnteFile}
+              disabled={isSyncingFonnte || isSyncing}
+              className="h-8 px-3 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 disabled:opacity-50 text-emerald-800 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+              title="Baca riwayat pesan dari public/fonnte-history.xlsx dan sinkronkan ke Google Sheets anti-duplikat"
+            >
+              {isSyncingFonnte ? (
+                <RefreshCw className="w-3 h-3 animate-spin text-emerald-700" />
+              ) : (
+                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+              )}
+              <span>{isSyncingFonnte ? 'Menyinkronkan…' : '⚡ Sync Fonnte-History.xlsx'}</span>
+            </button>
+
+            <button
+              type="button"
               onClick={syncFromSheets}
-              disabled={isSyncing}
+              disabled={isSyncing || isSyncingFonnte}
               className="h-8 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
             >
               <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
