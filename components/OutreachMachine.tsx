@@ -28,6 +28,7 @@ import {
   Zap,
   Coffee,
   X,
+  RefreshCw,
 } from 'lucide-react';
 import {
   OutreachLead,
@@ -45,6 +46,7 @@ interface Props {
   blacklist: Set<string>;
   onContactSentSuccess: (phone: string, lead: OutreachLead) => void;
   showToast: (type: 'success' | 'error' | 'warn', message: string) => void;
+  onSyncSuccess?: () => void;
 }
 
 const QUEUE_KEY = 'leads_queue_v5';
@@ -64,6 +66,7 @@ export default function OutreachMachine({
   blacklist,
   onContactSentSuccess,
   showToast,
+  onSyncSuccess,
 }: Props) {
   // ── Filter State ─────────────────────────────────────────────────────────────
   const [selectedCities, setSelectedCities] = useState<string[]>(DEFAULT_CITIES);
@@ -78,6 +81,7 @@ export default function OutreachMachine({
 
   // ── Queue & Logs State ───────────────────────────────────────────────────────
   const [isSearching, setIsSearching] = useState(false);
+  const [isSyncingWa, setIsSyncingWa] = useState(false);
   const [leads, setLeads] = useState<OutreachLead[]>([]);
   const [logs, setLogs] = useState<BatchLogEntry[]>([]);
   const [queueSearch, setQueueSearch] = useState('');
@@ -196,6 +200,61 @@ export default function OutreachMachine({
 
   const resetCategories = () => {
     setSelectedCategories([NICHE_CATEGORIES[0].label]);
+  };
+
+  // ── Sync WA History Handler ─────────────────────────────────────────────────
+  const handleSyncWaHistory = async () => {
+    if (isSyncingWa) return;
+    setIsSyncingWa(true);
+    addLog('info', '[SYNC WA] Memulai sinkronisasi riwayat pesan WhatsApp dari Fonnte…');
+    showToast('warn', 'Menghubungkan ke Fonnte & memeriksa riwayat WhatsApp...');
+
+    try {
+      const res = await fetch('/api/sync-wa-history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Gagal sinkronisasi riwayat WhatsApp.');
+      }
+
+      if (data.newImported > 0) {
+        addLog(
+          'success',
+          `[SYNC WA] Berhasil mengimpor ${data.newImported} nomor riwayat WhatsApp lama ke Google Sheets!`
+        );
+        showToast(
+          'success',
+          `Berhasil mengimpor ${data.newImported} nomor riwayat WhatsApp ke Google Sheets!`
+        );
+        if (onSyncSuccess) {
+          onSyncSuccess();
+        }
+      } else if (data.totalFonnte > 0) {
+        addLog(
+          'info',
+          `[SYNC WA] Selesai: Semua nomor riwayat WhatsApp (${data.totalFonnte} nomor) sudah terdaftar di Google Sheets.`
+        );
+        showToast(
+          'warn',
+          `Semua ${data.totalFonnte} nomor riwayat WA sudah terproteksi di Google Sheets (0 baru).`
+        );
+      } else {
+        addLog(
+          'info',
+          `[SYNC WA] Selesai: 0 nomor baru dari Fonnte (${data.fonnteResponseStatus || 'OK'}). Database anti-duplikasi aman.`
+        );
+        showToast('warn', 'Pemeriksaan riwayat pesan WA selesai.');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Kesalahan jaringan.';
+      addLog('error', `[SYNC WA] Gagal: ${msg}`);
+      showToast('error', msg);
+    } finally {
+      setIsSyncingWa(false);
+    }
   };
 
   // ── Cancel Search Handler ───────────────────────────────────────────────────
@@ -973,6 +1032,17 @@ export default function OutreachMachine({
 
           {/* Right: Actions */}
           <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleSyncWaHistory}
+              disabled={isSyncingWa}
+              className="h-9 px-3 rounded-lg border border-slate-200 hover:bg-slate-100 disabled:opacity-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+              title="Sinkronkan riwayat pesan WhatsApp Fonnte ke Google Sheets untuk proteksi anti-duplikasi"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isSyncingWa ? 'animate-spin text-emerald-600' : 'text-slate-500'}`} />
+              <span>{isSyncingWa ? 'Sinkron WA…' : 'Sinkron Riwayat WA'}</span>
+            </button>
+
             {!isRunning ? (
               <button
                 type="button"

@@ -52,6 +52,7 @@ function AppInner() {
     rejectedCount: 0,
   });
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isSyncingWa, setIsSyncingWa] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   // ── Tab navigation ──────────────────────────────────────────────────────────
@@ -100,6 +101,35 @@ function AppInner() {
     syncFromSheets();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ── Sync WA History from Fonnte ─────────────────────────────────────────────
+  const handleSyncWaHistory = useCallback(async () => {
+    if (isSyncingWa) return;
+    setIsSyncingWa(true);
+    showToast('warn', 'Menghubungkan ke Fonnte & memeriksa riwayat WhatsApp...');
+    try {
+      const res = await fetch('/api/sync-wa-history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Gagal sinkronisasi riwayat WA.');
+      }
+      if (data.newImported > 0) {
+        showToast('success', `Berhasil mengimpor ${data.newImported} nomor riwayat WhatsApp ke Google Sheets!`);
+        syncFromSheets();
+      } else if (data.totalFonnte > 0) {
+        showToast('warn', `Semua ${data.totalFonnte} nomor riwayat WhatsApp sudah terdaftar di Sheets.`);
+      } else {
+        showToast('warn', data.message || 'Pemeriksaan riwayat WhatsApp selesai.');
+      }
+    } catch (err: unknown) {
+      showToast('error', err instanceof Error ? err.message : 'Gagal sinkronisasi riwayat WA.');
+    } finally {
+      setIsSyncingWa(false);
+    }
+  }, [isSyncingWa, showToast, syncFromSheets]);
 
   // ── Callback when WA is sent successfully ──────────────────────────────────
   const handleContactSentSuccess = useCallback(
@@ -338,7 +368,18 @@ function AppInner() {
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={handleSyncWaHistory}
+              disabled={isSyncingWa}
+              className="h-8 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+              title="Sinkronkan nomor riwayat chat WhatsApp keluar Fonnte ke Google Sheets"
+            >
+              <RefreshCw className={`w-3 h-3 ${isSyncingWa ? 'animate-spin text-emerald-600' : 'text-slate-500'}`} />
+              <span>{isSyncingWa ? 'Sinkron WA…' : 'Sinkron Riwayat WA'}</span>
+            </button>
+
             <button
               type="button"
               onClick={syncFromSheets}
@@ -363,6 +404,7 @@ function AppInner() {
               blacklist={blacklist}
               onContactSentSuccess={handleContactSentSuccess}
               showToast={showToast}
+              onSyncSuccess={syncFromSheets}
             />
           )}
 
