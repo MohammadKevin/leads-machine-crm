@@ -41,13 +41,20 @@ export async function GET() {
       );
     }
 
-    const json = await response.json().catch(() => null);
+    // Safe Response Handling (Anti-Crash): Baca text terlebih dahulu
+    const rawBlacklistText = await response.text().catch(() => '');
+    let json: { status?: string; data?: Array<Record<string, any>> } | null = null;
+    try {
+      json = JSON.parse(rawBlacklistText);
+    } catch {
+      console.warn('Google Apps Script returned non-JSON on blacklist GET:', rawBlacklistText.slice(0, 200));
+    }
 
     if (!json || json.status !== 'success' || !Array.isArray(json.data)) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Format data respon Google Sheets tidak sesuai.',
+          error: 'Google Sheets sedang sibuk atau mengembalikan format non-JSON. Silakan coba beberapa saat lagi.',
           blacklist: [],
           records: [],
         },
@@ -65,12 +72,12 @@ export async function GET() {
     let rejectedCount = 0;
 
     for (const item of json.data) {
-      const rawPhone = item.phone_number || item.phone || item.no_telepon || '';
+      const rawPhone = String(item.phone_number || item.phone || item.no_telepon || '');
       const cleanPhone = normalizeIndonesianPhone(
-        item.normalized_phone || item.normalizedPhone || rawPhone
+        String(item.normalized_phone || item.normalizedPhone || rawPhone)
       );
 
-      const rawStatus = (item.lead_status || item.status_lead || item.status || 'CONTACTED').toUpperCase();
+      const rawStatus = String(item.lead_status || item.status_lead || item.status || 'CONTACTED').toUpperCase();
 
       let mappedStatus: SheetLeadRecord['status'] = 'CONTACTED';
       if (rawStatus === 'INTERESTED' || rawStatus === 'FOLLOWUP') {
@@ -96,21 +103,21 @@ export async function GET() {
 
       records.push({
         id: `sheet-${cleanPhone || Math.random().toString(36).slice(2, 8)}`,
-        timestamp: item.timestamp || item.last_sync_at || item.terakhir_disinkron || '',
-        businessName: item.business_name || item.nama_bisnis || item.name || 'Prospek',
-        category: item.category || item.kategori || 'general',
-        city: item.city || item.kota || '',
+        timestamp: String(item.timestamp || item.last_sync_at || item.terakhir_disinkron || ''),
+        businessName: String(item.business_name || item.nama_bisnis || item.name || 'Prospek'),
+        category: String(item.category || item.kategori || 'general'),
+        city: String(item.city || item.kota || ''),
         phone: rawPhone || cleanPhone,
         normalizedPhone: cleanPhone,
-        mapsUrl: item.maps_url || item.link_google_maps || item.address || '',
+        mapsUrl: String(item.maps_url || item.link_google_maps || item.address || ''),
         rating: Number(item.rating || 0),
         reviewsCount: Number(item.review_count || item.reviewsCount || item.jumlah_ulasan || 0),
         hasWebsite: Boolean(item.website || item.website_asli),
-        website: item.website || item.website_asli || null,
+        website: item.website ? String(item.website) : item.website_asli ? String(item.website_asli) : null,
         status: mappedStatus,
-        rejectionReason: item.rejection_reason || item.alasan_penolakan || null,
-        messageSent: item.generated_pitch || item.draft_pitch_wa || item.messageSent || '',
-        lastSyncAt: item.last_sync_at || item.terakhir_disinkron || new Date().toISOString(),
+        rejectionReason: item.rejection_reason ? String(item.rejection_reason) : item.alasan_penolakan ? String(item.alasan_penolakan) : null,
+        messageSent: String(item.generated_pitch || item.draft_pitch_wa || item.messageSent || ''),
+        lastSyncAt: String(item.last_sync_at || item.terakhir_disinkron || new Date().toISOString()),
       });
     }
 

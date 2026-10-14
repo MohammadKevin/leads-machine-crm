@@ -311,7 +311,7 @@ export default function OutreachMachine({
     showToast('warn', 'Pencarian prospek dibatalkan oleh operator.');
   };
 
-  // ── 1. Search Leads (Discovery Engine) ───────────────────────────────────────
+  // ── 1. Search Leads (Discovery Engine: Streaming per-kota) ─────────────────
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (isSearching) return;
@@ -329,105 +329,110 @@ export default function OutreachMachine({
     setIsSearching(true);
     setSearchProgress('Memulai…');
 
-    // Pecah kota target ke dalam batch kecil (2-3 kota per request) untuk menghindari timeout Vercel
-    const CITY_CHUNK_SIZE = 2;
-    const cityChunks: string[][] = [];
-    for (let c = 0; c < selectedCities.length; c += CITY_CHUNK_SIZE) {
-      cityChunks.push(selectedCities.slice(c, c + CITY_CHUNK_SIZE));
-    }
-
-    const totalSteps = selectedCategories.length * cityChunks.length;
-    let currentStep = 0;
+    const totalCities = selectedCities.length;
+    let processedIndex = 0;
+    let collectedLeads: OutreachLead[] = [...leadsRef.current];
+    let newlyFoundCount = 0;
+    let totalSkipped = 0;
 
     addLog(
       'info',
-      `[DISCOVERY] Memulai pencarian ${selectedCategories.length} kategori di ${selectedCities.length} wilayah target (${cityChunks.length} batch kota)…`
+      `[DISCOVERY] Memulai pencarian ${selectedCategories.length} kategori di ${totalCities} kota terpilih (Streaming progresif per-kota)…`
     );
 
-    let collectedLeads: OutreachLead[] = [];
-    let totalSkipped = 0;
-
     try {
-      for (let i = 0; i < selectedCategories.length; i++) {
+      for (const city of selectedCities) {
         if (controller.signal.aborted) break;
-        const currentCat = selectedCategories[i];
+        processedIndex++;
 
-        for (let j = 0; j < cityChunks.length; j++) {
+        const stepLabel = `${city} (${processedIndex}/${totalCities})`;
+        setSearchProgress(stepLabel);
+        addLog('info', `[DISCOVERY] [${processedIndex}/${totalCities}] Mencari prospek di ${city}…`);
+
+        try {
+          const res = await fetch('/api/discovery', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
+            body: JSON.stringify({
+              cities: [city],
+              categories: selectedCategories,
+              category: selectedCategories[0],
+              customQuery,
+              onlyWithoutWebsite: noWebsite,
+              excludeFranchise: noFranchise,
+              onlyValidWhatsApp: validWA,
+              strictA1,
+              blacklist: [
+                ...Array.from(blacklist),
+                ...collectedLeads.map((l) => l.phone),
+              ],
+            }),
+          });
+
           if (controller.signal.aborted) break;
-          const currentChunk = cityChunks[j];
-          currentStep++;
 
-          const stepLabel = `${currentChunk.join(', ')} (${currentStep}/${totalSteps})`;
-          setSearchProgress(stepLabel);
-          addLog(
-            'info',
-            `[DISCOVERY] [${currentStep}/${totalSteps}] Memeriksa ${currentCat} di ${currentChunk.join(', ')}…`
+          // Safe Text-first parsing (Anti-Crash)
+          const rawText = await res.text().catch(() => '');
+          let data: {
+            success?: boolean;
+            leads?: OutreachLead[];
+            skippedLogs?: Array<{ phone: string; businessName: string; reason: string }>;
+            error?: string;
+            warning?: string;
+          } | null = null;
+          try {
+            data = JSON.parse(rawText);
+          } catch {
+            data = null;
+          }
+
+          if (!res.ok || !data?.success) {
+            const errMsg =
+              data?.error || data?.warning || (res.status ? `HTTP ${res.status}` : 'Respon tidak valid');
+            addLog('warn', `[WARN] Gagal mengambil data untuk ${city}: ${errMsg}, melanjutkan ke kota berikutnya...`);
+            continue;
+          }
+
+          const fetched: OutreachLead[] = Array.isArray(data.leads) ? data.leads : [];
+          const skipped: Array<{ phone: string; businessName: string; reason: string }> =
+            Array.isArray(data.skippedLogs) ? data.skippedLogs : [];
+          totalSkipped += skipped.length;
+
+          // Log telemetry discovery results
+          fetched.forEach((lead) => {
+            addLog(
+              'info',
+              `[DISCOVERY] Menemukan ${lead.businessName} di ${lead.city} (Status: A1 Valid)`,
+              lead.phone,
+              lead.businessName
+            );
+          });
+
+          skipped.forEach((s) =>
+            addLog('skip', `[DUPLICATE-CHECK] ${s.phone} ${s.reason} → SKIPPED`, s.phone, s.businessName)
           );
 
-          try {
-            const res = await fetch('/api/discovery', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              signal: controller.signal,
-              body: JSON.stringify({
-                cities: currentChunk,
-                categories: [currentCat],
-                category: currentCat,
-                customQuery,
-                onlyWithoutWebsite: noWebsite,
-                excludeFranchise: noFranchise,
-                onlyValidWhatsApp: validWA,
-                strictA1,
-                blacklist: [
-                  ...Array.from(blacklist),
-                  ...collectedLeads.map((l) => l.phone),
-                ],
-              }),
-            });
-
-            if (controller.signal.aborted) break;
-
-            const data = await res.json().catch(() => null);
-            if (!res.ok || !data?.success) {
-              const errMsg = data?.error || data?.warning || `HTTP ${res.status}`;
-              addLog('warn', `[DISCOVERY] Kendala pada ${currentChunk.join(', ')}: ${errMsg} (melanjutkan...)`);
-              continue;
+          if (fetched.length > 0) {
+            const existingPhones = new Set(collectedLeads.map((l) => l.phone));
+            const newItems = fetched.filter((l) => !existingPhones.has(l.phone));
+            if (newItems.length > 0) {
+              newlyFoundCount += newItems.length;
+              collectedLeads = [...collectedLeads, ...newItems].slice(0, 150);
+              saveQueue(collectedLeads);
             }
-
-            const fetched: OutreachLead[] = data.leads || [];
-            const skipped: Array<{ phone: string; businessName: string; reason: string }> =
-              data.skippedLogs || [];
-            totalSkipped += skipped.length;
-
-            // Log telemetry discovery results
-            fetched.forEach((lead) => {
-              addLog(
-                'info',
-                `[DISCOVERY] Menemukan ${lead.businessName} di ${lead.city} (Status: A1 Valid)`,
-                lead.phone,
-                lead.businessName
-              );
-            });
-
-            skipped.forEach((s) =>
-              addLog('skip', `[DUPLICATE-CHECK] ${s.phone} ${s.reason} → SKIPPED`, s.phone, s.businessName)
-            );
-
-            if (fetched.length > 0) {
-              const existingPhones = new Set(collectedLeads.map((l) => l.phone));
-              const newItems = fetched.filter((l) => !existingPhones.has(l.phone));
-              if (newItems.length > 0) {
-                collectedLeads = [...collectedLeads, ...newItems].slice(0, 100);
-                saveQueue(collectedLeads);
-              }
-            }
-          } catch (chunkErr: any) {
-            if (chunkErr?.name === 'AbortError' || controller.signal.aborted) {
-              throw chunkErr;
-            }
-            const chunkMsg = chunkErr instanceof Error ? chunkErr.message : 'Gangguan koneksi sementara.';
-            addLog('warn', `[DISCOVERY] Chunk ${currentChunk.join(', ')} dilewati: ${chunkMsg}`);
           }
+        } catch (cityErr: unknown) {
+          const isAbort =
+            controller.signal.aborted ||
+            (cityErr instanceof DOMException && cityErr.name === 'AbortError') ||
+            (cityErr as { name?: string })?.name === 'AbortError';
+
+          if (isAbort) {
+            break;
+          }
+          const cityMsg = cityErr instanceof Error ? cityErr.message : 'Gangguan koneksi sementara.';
+          addLog('warn', `[WARN] Gagal mengambil data untuk ${city}: ${cityMsg}, melanjutkan ke kota berikutnya...`);
         }
       }
 
@@ -435,22 +440,26 @@ export default function OutreachMachine({
         return;
       }
 
-      if (collectedLeads.length === 0) {
+      if (newlyFoundCount === 0) {
         showToast(
           'warn',
           'Tidak ada lead baru — semua nomor sudah ada di Sheets atau tidak lolos kualifikasi A1.'
         );
         addLog('warn', '[DISCOVERY] Selesai: 0 prospek baru memenuhi syarat Tier A1.');
       } else {
-        showToast('success', `${collectedLeads.length} prospek Tier A1 siap — anti-duplikasi aktif.`);
+        showToast('success', `${newlyFoundCount} prospek baru Tier A1 berhasil ditambahkan.`);
         addLog(
           'success',
-          `[DISCOVERY] Berhasil mengumpulkan ${collectedLeads.length} prospek A1 (${totalSkipped} dilewati).`
+          `[DISCOVERY] Selesai! Berhasil menambahkan ${newlyFoundCount} prospek Tier A1 (${totalSkipped} dilewati).`
         );
       }
-    } catch (err: any) {
-      if (err?.name === 'AbortError' || controller.signal.aborted) {
-        // Abaikan error pembatalan normal
+    } catch (err: unknown) {
+      const isAbort =
+        controller.signal.aborted ||
+        (err instanceof DOMException && err.name === 'AbortError') ||
+        (err as { name?: string })?.name === 'AbortError';
+
+      if (isAbort) {
         return;
       }
       const msg = err instanceof Error ? err.message : 'Kesalahan jaringan.';

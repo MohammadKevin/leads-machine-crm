@@ -92,15 +92,22 @@ export async function POST(req: NextRequest) {
               gl: 'id',
               hl: 'id',
             }),
-            timeoutMs: 9000,
-            retries: 1,
+            timeoutMs: 8000,
+            retries: 0,
           });
 
           if (!response.ok) {
             continue;
           }
 
-          const data = await response.json().catch(() => null);
+          const rawSerper = await response.text().catch(() => '');
+          let data: { places?: SerperPlaceItem[] } | null = null;
+          try {
+            data = JSON.parse(rawSerper);
+          } catch {
+            continue;
+          }
+
           if (!data || !Array.isArray(data.places)) {
             continue;
           }

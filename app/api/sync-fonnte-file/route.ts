@@ -112,12 +112,21 @@ export async function POST(_req: NextRequest) {
       );
     }
 
-    const sheetsJson = await sheetsRes.json().catch(() => null);
+    // Safe Response Handling (Anti-Crash): Baca text terlebih dahulu
+    const rawSheetsText = await sheetsRes.text().catch(() => '');
+    let sheetsJson: { status?: string; data?: Array<Record<string, unknown>> } | null = null;
+    try {
+      sheetsJson = JSON.parse(rawSheetsText);
+    } catch {
+      console.warn('Google Apps Script returned non-JSON on GET:', rawSheetsText.slice(0, 200));
+    }
+
     if (!sheetsJson || sheetsJson.status !== 'success' || !Array.isArray(sheetsJson.data)) {
       return NextResponse.json(
         {
           success: false,
-          message: 'Format data respon Google Sheets tidak sesuai.',
+          message:
+            'Google Sheets sedang sibuk atau mengembalikan format non-JSON. Silakan coba beberapa saat lagi.',
         },
         { status: 502 }
       );
@@ -126,11 +135,11 @@ export async function POST(_req: NextRequest) {
     const existingInSheets = new Set<string>();
     for (const item of sheetsJson.data) {
       const rawPhone =
-        item.normalized_phone ||
-        item.normalizedPhone ||
-        item.phone_number ||
-        item.phone ||
-        item.no_telepon ||
+        (item.normalized_phone as string) ||
+        (item.normalizedPhone as string) ||
+        (item.phone_number as string) ||
+        (item.phone as string) ||
+        (item.no_telepon as string) ||
         '';
       const cleanPhone = normalizeIndonesianPhone(rawPhone);
       if (cleanPhone) {
@@ -149,13 +158,25 @@ export async function POST(_req: NextRequest) {
       }
     }
 
-    // 5. Kirim Nomor Baru ke Google Sheets Web App (Batch Paralel)
+    // Jika seluruh nomor sudah ada di Sheets, kembalikan langsung tanpa membebani server
+    if (numbersToInsert.length === 0) {
+      return NextResponse.json({
+        success: true,
+        totalInFile: extractedNumbers.size,
+        newInserted: 0,
+        alreadyExisted,
+        message: `Seluruh ${extractedNumbers.size} nomor dari fonnte-history.xlsx sudah terdaftar di Google Sheets (0 nomor baru).`,
+      });
+    }
+
+    // 5. Kirim Nomor Baru ke Google Sheets Web App (Sekuensial Berjeda / Batch Safe)
     const insertedNumbers: string[] = [];
-    const BATCH_SIZE = 8;
+    const BATCH_SIZE = 4;
     const timestamp = new Date().toISOString();
 
     for (let i = 0; i < numbersToInsert.length; i += BATCH_SIZE) {
       const batch = numbersToInsert.slice(i, i + BATCH_SIZE);
+
       await Promise.all(
         batch.map(async (phone) => {
           try {
@@ -182,7 +203,22 @@ export async function POST(_req: NextRequest) {
               retries: 1,
             });
 
-            if (res.ok) {
+            // Safe parsing respon POST (Anti-Crash)
+            const rawPostRes = await res.text().catch(() => '');
+            let isOk = res.ok;
+            try {
+              const parsedPost = JSON.parse(rawPostRes);
+              if (parsedPost?.status === 'success' || parsedPost?.success === true) {
+                isOk = true;
+              }
+            } catch {
+              const lower = rawPostRes.toLowerCase();
+              if (lower.includes('success') || lower.includes('ok')) {
+                isOk = true;
+              }
+            }
+
+            if (isOk) {
               insertedNumbers.push(phone);
             }
           } catch {
@@ -190,6 +226,11 @@ export async function POST(_req: NextRequest) {
           }
         })
       );
+
+      // Jeda 300ms antar chunk agar Google Apps Script tidak melempar 429 / Server Overload / lock timeout
+      if (i + BATCH_SIZE < numbersToInsert.length) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
     }
 
     // 6. Respons API

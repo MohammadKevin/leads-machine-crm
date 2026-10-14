@@ -118,15 +118,22 @@ function AppInner() {
         method: 'GET',
         headers: { Accept: 'application/json' },
       });
-      const data = await res.json();
-      if (res.ok && data.success) {
+      const rawText = await res.text().catch(() => '');
+      let data: { success?: boolean; blacklist?: string[]; records?: SheetLeadRecord[]; metrics?: OutreachMetrics; error?: string } | null = null;
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        data = { success: false, error: rawText.slice(0, 150) || 'Format data Google Sheets tidak sesuai.' };
+      }
+
+      if (res.ok && data?.success) {
         const nums: string[] = data.blacklist || [];
         setBlacklist(new Set(nums));
         setSheetRecords(data.records || []);
         if (data.metrics) setMetrics(data.metrics);
         showToast('success', `Anti-duplikasi aktif — ${nums.length} nomor terproteksi.`);
       } else {
-        showToast('warn', data.error || 'Gagal memuat data Google Sheets.');
+        showToast('warn', data?.error || 'Gagal memuat data Google Sheets.');
       }
     } catch (err: unknown) {
       showToast('error', err instanceof Error ? err.message : 'Kesalahan jaringan.');
@@ -151,12 +158,21 @@ function AppInner() {
       const res = await fetch('/api/sync-fonnte-file', {
         method: 'POST',
       });
-      const data = await res.json();
+      const rawText = await res.text().catch(() => '');
+      let data: { success?: boolean; totalInFile?: number; newInserted?: number; alreadyExisted?: number; message?: string } | null = null;
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        data = { success: false, message: rawText.slice(0, 150) || 'Gagal membaca respon server.' };
+      }
 
-      if (res.ok && data.success) {
+      if (res.ok && data?.success) {
+        const total = data.totalInFile ?? 0;
+        const inserted = data.newInserted ?? 0;
+        const existed = data.alreadyExisted ?? 0;
         logTelemetry(
           'success',
-          `[SUCCESS] Berhasil membaca ${data.totalInFile} nomor dari fonnte-history.xlsx! ${data.newInserted} nomor baru disinkronkan ke Google Sheets.`
+          `[SUCCESS] Berhasil membaca ${total} nomor dari fonnte-history.xlsx! ${inserted} nomor baru disinkronkan ke Google Sheets.`
         );
 
         // Refresh counter blacklist anti-duplikasi di sidebar kiri
@@ -164,10 +180,10 @@ function AppInner() {
 
         showToast(
           'success',
-          `Berhasil membaca ${data.totalInFile} nomor dari fonnte-history.xlsx! ${data.newInserted} nomor baru disinkronkan ke Google Sheets.`
+          `Berhasil membaca ${total} nomor dari fonnte-history.xlsx! ${inserted} nomor baru disinkronkan ke Google Sheets (${existed} sudah ada).`
         );
       } else {
-        const errMsg = data.message || 'Gagal memproses file fonnte-history.xlsx.';
+        const errMsg = data?.message || 'Gagal memproses file fonnte-history.xlsx.';
         logTelemetry('error', `[ERROR] Gagal membaca fonnte-history.xlsx: ${errMsg}`);
         showToast('error', errMsg);
       }
@@ -209,11 +225,18 @@ function AppInner() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ numbers: detectedValidNumbers }),
       });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Gagal menyimpan ke Sheets.');
+      const rawText = await res.text().catch(() => '');
+      let data: { success?: boolean; newImported?: number; error?: string } | null = null;
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        data = { success: false, error: rawText.slice(0, 150) || 'Gagal menyimpan ke Sheets.' };
       }
-      if (data.newImported > 0) {
+
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error || 'Gagal menyimpan ke Sheets.');
+      }
+      if ((data.newImported ?? 0) > 0) {
         showToast('success', `Berhasil menyimpan ${data.newImported} nomor ke Google Sheets!`);
         syncFromSheets();
       } else {
