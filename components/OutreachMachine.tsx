@@ -2,49 +2,10 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  Search,
-  Play,
-  Pause,
-  Square,
-  RotateCcw,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-  Clock,
-  Sparkles,
-  Send,
-  ShieldCheck,
-  MapPin,
-  Star,
-  Copy,
-  Terminal as TerminalIcon,
-  Trash2,
-  Layers,
-  Check,
-  Loader2,
-  ExternalLink,
-  ChevronRight,
-  Filter,
-  Zap,
-  Coffee,
-  X,
-  RefreshCw,
-  Upload,
-} from 'lucide-react';
-import {
   OutreachLead,
   BatchLogEntry,
   NICHE_CATEGORIES,
-  DEFAULT_CITIES,
-  ALL_38_JAWA_TIMUR,
-  KORIDOR_UTAMA_JAWA,
-  ALL_AVAILABLE_CITIES,
 } from '@/types/outreach';
-import {
-  formatPhoneDisplay,
-  normalizeIndonesianPhone,
-  isValidIndonesianWhatsApp,
-} from '@/lib/defensive-client';
 import { getDynamicFallbackPitch } from '@/lib/gemini-pitch';
 
 interface Props {
@@ -52,17 +13,64 @@ interface Props {
   onContactSentSuccess: (phone: string, lead: OutreachLead) => void;
   showToast: (type: 'success' | 'error' | 'warn', message: string) => void;
   onSyncSuccess?: () => void;
+  onOpenPrototype?: (lead: OutreachLead) => void;
 }
 
 const QUEUE_KEY = 'leads_queue_v5';
 const LOG_KEY = 'leads_logs_v5';
 
-// Jeda aman dinamis 25 hingga 45 detik antar nomor
+const HIGH_TICKET_NICHES = [
+  {
+    id: 'villa',
+    label: 'Villa & Glamping',
+    fullName: 'Kos-kosan Eksklusif, Homestay & Villa',
+    query: 'Villa Guesthouse Glamping Homestay Penginapan',
+    dealRange: 'Rp 2,5jt–3,5jt',
+    cities: 'Batu, Malang, Prigen',
+    icon: 'villa',
+  },
+  {
+    id: 'interior',
+    label: 'Kontraktor & Interior',
+    fullName: 'Kontraktor, Arsitek & Interior',
+    query: 'Kontraktor Bangunan Arsitek Desain Interior Konstruksi',
+    dealRange: 'Rp 2,5jt–4jt',
+    cities: 'Malang, Surabaya, Sidoarjo',
+    icon: 'construction',
+  },
+  {
+    id: 'clinic',
+    label: 'Klinik Gigi & Estetika',
+    fullName: 'Klinik & Apotek',
+    query: 'Klinik Gigi Dokter Gigi Klinik Kecantikan Estetika',
+    dealRange: 'Rp 2jt–3jt',
+    cities: 'Malang, Surabaya',
+    icon: 'dentistry',
+  },
+];
+
+const CITY_PRESETS = [
+  {
+    id: 'malang_batu',
+    label: 'Malang Raya & Batu',
+    cities: ['Malang', 'Batu', 'Kabupaten Malang'],
+  },
+  {
+    id: 'surabaya_sidoarjo',
+    label: 'Surabaya & Sidoarjo',
+    cities: ['Surabaya', 'Sidoarjo', 'Gresik'],
+  },
+  {
+    id: 'koridor_jatim',
+    label: 'Koridor Jatim',
+    cities: ['Malang', 'Batu', 'Surabaya', 'Sidoarjo', 'Kediri'],
+  },
+];
+
 function randomJitterSeconds(min = 25, max = 45) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// Jeda cooldown periodik 3 hingga 5 menit (180s - 300s) setiap 15 pesan
 function randomCooldownSeconds(min = 180, max = 300) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -72,34 +80,26 @@ export default function OutreachMachine({
   onContactSentSuccess,
   showToast,
   onSyncSuccess,
+  onOpenPrototype,
 }: Props) {
-  // ── Filter State ─────────────────────────────────────────────────────────────
-  const [selectedCities, setSelectedCities] = useState<string[]>(DEFAULT_CITIES);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([
-    NICHE_CATEGORIES[0].label,
-  ]);
-  const [customQuery, setCustomQuery] = useState('');
-  const [noWebsite, setNoWebsite] = useState(true);
-  const [noFranchise, setNoFranchise] = useState(true);
-  const [validWA, setValidWA] = useState(true);
-  const [strictA1, setStrictA1] = useState(true);
+  const [activeNicheId, setActiveNicheId] = useState<string>('villa');
+  const [selectedCities, setSelectedCities] = useState<string[]>(CITY_PRESETS[0].cities);
+  const [activeCityPresetId, setActiveCityPresetId] = useState<string>('malang_batu');
+  const [targetMode, setTargetMode] = useState<'admin_gatekeeper' | 'owner_direct'>('admin_gatekeeper');
 
-  // ── Queue & Logs State ───────────────────────────────────────────────────────
   const [isSearching, setIsSearching] = useState(false);
   const [searchProgress, setSearchProgress] = useState('');
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [importText, setImportText] = useState('');
-  const [isImporting, setIsImporting] = useState(false);
   const [leads, setLeads] = useState<OutreachLead[]>([]);
   const [logs, setLogs] = useState<BatchLogEntry[]>([]);
-  const [queueSearch, setQueueSearch] = useState('');
+  const [tableFilter, setTableFilter] = useState<'ALL' | 'READY' | 'SENT' | 'REPLIED' | 'HIGH_REVIEWS'>('ALL');
+  const [copiedPitchId, setCopiedPitchId] = useState<string | null>(null);
+  const [showTerminal, setShowTerminal] = useState(false);
 
-  // ── Runner State Machine ─────────────────────────────────────────────────────
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isCooldown, setIsCooldown] = useState(false);
   const [countdown, setCountdown] = useState(0);
-  const [countdownLabel, setCountdownLabel] = useState<string>('Jeda');
+  const [countdownLabel, setCountdownLabel] = useState<string>('Kirim berikutnya');
   const [activeLead, setActiveLead] = useState<OutreachLead | null>(null);
 
   const runningRef = useRef(false);
@@ -113,7 +113,6 @@ export default function OutreachMachine({
     leadsRef.current = leads;
   }, [leads]);
 
-  // Cleanup abort controller on unmount
   useEffect(() => {
     return () => {
       if (abortControllerRef.current) {
@@ -122,7 +121,6 @@ export default function OutreachMachine({
     };
   }, []);
 
-  // Restore persisted queue & logs
   useEffect(() => {
     try {
       const q = localStorage.getItem(QUEUE_KEY);
@@ -135,27 +133,18 @@ export default function OutreachMachine({
         const p = JSON.parse(l);
         if (Array.isArray(p)) setLogs(p);
       }
-    } catch {
-      /* ignore storage error */
-    }
+    } catch {}
   }, []);
 
   const saveQueue = useCallback((next: OutreachLead[]) => {
     setLeads(next);
     try {
       localStorage.setItem(QUEUE_KEY, JSON.stringify(next));
-    } catch {
-      /* ignore */
-    }
+    } catch {}
   }, []);
 
   const addLog = useCallback(
-    (
-      type: BatchLogEntry['type'],
-      message: string,
-      phone?: string,
-      businessName?: string
-    ) => {
+    (type: BatchLogEntry['type'], message: string, phone?: string, businessName?: string) => {
       const entry: BatchLogEntry = {
         id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         timestamp: new Date().toLocaleTimeString('id-ID', {
@@ -169,160 +158,31 @@ export default function OutreachMachine({
         businessName,
       };
       setLogs((prev) => {
-        const updated = [entry, ...prev].slice(0, 300);
+        const next = [entry, ...prev].slice(0, 300);
         try {
-          localStorage.setItem(LOG_KEY, JSON.stringify(updated));
-        } catch {
-          /* ignore */
-        }
-        return updated;
+          localStorage.setItem(LOG_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
       });
     },
     []
   );
 
-  // Listen for telemetry logs dispatched externally (e.g. from top header sync)
-  useEffect(() => {
-    const handleCustomLog = (e: Event) => {
-      const ce = e as CustomEvent<{
-        type: BatchLogEntry['type'];
-        message: string;
-        phone?: string;
-        businessName?: string;
-      }>;
-      if (ce.detail) {
-        addLog(
-          ce.detail.type || 'info',
-          ce.detail.message,
-          ce.detail.phone,
-          ce.detail.businessName
-        );
-      }
-    };
-    window.addEventListener('add-telemetry-log', handleCustomLog);
-    return () => {
-      window.removeEventListener('add-telemetry-log', handleCustomLog);
-    };
-  }, [addLog]);
-
-  // Auto-scroll log to top on new entry
-  useEffect(() => {
-    if (logEndRef.current) {
-      logEndRef.current.scrollTop = 0;
-    }
-  }, [logs.length]);
-
-  const toggleCity = (city: string) => {
-    setSelectedCities((prev) =>
-      prev.includes(city) ? prev.filter((c) => c !== city) : [...prev, city]
-    );
+  const handleNicheSelect = (id: string) => {
+    setActiveNicheId(id);
   };
 
-  const toggleCategory = (catLabel: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(catLabel)
-        ? prev.filter((c) => c !== catLabel)
-        : [...prev, catLabel]
-    );
+  const handleCityPresetSelect = (preset: typeof CITY_PRESETS[0]) => {
+    setActiveCityPresetId(preset.id);
+    setSelectedCities(preset.cities);
   };
 
-  const selectAllCategories = () => {
-    setSelectedCategories(NICHE_CATEGORIES.map((c) => c.label));
-  };
-
-  const resetCategories = () => {
-    setSelectedCategories([NICHE_CATEGORIES[0].label]);
-  };
-
-  // ── Bulk Import WA Lama (Anti-Duplikasi Sheets) ─────────────────────────────
-  const detectedValidNumbers = React.useMemo(() => {
-    if (!importText.trim()) return [];
-    const items = importText.split(/[\r\n,;]+/).map((s) => s.trim()).filter(Boolean);
-    const valid = new Set<string>();
-    for (const item of items) {
-      const clean = normalizeIndonesianPhone(item);
-      if (clean && isValidIndonesianWhatsApp(clean)) {
-        valid.add(clean);
-      }
-    }
-    return Array.from(valid);
-  }, [importText]);
-
-  const handleBulkImportWa = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (detectedValidNumbers.length === 0) {
-      showToast('warn', 'Masukkan minimal satu nomor WhatsApp valid (format seluler 08xx / 628xx).');
-      return;
-    }
-    setIsImporting(true);
-    addLog('info', `[IMPORT WA] Memulai impor ${detectedValidNumbers.length} nomor ke database Google Sheets…`);
-    showToast('warn', `Menyimpan ${detectedValidNumbers.length} nomor ke Google Sheets...`);
-
-    try {
-      const res = await fetch('/api/sync-wa-history', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ numbers: detectedValidNumbers }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Gagal mengimpor nomor ke Google Sheets.');
-      }
-
-      if (data.newImported > 0) {
-        addLog(
-          'success',
-          `[SYNC WA] Berhasil mengimpor ${data.newImported} nomor riwayat WhatsApp lama ke Google Sheets!`
-        );
-        showToast(
-          'success',
-          `Berhasil menyimpan ${data.newImported} nomor ke database anti-duplikasi Sheets!`
-        );
-        if (onSyncSuccess) {
-          onSyncSuccess();
-        }
-      } else {
-        addLog(
-          'info',
-          `[SYNC WA] Selesai: Semua ${detectedValidNumbers.length} nomor sudah ada di Sheets (0 baru).`
-        );
-        showToast('warn', 'Semua nomor tersebut sudah terdaftar di Google Sheets.');
-      }
-
-      setIsImportModalOpen(false);
-      setImportText('');
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Gagal menyimpan ke Sheets.';
-      addLog('error', `[IMPORT WA] Gagal: ${msg}`);
-      showToast('error', msg);
-    } finally {
-      setIsImporting(false);
-    }
-  };
-
-  // ── Cancel Search Handler ───────────────────────────────────────────────────
-  const handleCancelSearch = () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-    }
-    setIsSearching(false);
-    addLog('info', '[INFO] Pencarian prospek dibatalkan oleh operator.');
-    showToast('warn', 'Pencarian prospek dibatalkan oleh operator.');
-  };
-
-  // ── 1. Search Leads (Discovery Engine: Streaming per-kota) ─────────────────
-  const handleSearch = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (isSearching) return;
-    if (selectedCities.length === 0) {
-      showToast('error', 'Pilih minimal satu kota target.');
-      return;
-    }
-    if (selectedCategories.length === 0) {
-      showToast('error', 'Pilih minimal satu kategori niche.');
-      return;
-    }
+
+    const currentNiche = HIGH_TICKET_NICHES.find((n) => n.id === activeNicheId) || HIGH_TICKET_NICHES[0];
+    const categories = [currentNiche.fullName];
 
     const controller = new AbortController();
     abortControllerRef.current = controller;
@@ -335,19 +195,13 @@ export default function OutreachMachine({
     let newlyFoundCount = 0;
     let totalSkipped = 0;
 
-    addLog(
-      'info',
-      `[DISCOVERY] Memulai pencarian ${selectedCategories.length} kategori di ${totalCities} kota terpilih (Streaming progresif per-kota)…`
-    );
+    addLog('info', `[RADAR] Memulai pencarian ${currentNiche.label} di ${selectedCities.join(', ')}…`);
 
     try {
       for (const city of selectedCities) {
         if (controller.signal.aborted) break;
         processedIndex++;
-
-        const stepLabel = `${city} (${processedIndex}/${totalCities})`;
-        setSearchProgress(stepLabel);
-        addLog('info', `[DISCOVERY] [${processedIndex}/${totalCities}] Mencari prospek di ${city}…`);
+        setSearchProgress(`${city} (${processedIndex}/${totalCities})`);
 
         try {
           const res = await fetch('/api/discovery', {
@@ -356,13 +210,13 @@ export default function OutreachMachine({
             signal: controller.signal,
             body: JSON.stringify({
               cities: [city],
-              categories: selectedCategories,
-              category: selectedCategories[0],
-              customQuery,
-              onlyWithoutWebsite: noWebsite,
-              excludeFranchise: noFranchise,
-              onlyValidWhatsApp: validWA,
-              strictA1,
+              categories,
+              category: categories[0],
+              customQuery: '',
+              onlyWithoutWebsite: true,
+              excludeFranchise: true,
+              onlyValidWhatsApp: true,
+              strictA1: true,
               blacklist: [
                 ...Array.from(blacklist),
                 ...collectedLeads.map((l) => l.phone),
@@ -372,14 +226,12 @@ export default function OutreachMachine({
 
           if (controller.signal.aborted) break;
 
-          // Safe Text-first parsing (Anti-Crash)
           const rawText = await res.text().catch(() => '');
           let data: {
             success?: boolean;
             leads?: OutreachLead[];
             skippedLogs?: Array<{ phone: string; businessName: string; reason: string }>;
             error?: string;
-            warning?: string;
           } | null = null;
           try {
             data = JSON.parse(rawText);
@@ -388,9 +240,6 @@ export default function OutreachMachine({
           }
 
           if (!res.ok || !data?.success) {
-            const errMsg =
-              data?.error || data?.warning || (res.status ? `HTTP ${res.status}` : 'Respon tidak valid');
-            addLog('warn', `[WARN] Gagal mengambil data untuk ${city}: ${errMsg}, melanjutkan ke kota berikutnya...`);
             continue;
           }
 
@@ -399,19 +248,14 @@ export default function OutreachMachine({
             Array.isArray(data.skippedLogs) ? data.skippedLogs : [];
           totalSkipped += skipped.length;
 
-          // Log telemetry discovery results
           fetched.forEach((lead) => {
             addLog(
               'info',
-              `[DISCOVERY] Menemukan ${lead.businessName} di ${lead.city} (Status: A1 Valid)`,
+              `[RADAR] Menemukan ${lead.businessName} (${lead.city}) — Lolos A1`,
               lead.phone,
               lead.businessName
             );
           });
-
-          skipped.forEach((s) =>
-            addLog('skip', `[DUPLICATE-CHECK] ${s.phone} ${s.reason} → SKIPPED`, s.phone, s.businessName)
-          );
 
           if (fetched.length > 0) {
             const existingPhones = new Set(collectedLeads.map((l) => l.phone));
@@ -427,44 +271,27 @@ export default function OutreachMachine({
             controller.signal.aborted ||
             (cityErr instanceof DOMException && cityErr.name === 'AbortError') ||
             (cityErr as { name?: string })?.name === 'AbortError';
-
-          if (isAbort) {
-            break;
-          }
-          const cityMsg = cityErr instanceof Error ? cityErr.message : 'Gangguan koneksi sementara.';
-          addLog('warn', `[WARN] Gagal mengambil data untuk ${city}: ${cityMsg}, melanjutkan ke kota berikutnya...`);
+          if (isAbort) break;
         }
       }
 
-      if (controller.signal.aborted) {
-        return;
-      }
+      if (controller.signal.aborted) return;
 
       if (newlyFoundCount === 0) {
         showToast(
           'warn',
           'Tidak ada lead baru — semua nomor sudah ada di Sheets atau tidak lolos kualifikasi A1.'
         );
-        addLog('warn', '[DISCOVERY] Selesai: 0 prospek baru memenuhi syarat Tier A1.');
       } else {
-        showToast('success', `${newlyFoundCount} prospek baru Tier A1 berhasil ditambahkan.`);
-        addLog(
-          'success',
-          `[DISCOVERY] Selesai! Berhasil menambahkan ${newlyFoundCount} prospek Tier A1 (${totalSkipped} dilewati).`
-        );
+        showToast('success', `${newlyFoundCount} prospek Tier A1 berhasil ditambahkan ke antrean.`);
       }
     } catch (err: unknown) {
       const isAbort =
         controller.signal.aborted ||
         (err instanceof DOMException && err.name === 'AbortError') ||
         (err as { name?: string })?.name === 'AbortError';
-
-      if (isAbort) {
-        return;
-      }
-      const msg = err instanceof Error ? err.message : 'Kesalahan jaringan.';
-      showToast('error', msg);
-      addLog('error', `[ERROR] Pencarian gagal: ${msg}`);
+      if (isAbort) return;
+      showToast('error', 'Gagal menghubungi server Serper.');
     } finally {
       setIsSearching(false);
       setSearchProgress('');
@@ -474,14 +301,22 @@ export default function OutreachMachine({
     }
   };
 
-  // ── Pause helper ─────────────────────────────────────────────────────────────
+  const handleCancelSearch = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setIsSearching(false);
+      setSearchProgress('');
+      showToast('warn', 'Pencarian prospek dibatalkan.');
+    }
+  };
+
   const waitWhilePaused = async () => {
     while (pausedRef.current && !abortRef.current) {
       await new Promise((r) => setTimeout(r, 300));
     }
   };
 
-  // ── 2. Run Auto-Send Batch with Jitter & Cooldown ─────────────────────────────
   const runBatch = async () => {
     if (runningRef.current) return;
     const queue = leadsRef.current;
@@ -502,7 +337,7 @@ export default function OutreachMachine({
     setIsRunning(true);
     setIsPaused(false);
     setIsCooldown(false);
-    showToast('success', `Memulai safe dispatch untuk ${pending.length} prospek (Jeda 25–45s).`);
+    showToast('success', `Memulai safe dispatch untuk ${pending.length} prospek.`);
     addLog('info', `[START] Batch safe outreach dimulai untuk ${pending.length} prospek.`);
 
     let sentInCurrentChunk = 0;
@@ -517,52 +352,34 @@ export default function OutreachMachine({
       if (!lead) continue;
       setActiveLead(lead);
 
-      // Cek blacklist live sebelum dispatch
       if (blacklist.has(lead.phone)) {
-        addLog(
-          'skip',
-          `[DUPLICATE-CHECK] ${lead.phone} sudah ada di Google Sheets → SKIPPED`,
-          lead.phone,
-          lead.businessName
-        );
+        addLog('skip', `[DUPLICAT] ${lead.phone} sudah ada di Sheets → SKIPPED`, lead.phone, lead.businessName);
         const u = [...leadsRef.current];
         u[idx] = { ...lead, status: 'skipped', error: 'Sudah ada di Google Sheets' };
         saveQueue(u);
         continue;
       }
 
-      // Step A: Dynamic Gemini Copywriting dari nol
       const qG = [...leadsRef.current];
       qG[idx] = { ...lead, status: 'generating' };
       saveQueue(qG);
 
       let finalMessage = lead.pitchMessage;
       if (!finalMessage) {
-        addLog(
-          'info',
-          `[AI GENERATING] Merancang pesan unik via Gemini untuk ${lead.businessName}...`,
-          lead.phone,
-          lead.businessName
-        );
         try {
           const gr = await fetch('/api/outreach/generate-pitch', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ lead }),
+            body: JSON.stringify({ lead, targetMode }),
           });
           const gd = await gr.json();
           if (gr.ok && gd.success && gd.message) {
             finalMessage = gd.message;
-            addLog(
-              'info',
-              `[GEMINI-AI] Pitch unik (Angle ${gd.angleUsed || 'Dynamic'}) siap untuk ${lead.businessName}.`,
-              lead.phone,
-              lead.businessName
-            );
+            if (typeof window !== 'undefined' && gd.tokensUsed) {
+              window.dispatchEvent(new CustomEvent('gk-token-deducted', { detail: { tokens: gd.tokensUsed } }));
+            }
           }
-        } catch {
-          /* fallback to dynamic pitch */
-        }
+        } catch {}
       }
 
       if (!finalMessage) {
@@ -573,6 +390,7 @@ export default function OutreachMachine({
           address: lead.address,
           rating: lead.rating,
           reviewsCount: lead.reviewsCount,
+          targetMode,
         });
       }
 
@@ -583,7 +401,6 @@ export default function OutreachMachine({
       await waitWhilePaused();
       if (abortRef.current) break;
 
-      // Step B: Fonnte Outreach Dispatch & Sheets Record
       try {
         const sr = await fetch('/api/outreach/send-single', {
           method: 'POST',
@@ -605,24 +422,13 @@ export default function OutreachMachine({
           onContactSentSuccess(lead.phone, done);
           sentInCurrentChunk++;
 
-          addLog(
-            'success',
-            `[FONNTE OUTREACH] Mengirim ke +${lead.phone}... Sukses.`,
-            lead.phone,
-            lead.businessName
-          );
-          addLog(
-            'success',
-            `[SHEETS RECORD] Menyimpan riwayat ke Google Spreadsheet.`,
-            lead.phone,
-            lead.businessName
-          );
+          addLog('success', `[SUKSES] Pesan terkirim ke ${lead.businessName} (${lead.phone})`, lead.phone);
         } else {
           const errMsg = sd.error || 'Gagal pengiriman WhatsApp Fonnte.';
           const qF = [...leadsRef.current];
           qF[idx] = { ...lead, status: 'failed', error: errMsg };
           saveQueue(qF);
-          addLog('error', `[FAILED] ${lead.businessName}: ${errMsg}`, lead.phone, lead.businessName);
+          addLog('error', `[GAGAL] ${lead.businessName}: ${errMsg}`, lead.phone);
         }
       } catch (err: unknown) {
         const errMsg = err instanceof Error ? err.message : 'Kesalahan jaringan';
@@ -632,18 +438,13 @@ export default function OutreachMachine({
         addLog('error', `[ERROR] ${lead.phone}: ${errMsg}`, lead.phone);
       }
 
-      // Step C: Periodic Cooldown (setiap 15 pesan, jeda 3-5 menit)
       const isLast = p === pending.length - 1;
       if (!isLast && !abortRef.current) {
-        if (sentInCurrentChunk >= 15) {
+        if (sentInCurrentChunk >= 20) {
           sentInCurrentChunk = 0;
           const cooldownSec = randomCooldownSeconds(180, 300);
           setIsCooldown(true);
-          setCountdownLabel('Cooldown 15 Pesan');
-          addLog(
-            'warn',
-            `[COOLDOWN] Istirahat berkala aman ${Math.round(cooldownSec / 60)} menit (${cooldownSec}s) setelah 15 pesan terkirim.`
-          );
+          setCountdownLabel('Jeda 20 pesan');
 
           for (let s = cooldownSec; s > 0; s--) {
             if (abortRef.current) break;
@@ -654,15 +455,10 @@ export default function OutreachMachine({
           }
           setIsCooldown(false);
           setCountdown(0);
-          addLog('info', `[COOLDOWN SELESAI] Melanjutkan antrean batch berikutnya.`);
         } else {
-          // Random Jitter Delay (25 - 45 detik)
-          const jitterDelay = randomJitterSeconds(25, 45);
-          setIsCooldown(false);
-          setCountdownLabel('Jeda Aman');
-          addLog('info', `[WAIT] Jeda acak ${jitterDelay} detik sebelum nomor berikutnya…`);
-
-          for (let s = jitterDelay; s > 0; s--) {
+          const jitter = randomJitterSeconds(25, 45);
+          setCountdownLabel('Kirim berikutnya');
+          for (let s = jitter; s > 0; s--) {
             if (abortRef.current) break;
             await waitWhilePaused();
             if (abortRef.current) break;
@@ -680,14 +476,14 @@ export default function OutreachMachine({
     setIsCooldown(false);
     setActiveLead(null);
     setCountdown(0);
-    showToast('success', 'Batch pengiriman selesai diproses.');
-    addLog('info', '[DONE] Seluruh antrean batch telah diproses dengan aman.');
+    showToast('success', 'Batch safe dispatch selesai!');
+    if (onSyncSuccess) onSyncSuccess();
   };
 
   const handlePause = () => {
     pausedRef.current = true;
     setIsPaused(true);
-    addLog('warn', '[PAUSE] Batch dijeda oleh operator.');
+    addLog('warn', '[PAUSE] Batch dijeda.');
   };
 
   const handleResume = () => {
@@ -705,7 +501,6 @@ export default function OutreachMachine({
     setIsCooldown(false);
     setActiveLead(null);
     setCountdown(0);
-    addLog('warn', '[STOP] Batch dihentikan paksa oleh operator.');
     showToast('warn', 'Batch berhasil dihentikan.');
   };
 
@@ -716,13 +511,75 @@ export default function OutreachMachine({
     try {
       localStorage.removeItem(QUEUE_KEY);
       localStorage.removeItem(LOG_KEY);
-    } catch {
-      /* ignore */
-    }
-    showToast('success', 'Antrean dan live log berhasil di-reset.');
+    } catch {}
+    showToast('success', 'Antrean prospek berhasil di-reset.');
   };
 
-  // ── Metrics Calculation ──────────────────────────────────────────────────────
+  const handleExportCsv = () => {
+    if (leads.length === 0) return;
+    const header = 'Nama Bisnis,WhatsApp,Kota,Kategori,Rating,Ulasan,Status\n';
+    const rows = leads
+      .map(
+        (l) =>
+          `"${(l.businessName || '').replace(/"/g, '""')}","${l.phone}","${l.city || ''}","${l.category || ''}",${l.rating || 0},${l.reviewsCount || 0},"${l.status}"`
+      )
+      .join('\n');
+    const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `leads_${activeNicheId}_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('success', `${leads.length} data prospek berhasil diekspor ke CSV.`);
+  };
+
+  const handleManualWhatsApp = async (item: OutreachLead) => {
+    const rawClean = item.phone.replace(/\D/g, '');
+    let normalized = rawClean;
+    if (normalized.startsWith('0')) normalized = '62' + normalized.slice(1);
+    else if (normalized.startsWith('8')) normalized = '62' + normalized;
+
+    let pitch = item.pitchMessage;
+    if (!pitch) {
+      pitch = getDynamicFallbackPitch({
+        businessName: item.businessName,
+        category: item.category,
+        city: item.city,
+        address: item.address,
+        rating: item.rating,
+        reviewsCount: item.reviewsCount,
+        targetMode,
+      });
+    }
+
+    const waUrl = `https://wa.me/${normalized}?text=${encodeURIComponent(pitch)}`;
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
+
+    const updatedLead: OutreachLead = { ...item, status: 'sent', pitchMessage: pitch };
+    const nextLeads = leadsRef.current.map((l) => (l.id === item.id ? updatedLead : l));
+    saveQueue(nextLeads);
+    onContactSentSuccess(normalized, updatedLead);
+
+    try {
+      await fetch('/api/sheets/update-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: normalized,
+          status: 'CONTACTED',
+          businessName: item.businessName,
+        }),
+      });
+      showToast('success', `WA ${item.businessName} dibuka & otomatis dicatat ke Sheets!`);
+    } catch {
+      showToast('warn', 'WA dibuka, namun gagal mencatat ke Google Sheets.');
+    }
+
+    if (onSyncSuccess) onSyncSuccess();
+  };
+
   const totalLeads = leads.length;
   const sentCount = leads.filter((l) => l.status === 'sent').length;
   const failedCount = leads.filter((l) => l.status === 'failed').length;
@@ -732,865 +589,512 @@ export default function OutreachMachine({
   ).length;
   const processedCount = sentCount + failedCount + skipCount;
   const progressPct = totalLeads > 0 ? Math.round((processedCount / totalLeads) * 100) : 0;
+  const estimatedQueueValue = readyCount * 2500000;
+  const sultanCount = leads.filter((l) => (l.reviewsCount || 0) >= 25).length;
 
-  // Filter queue for table
   const filteredLeads = leads.filter((l) => {
-    if (!queueSearch.trim()) return true;
-    const q = queueSearch.toLowerCase();
-    return (
-      l.businessName.toLowerCase().includes(q) ||
-      l.city.toLowerCase().includes(q) ||
-      l.category.toLowerCase().includes(q) ||
-      l.phone.includes(q)
-    );
+    if (tableFilter === 'READY') {
+      return l.status === 'ready' || l.status === 'in_queue' || l.status === 'pending';
+    }
+    if (tableFilter === 'SENT') {
+      return l.status === 'sent';
+    }
+    if (tableFilter === 'HIGH_REVIEWS') {
+      return (l.reviewsCount || 0) >= 25;
+    }
+    return true;
   });
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 gap-6">
-
-      {/* ═════════════════════════════════════════════════════════════
-          SECTION A: PARAMETER & FILTER PROSPEK (Grid 3 Kolom)
-      ═════════════════════════════════════════════════════════════ */}
-      <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs shrink-0">
-        <form onSubmit={handleSearch}>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-            {/* Kolom 1 — Kota Target & Preset Jawa Timur 38 Wilayah */}
-            <div className="flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-slate-500" />
-                    <label className="text-xs font-semibold text-slate-900 uppercase tracking-wider">
-                      Wilayah Target
-                    </label>
-                  </div>
-                  <span className="text-[11px] text-slate-500">
-                    <span className="font-semibold text-slate-900">{selectedCities.length}</span> terpilih
-                  </span>
-                </div>
-
-                {/* Quick Presets Bar */}
-                <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedCities(Array.from(ALL_38_JAWA_TIMUR))}
-                    className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-2xs transition cursor-pointer flex items-center gap-1"
-                    title="Pilih seluruh 38 Kota & Kabupaten di Jawa Timur"
-                  >
-                    <Zap className="w-3 h-3 fill-current" />
-                    <span>⚡ Seluruh Jawa Timur (38)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setSelectedCities(Array.from(KORIDOR_UTAMA_JAWA))}
-                    className="px-2 py-1 rounded-md text-[11px] font-medium border border-slate-200 hover:bg-slate-100 text-slate-700 transition cursor-pointer"
-                  >
-                    Koridor Jawa
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setSelectedCities(DEFAULT_CITIES)}
-                    className="px-2 py-1 rounded-md text-[11px] font-medium border border-slate-200 hover:bg-slate-100 text-slate-700 transition cursor-pointer"
-                  >
-                    Default Jatim
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setSelectedCities([])}
-                    className="px-2 py-1 rounded-md text-[11px] font-medium text-slate-400 hover:text-rose-600 transition cursor-pointer ml-auto"
-                  >
-                    Reset
-                  </button>
-                </div>
-
-                {/* Cities Pill Selector */}
-                <div className="flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto pr-1">
-                  {ALL_AVAILABLE_CITIES.map((city) => {
-                    const active = selectedCities.includes(city);
-                    return (
-                      <button
-                        key={city}
-                        type="button"
-                        onClick={() => toggleCity(city)}
-                        className={`px-2.5 py-0.5 rounded-md text-[11px] font-medium border transition-all cursor-pointer ${
-                          active
-                            ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300 hover:text-slate-900'
-                        }`}
-                      >
-                        {city}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* Kolom 2 — Kategori Niche (7 Kategori High-Value & Perusahaan) */}
-            <div className="flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-slate-100 lg:pl-6 pt-4 lg:pt-0">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Filter className="w-4 h-4 text-slate-500" />
-                    <label className="text-xs font-semibold text-slate-900 uppercase tracking-wider">
-                      Kategori High-Value &amp; B2B
-                    </label>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[11px]">
-                    <span className="text-slate-500 font-medium">
-                      ({selectedCategories.length} terpilih / {NICHE_CATEGORIES.length})
-                    </span>
-                    <span className="text-slate-300">·</span>
-                    <button
-                      type="button"
-                      onClick={selectAllCategories}
-                      className="text-slate-700 hover:text-slate-900 font-semibold transition cursor-pointer"
-                    >
-                      Pilih Semua
-                    </button>
-                    <span className="text-slate-300">·</span>
-                    <button
-                      type="button"
-                      onClick={resetCategories}
-                      className="text-slate-400 hover:text-rose-600 font-medium transition cursor-pointer"
-                    >
-                      Reset
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1 max-h-[140px] overflow-y-auto pr-1">
-                  {NICHE_CATEGORIES.map((cat) => {
-                    const active = selectedCategories.includes(cat.label);
-                    return (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={() => toggleCategory(cat.label)}
-                        className={`text-left px-2.5 py-1.5 rounded-md text-xs font-medium border transition-all cursor-pointer flex items-center justify-between ${
-                          active
-                            ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 truncate">
-                          <div
-                            className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors ${
-                              active
-                                ? 'bg-white border-white text-slate-900'
-                                : 'border-slate-300 bg-white'
-                            }`}
-                          >
-                            {active && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-                          </div>
-                          <span className="font-semibold truncate">{cat.label}</span>
-                        </div>
-                        <span
-                          className={`text-[10px] ml-2 shrink-0 ${
-                            active ? 'text-slate-300' : 'text-slate-400'
-                          }`}
-                        >
-                          {cat.description}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Custom search keyword */}
-              <div className="mt-2.5">
-                <input
-                  type="text"
-                  value={customQuery}
-                  onChange={(e) => setCustomQuery(e.target.value)}
-                  placeholder="Kueri spesifik (contoh: Klinik Estetika Malang)"
-                  className="w-full h-8 px-3 text-xs rounded-md bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900 focus:bg-white transition"
-                />
-              </div>
-            </div>
-
-            {/* Kolom 3 — Kualifikasi Ketat Tier A1 & Tombol Aksi */}
-            <div className="flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-slate-100 lg:pl-6 pt-4 lg:pt-0">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  <label className="text-xs font-semibold text-slate-900 uppercase tracking-wider">
-                    Kualifikasi Ketat Prospek Tier A1
-                  </label>
-                </div>
-
-                <div className="space-y-1.5 mb-3.5">
-                  <label className="flex items-center gap-2.5 text-xs text-slate-800 font-medium cursor-pointer hover:text-slate-900 select-none">
-                    <input
-                      type="checkbox"
-                      checked={strictA1}
-                      onChange={(e) => setStrictA1(e.target.checked)}
-                      className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 cursor-pointer"
-                    />
-                    <span className="font-semibold text-slate-900">
-                      Tier A1 Mutlak (Tanpa Web Resmi + Review &ge;3)
-                    </span>
-                  </label>
-
-                  <label className="flex items-center gap-2.5 text-xs text-slate-700 font-medium cursor-pointer hover:text-slate-900 select-none">
-                    <input
-                      type="checkbox"
-                      checked={validWA}
-                      onChange={(e) => setValidWA(e.target.checked)}
-                      className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 cursor-pointer"
-                    />
-                    <span>WhatsApp Valid (628/08, Drop Telepon Kabel)</span>
-                  </label>
-
-                  <label className="flex items-center gap-2.5 text-xs text-slate-700 font-medium cursor-pointer hover:text-slate-900 select-none">
-                    <input
-                      type="checkbox"
-                      checked={noFranchise}
-                      onChange={(e) => setNoFranchise(e.target.checked)}
-                      className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 cursor-pointer"
-                    />
-                    <span>Tolak Franchise / Waralaba Multinasional</span>
-                  </label>
-
-                  <label className="flex items-center gap-2.5 text-xs text-slate-700 font-medium cursor-pointer hover:text-slate-900 select-none">
-                    <input
-                      type="checkbox"
-                      checked={noWebsite}
-                      onChange={(e) => setNoWebsite(e.target.checked)}
-                      className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 cursor-pointer"
-                    />
-                    <span>Hanya Bisnis Tanpa Website Mandiri</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Main Action Button / Cancel Button Group */}
-              {!isSearching ? (
-                <button
-                  type="submit"
-                  className="w-full h-10 px-4 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-xs transition active:scale-[0.99] cursor-pointer"
-                >
-                  <Search className="w-4 h-4" />
-                  <span>🔍 Cari Prospek Bersih Tier A1</span>
-                </button>
-              ) : (
-                <div className="flex items-center gap-2 w-full">
-                  <button
-                    type="button"
-                    disabled
-                    className="flex-1 h-10 px-3 rounded-lg bg-slate-800 text-white text-xs font-semibold flex items-center justify-center gap-2 cursor-not-allowed opacity-90 shadow-xs"
-                  >
-                    <Loader2 className="w-4 h-4 animate-spin text-slate-300 shrink-0" />
-                    <span className="truncate">⏳ {searchProgress || 'Mengecek Serper & Memfilter A1...'}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCancelSearch}
-                    className="h-10 px-4 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium transition-colors flex items-center gap-1.5 shrink-0 shadow-xs active:scale-[0.98] cursor-pointer"
-                    title="Batalkan proses pencarian"
-                  >
-                    <X className="w-4 h-4" />
-                    <span>✕ Batal</span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-          </div>
-        </form>
-      </section>
-
-      {/* ═════════════════════════════════════════════════════════════
-          SECTION B: STATUS BATCH & METRIK (4 KPI Card + Safe Dispatch)
-      ═════════════════════════════════════════════════════════════ */}
-      <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs shrink-0 flex flex-col gap-4">
-        {/* 4 Balanced KPI Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-
-          {/* 1. Antrean Siap Kirim (Netral / Slate) */}
-          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                Antrean Siap Kirim
-              </span>
-              <div className="w-7 h-7 rounded-lg bg-slate-200/70 text-slate-700 flex items-center justify-center">
-                <Layers className="w-3.5 h-3.5" />
-              </div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-slate-900">{readyCount}</div>
-              <div className="text-[11px] text-slate-500 mt-0.5">dari {totalLeads} total prospek</div>
-            </div>
-          </div>
-
-          {/* 2. Sukses Terkirim (Hijau / Emerald) */}
-          <div className="p-4 rounded-xl border border-emerald-100 bg-emerald-50/40 flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider">
-                Sukses Terkirim
-              </span>
-              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-              </div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-emerald-700">{sentCount}</div>
-              <div className="text-[11px] text-emerald-600/80 mt-0.5">Tersimpan ke Sheets</div>
-            </div>
-          </div>
-
-          {/* 3. Dilewati / Duplikat (Abu-abu / Slate) */}
-          <div className="p-4 rounded-xl border border-slate-200 bg-slate-100/50 flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
-                Dilewati / Duplikat
-              </span>
-              <div className="w-7 h-7 rounded-lg bg-slate-200 text-slate-600 flex items-center justify-center">
-                <ShieldCheck className="w-3.5 h-3.5" />
-              </div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-slate-700">{skipCount}</div>
-              <div className="text-[11px] text-slate-500 mt-0.5">Terproteksi anti-duplikasi</div>
-            </div>
-          </div>
-
-          {/* 4. Gagal / Timeout (Merah / Rose) */}
-          <div className="p-4 rounded-xl border border-rose-100 bg-rose-50/40 flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-semibold text-rose-700 uppercase tracking-wider">
-                Gagal / Timeout
-              </span>
-              <div className="w-7 h-7 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center">
-                <XCircle className="w-3.5 h-3.5" />
-              </div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-rose-700">{failedCount}</div>
-              <div className="text-[11px] text-rose-600/80 mt-0.5">Memerlukan retry</div>
-            </div>
-          </div>
-
+    <div className="flex flex-col w-full">
+      <section className="bg-white border border-[#E5E7EB] rounded-[8px] p-5 mb-6">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500 mb-3">
+          1 · PILIH NICHE
         </div>
 
-        {/* Progress Bar & Safe Dispatch Jitter Status */}
-        <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-
-          {/* Left: Progress info & Live Countdown Visual */}
-          <div className="flex-1 max-w-xl">
-            <div className="flex items-center justify-between text-xs mb-1.5">
-              <span className="text-slate-600 font-medium">
-                Kemajuan Batch:{' '}
-                <span className="text-slate-900 font-semibold">
-                  {processedCount} / {totalLeads} ({progressPct}%)
-                </span>
-              </span>
-
-              {/* Countdown Visualizer */}
-              {countdown > 0 && isRunning && (
-                <span
-                  className={`font-mono text-xs px-2 py-0.5 rounded-md flex items-center gap-1.5 font-bold shadow-2xs ${
-                    isCooldown
-                      ? 'bg-amber-100 text-amber-900 border border-amber-300 animate-pulse'
-                      : 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5" id="niche-selector">
+          {HIGH_TICKET_NICHES.map((niche) => {
+            const active = activeNicheId === niche.id;
+            return (
+              <div
+                key={niche.id}
+                onClick={() => handleNicheSelect(niche.id)}
+                className={`niche-card relative border p-4 rounded-[8px] cursor-pointer transition-colors ${
+                  active
+                    ? 'border-[#059669] bg-emerald-50/20'
+                    : 'border-[#E5E7EB] bg-white hover:border-slate-300'
+                }`}
+              >
+                {active && (
+                  <span className="material-symbols-outlined absolute top-3 right-3 text-[#059669] text-[18px]">
+                    check_circle
+                  </span>
+                )}
+                <div
+                  className={`w-8 h-8 rounded-[6px] flex items-center justify-center mb-3 ${
+                    active ? 'bg-emerald-100/60 text-emerald-700' : 'bg-slate-100 text-slate-600'
                   }`}
                 >
-                  {isCooldown ? <Coffee className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
-                  <span>
-                    {countdownLabel}: {countdown}s
-                  </span>
-                </span>
-              )}
+                  <span className="material-symbols-outlined text-[18px]">{niche.icon}</span>
+                </div>
+                <div className="text-[14px] font-semibold text-slate-900 leading-snug">{niche.label}</div>
+                <div className="text-[12px] text-slate-500 mt-0.5">{niche.cities}</div>
+                <div
+                  className={`font-mono text-[13px] font-medium mt-2 tracking-tight ${
+                    active ? 'text-emerald-700' : 'text-slate-700'
+                  }`}
+                >
+                  {niche.dealRange}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-1">
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500 mb-2">
+              2 · PILIH WILAYAH
             </div>
-            <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+            <div className="bg-slate-100 p-1 rounded-md inline-flex border border-slate-200 text-xs font-medium">
+              {CITY_PRESETS.map((preset) => {
+                const active = activeCityPresetId === preset.id;
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => handleCityPresetSelect(preset)}
+                    className={`px-3 py-1 rounded-[4px] transition-colors cursor-pointer ${
+                      active
+                        ? 'bg-white text-slate-900 border border-slate-200/80 shadow-none font-medium'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <div className="text-[12px] text-slate-500 mb-1 lg:text-right">Gaya pesan</div>
+            <div className="bg-slate-100 p-1 rounded-md inline-flex border border-slate-200 text-xs font-medium">
+              <button
+                type="button"
+                onClick={() => setTargetMode('admin_gatekeeper')}
+                className={`px-3 py-1 rounded-[4px] transition-colors cursor-pointer ${
+                  targetMode === 'admin_gatekeeper'
+                    ? 'bg-white text-slate-900 border border-slate-200/80 shadow-none font-medium'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Lewat admin (disarankan)
+              </button>
+              <button
+                type="button"
+                onClick={() => setTargetMode('owner_direct')}
+                className={`px-3 py-1 rounded-[4px] transition-colors cursor-pointer ${
+                  targetMode === 'owner_direct'
+                    ? 'bg-white text-slate-900 border border-slate-200/80 shadow-none font-medium'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Langsung ke owner
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="text-[12px] text-slate-500 flex items-center gap-2">
+            <span className="material-symbols-outlined text-[16px] text-slate-400">verified_user</span>
+            <span>Kualifikasi A1 otomatis: bukan franchise · belum punya web · WhatsApp seluler valid</span>
+          </div>
+
+          {!isSearching ? (
+            <button
+              onClick={handleSearch}
+              className="bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-medium px-4 py-2 rounded-[6px] transition-colors flex items-center justify-center gap-1.5 self-start sm:self-auto cursor-pointer"
+              type="button"
+            >
+              <span className="material-symbols-outlined text-[15px]">radar</span>
+              <span>Tarik prospek A1</span>
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled
+                className="bg-slate-800 text-white text-xs font-medium px-4 py-2 rounded-[6px] opacity-90 flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-[15px] animate-spin">refresh</span>
+                <span>Menyelidiki {searchProgress}…</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelSearch}
+                className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium px-3 py-2 rounded-[6px] cursor-pointer"
+              >
+                Batal
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white border border-[#E5E7EB] p-4 rounded-[8px]">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">
+              ANTREAN SIAP KIRIM
+            </div>
+            <div className="font-mono text-[28px] font-semibold text-slate-900 mt-1 leading-none">
+              {readyCount}
+            </div>
+          </div>
+
+          <div className="bg-white border border-[#E5E7EB] p-4 rounded-[8px]">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">TERKIRIM</div>
+            <div className="font-mono text-[28px] font-semibold text-slate-900 mt-1 leading-none">
+              {sentCount}
+            </div>
+          </div>
+
+          <div className="bg-white border border-[#E5E7EB] p-4 rounded-[8px]">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">
+              DILEWATI / DUPLIKAT
+            </div>
+            <div className="font-mono text-[28px] font-semibold text-slate-400 mt-1 leading-none">
+              {skipCount}
+            </div>
+          </div>
+
+          <div className="bg-white border border-[#E5E7EB] p-4 rounded-[8px]">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">
+              ESTIMASI PIPELINE
+            </div>
+            <div className="font-mono text-[28px] font-semibold text-emerald-700 mt-1 leading-none">
+              Rp {estimatedQueueValue.toLocaleString('id-ID')}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white border border-[#E5E7EB] px-4 py-2.5 rounded-[8px] mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-3">
+            <span className="font-mono font-medium text-slate-700">
+              {countdown > 0
+                ? `${countdownLabel} dalam 00:${String(countdown).padStart(2, '0')}`
+                : isRunning
+                ? 'Sedang mengirim pesan…'
+                : 'Siap dispatch aman'}
+            </span>
+            <div className="w-36 h-1 bg-slate-100 rounded-full overflow-hidden">
               <div
-                className={`h-full transition-all duration-500 ease-out ${
-                  isCooldown ? 'bg-amber-500' : 'bg-slate-900'
+                className={`h-full rounded-full transition-all duration-300 ${
+                  isCooldown ? 'bg-amber-500' : 'bg-[#059669]'
                 }`}
                 style={{ width: `${progressPct}%` }}
-              />
+              ></div>
             </div>
           </div>
 
-          {/* Right: Actions */}
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => setIsImportModalOpen(true)}
-              className="h-9 px-3.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
-              title="Import daftar nomor WhatsApp yang pernah di-chat sebelumnya agar tidak terduplikasi"
-            >
-              <Upload className="w-3.5 h-3.5 text-slate-500" />
-              <span>📥 Import Nomor WA Lama</span>
-            </button>
-
-            {!isRunning ? (
-              <button
-                type="button"
-                onClick={runBatch}
-                disabled={readyCount === 0}
-                className="h-9 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 text-white text-xs font-semibold flex items-center gap-2 shadow-xs transition active:scale-[0.99] cursor-pointer"
-              >
-                <Play className="w-3.5 h-3.5 fill-current" />
-                <span>🚀 Jalankan Batch Auto-Send (Jeda 25–45s)</span>
-              </button>
-            ) : (
-              <div className="flex items-center gap-2">
-                {isPaused ? (
-                  <button
-                    type="button"
-                    onClick={handleResume}
-                    className="h-9 px-3.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
-                  >
-                    <Play className="w-3.5 h-3.5 fill-current" />
-                    <span>Lanjutkan</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handlePause}
-                    className="h-9 px-3.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
-                  >
-                    <Pause className="w-3.5 h-3.5 fill-current" />
-                    <span>Jeda</span>
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={handleStop}
-                  className="h-9 px-3.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
-                >
-                  <Square className="w-3.5 h-3.5 fill-current" />
-                  <span>Hentikan</span>
-                </button>
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={handleReset}
-              disabled={isRunning || (leads.length === 0 && logs.length === 0)}
-              className="h-9 px-3.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
-              title="Reset antrean dan terminal log"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>↺ Reset Antrean</span>
-            </button>
-          </div>
-
-        </div>
-      </section>
-
-      {/* ═════════════════════════════════════════════════════════════
-          SECTION C: REALTIME CONSOLE & ANTREAN AKTIF (Full Height)
-      ═════════════════════════════════════════════════════════════ */}
-      <section className="flex-1 min-h-[380px] grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden">
-
-        {/* Panel Kiri: Tabel Antrean Batch (Col 7) */}
-        <div className="lg:col-span-7 bg-white border border-slate-200 rounded-xl shadow-xs flex flex-col h-full overflow-hidden">
-          {/* Header */}
-          <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between gap-3 shrink-0 bg-slate-50/50">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-900 uppercase tracking-wider">
-                Tabel Antrean Batch Tier A1
-              </span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200/80 text-slate-700">
-                {leads.length} Target
-              </span>
-            </div>
-
-            <div className="relative w-48">
-              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={queueSearch}
-                onChange={(e) => setQueueSearch(e.target.value)}
-                placeholder="Cari dalam antrean…"
-                className="w-full h-7 pl-8 pr-2.5 text-xs rounded-md bg-white border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900"
-              />
-            </div>
-          </div>
-
-          {/* Table Content */}
-          <div className="flex-1 min-h-0 overflow-auto">
-            {filteredLeads.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-400">
-                <Layers className="w-8 h-8 stroke-1 text-slate-300 mb-2" />
-                <p className="text-xs font-medium text-slate-600">Antrean prospek masih kosong</p>
-                <p className="text-[11px] text-slate-400 mt-0.5 max-w-xs">
-                  Gunakan parameter filter di atas dan klik &ldquo;Cari Prospek Bersih Tier A1&rdquo; untuk mengisi antrean batch.
-                </p>
-              </div>
-            ) : (
-              <table className="w-full text-left text-xs border-collapse">
-                <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold text-[11px] uppercase tracking-wider z-10">
-                  <tr>
-                    <th className="px-4 py-2.5">Nama Bisnis</th>
-                    <th className="px-3 py-2.5">Kota</th>
-                    <th className="px-3 py-2.5">Kategori</th>
-                    <th className="px-3 py-2.5">Nomor WA</th>
-                    <th className="px-3 py-2.5">Rating</th>
-                    <th className="px-4 py-2.5 text-right">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filteredLeads.map((item) => {
-                    const isActive = activeLead?.id === item.id;
-                    return (
-                      <tr
-                        key={item.id}
-                        className={`transition-colors ${
-                          isActive
-                            ? 'bg-blue-50/60 font-medium'
-                            : 'hover:bg-slate-50/80'
-                        }`}
-                      >
-                        {/* 1. Nama Bisnis */}
-                        <td className="px-4 py-2.5 max-w-[180px]">
-                          <div className="truncate font-medium text-slate-900" title={item.businessName}>
-                            {item.businessName}
-                          </div>
-                          {item.hasWebsite ? (
-                            <span className="text-[10px] text-slate-400">Website Mandiri</span>
-                          ) : item.website ? (
-                            <span className="text-[10px] text-amber-600 font-medium truncate block" title={item.website}>
-                              Medsos/Linktree ★
-                            </span>
-                          ) : (
-                            <span className="text-[10px] text-emerald-600 font-medium">Tanpa Website ★</span>
-                          )}
-                        </td>
-
-                        {/* 2. Kota */}
-                        <td className="px-3 py-2.5 whitespace-nowrap text-slate-600">
-                          {item.city}
-                        </td>
-
-                        {/* 3. Kategori */}
-                        <td className="px-3 py-2.5 whitespace-nowrap">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700">
-                            {item.category}
-                          </span>
-                        </td>
-
-                        {/* 4. Nomor WA */}
-                        <td className="px-3 py-2.5 whitespace-nowrap font-mono text-[11px] text-slate-800">
-                          {formatPhoneDisplay(item.phone)}
-                        </td>
-
-                        {/* 5. Rating */}
-                        <td className="px-3 py-2.5 whitespace-nowrap">
-                          {item.rating > 0 ? (
-                            <div className="flex items-center gap-1 font-mono text-[11px] text-slate-700">
-                              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                              <span>{item.rating}</span>
-                              <span className="text-slate-400 text-[10px]">({item.reviewsCount})</span>
-                            </div>
-                          ) : (
-                            <span className="text-slate-300">—</span>
-                          )}
-                        </td>
-
-                        {/* 6. Status Pill */}
-                        <td className="px-4 py-2.5 whitespace-nowrap text-right">
-                          {item.status === 'sent' && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              <CheckCircle2 className="w-3 h-3" />
-                              Terkirim
-                            </span>
-                          )}
-                          {item.status === 'sending' && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 animate-pulse">
-                              <Send className="w-3 h-3" />
-                              Mengirim WA…
-                            </span>
-                          )}
-                          {item.status === 'generating' && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-50 text-purple-700 border border-purple-200">
-                              <Sparkles className="w-3 h-3 animate-spin" />
-                              Gemini AI…
-                            </span>
-                          )}
-                          {item.status === 'failed' && (
-                            <span
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200"
-                              title={item.error}
-                            >
-                              <XCircle className="w-3 h-3" />
-                              Gagal
-                            </span>
-                          )}
-                          {item.status === 'skipped' && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-500 border border-slate-200">
-                              Dilewati
-                            </span>
-                          )}
-                          {(item.status === 'ready' ||
-                            item.status === 'in_queue' ||
-                            item.status === 'pending') && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-700">
-                              Siap Kirim
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
-
-        {/* Panel Kanan: Terminal Live Log (Col 5) */}
-        <div className="lg:col-span-5 bg-slate-950 border border-slate-800 rounded-xl shadow-inner flex flex-col h-full overflow-hidden text-slate-300 font-mono text-xs">
-          {/* Terminal Window Bar */}
-          <div className="px-4 py-2.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between shrink-0">
-            {/* macOS 3 dots */}
+          <div className="flex items-center gap-4">
+            <span className="text-slate-500">Jeda otomatis setiap 20 pesan</span>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80 inline-block" />
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80 inline-block" />
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80 inline-block" />
-              <span className="ml-2 text-[11px] font-medium text-slate-400 flex items-center gap-1.5">
-                <TerminalIcon className="w-3 h-3 text-slate-400" />
-                Live Telemetry &amp; Logs
-              </span>
-            </div>
-
-            {/* Active pulse */}
-            <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 relative">
-                <span
-                  className={`absolute inline-flex h-full w-full rounded-full ${
-                    isRunning
-                      ? isCooldown
-                        ? 'bg-amber-400 animate-ping opacity-75'
-                        : 'bg-emerald-400 animate-ping opacity-75'
-                      : 'bg-slate-600'
-                  }`}
-                />
-                <span
-                  className={`relative inline-flex rounded-full h-2 w-2 ${
-                    isRunning
-                      ? isCooldown
-                        ? 'bg-amber-500'
-                        : 'bg-emerald-500'
-                      : 'bg-slate-500'
-                  }`}
-                />
-              </span>
-              <span className="text-[10px] text-slate-400 uppercase tracking-wider">
-                {isRunning
-                  ? isPaused
-                    ? 'Paused'
-                    : isCooldown
-                    ? 'Cooldown'
-                    : 'Dispatching'
-                  : 'Idle'}
-              </span>
-            </div>
-          </div>
-
-          {/* Terminal Logs Stream */}
-          <div
-            ref={logEndRef}
-            className="flex-1 min-h-0 overflow-y-auto p-4 space-y-1.5 terminal-scroll"
-          >
-            {logs.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center text-slate-600 py-12">
-                <TerminalIcon className="w-6 h-6 stroke-1 mb-2 text-slate-700" />
-                <p className="text-[11px] text-slate-500">Terminal siap menerima event stream.</p>
-                <p className="text-[10px] text-slate-600 mt-0.5">
-                  Log kualifikasi A1, AI generation, anti-duplikasi, dan status pengiriman Fonnte akan tampil di sini.
-                </p>
-              </div>
-            ) : (
-              logs.map((log) => {
-                const isDiscovery = log.message.includes('DISCOVERY');
-                const isDup = log.message.includes('DUPLICATE-CHECK') || log.type === 'skip';
-                const isAiGen = log.message.includes('AI GENERATING') || log.message.includes('GEMINI-AI');
-                const isFonnte = log.message.includes('FONNTE OUTREACH') || log.message.includes('FONNTE-SUCCESS');
-                const isSheets = log.message.includes('SHEETS RECORD');
-                const isCooldownLog = log.message.includes('COOLDOWN');
-                const isErr = log.type === 'error' || log.message.includes('ERROR');
-                const isWarn = log.type === 'warn' || log.message.includes('WARN');
-                const isSuccess = log.type === 'success' || log.message.includes('SUCCESS');
-
-                return (
-                  <div
-                    key={log.id}
-                    className="flex items-start gap-2 text-[11px] leading-relaxed break-words hover:bg-slate-900/50 px-1 py-0.5 rounded transition"
-                  >
-                    <span className="text-slate-500 shrink-0 select-none">[{log.timestamp}]</span>
-
-                    {/* Tag badge */}
-                    {isDiscovery ? (
-                      <span className="text-cyan-400 font-semibold shrink-0">[DISCOVERY]</span>
-                    ) : isAiGen ? (
-                      <span className="text-purple-400 font-semibold shrink-0">[AI GENERATING]</span>
-                    ) : isFonnte ? (
-                      <span className="text-emerald-400 font-semibold shrink-0">[FONNTE OUTREACH]</span>
-                    ) : isSheets ? (
-                      <span className="text-blue-400 font-semibold shrink-0">[SHEETS RECORD]</span>
-                    ) : isCooldownLog ? (
-                      <span className="text-amber-400 font-semibold shrink-0">[COOLDOWN]</span>
-                    ) : isDup ? (
-                      <span className="text-amber-300 font-semibold shrink-0">[DUPLICATE-CHECK]</span>
-                    ) : isErr ? (
-                      <span className="text-rose-400 font-semibold shrink-0">[ERROR]</span>
-                    ) : isWarn ? (
-                      <span className="text-amber-300 font-semibold shrink-0">[WARN]</span>
-                    ) : isSuccess ? (
-                      <span className="text-emerald-400 font-semibold shrink-0">[SUCCESS]</span>
-                    ) : (
-                      <span className="text-slate-400 font-semibold shrink-0">[INFO]</span>
-                    )}
-
-                    <span
-                      className={
-                        isErr
-                          ? 'text-rose-300'
-                          : isDup
-                          ? 'text-amber-200'
-                          : isFonnte || isSheets || isSuccess
-                          ? 'text-emerald-300'
-                          : isAiGen
-                          ? 'text-purple-200'
-                          : isDiscovery
-                          ? 'text-cyan-200'
-                          : isCooldownLog
-                          ? 'text-amber-200'
-                          : 'text-slate-300'
-                      }
+              {!isRunning ? (
+                <button
+                  type="button"
+                  onClick={runBatch}
+                  disabled={readyCount === 0}
+                  className="bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400 text-white px-3 py-1 rounded text-[11px] font-medium transition-colors cursor-pointer"
+                >
+                  Mulai Auto-Send
+                </button>
+              ) : (
+                <>
+                  {isPaused ? (
+                    <button
+                      type="button"
+                      onClick={handleResume}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer"
                     >
-                      {log.message.replace(
-                        /^\[(DISCOVERY|AI GENERATING|GEMINI-AI|FONNTE OUTREACH|FONNTE-SUCCESS|SHEETS RECORD|COOLDOWN|COOLDOWN SELESAI|DUPLICATE-CHECK|ERROR|WARN|INFO|SUCCESS|START|WAIT|DONE)\]\s*/,
-                        ''
-                      )}
-                    </span>
-                  </div>
-                );
-              })
-            )}
+                      Lanjut
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handlePause}
+                      className="border border-slate-300 hover:bg-slate-50 px-2 py-0.5 rounded text-[11px] font-medium text-slate-700 transition-colors cursor-pointer"
+                    >
+                      Jeda
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleStop}
+                    className="border border-rose-300 text-rose-700 hover:bg-rose-50 px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer"
+                  >
+                    Hentikan
+                  </button>
+                </>
+              )}
+              <button
+                type="button"
+                onClick={handleExportCsv}
+                disabled={leads.length === 0}
+                className="border border-slate-200 hover:bg-slate-50 text-slate-600 px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer disabled:opacity-40 inline-flex items-center gap-1"
+                title="Ekspor daftar prospek ke file CSV"
+              >
+                <span className="material-symbols-outlined text-[12px]">download</span>
+                <span>Export CSV</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleReset}
+                disabled={isRunning || leads.length === 0}
+                className="border border-slate-200 hover:bg-slate-50 text-slate-500 px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer disabled:opacity-40"
+              >
+                Reset
+              </button>
+            </div>
           </div>
+        </div>
+      </section>
 
-          {/* Terminal Footer Info */}
-          <div className="px-4 py-2 border-t border-slate-900 bg-slate-950/80 flex items-center justify-between text-[10px] text-slate-500">
-            <span>Log buffer: {logs.length} entri</span>
+      <section className="bg-white border border-[#E5E7EB] rounded-[8px] overflow-hidden mb-6">
+        <div className="px-4 py-3 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50/50">
+          <div className="text-[13px] font-semibold text-slate-900 flex items-center gap-2">
+            <span>Prospek Hasil Radar</span>
+            <span className="text-slate-400 font-normal">·</span>
+            <span className="text-slate-500 font-normal text-[12px]">({filteredLeads.length} Terverifikasi A1)</span>
+          </div>
+          <div className="flex items-center gap-1 bg-slate-200/60 p-0.5 rounded-md text-[11px] font-medium">
             <button
               type="button"
-              onClick={() => {
-                const text = logs.map((l) => `[${l.timestamp}] ${l.message}`).join('\n');
-                navigator.clipboard.writeText(text);
-                showToast('success', 'Log berhasil disalin ke clipboard.');
-              }}
-              className="hover:text-slate-300 transition cursor-pointer"
+              onClick={() => setTableFilter('ALL')}
+              className={`px-2.5 py-1 rounded-[4px] cursor-pointer ${
+                tableFilter === 'ALL'
+                  ? 'bg-white text-slate-900 border border-slate-200/60 shadow-none'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
             >
-              Salin Semua Log
+              Semua
+            </button>
+            <button
+              type="button"
+              onClick={() => setTableFilter('READY')}
+              className={`px-2.5 py-1 rounded-[4px] cursor-pointer ${
+                tableFilter === 'READY'
+                  ? 'bg-white text-slate-900 border border-slate-200/60 shadow-none'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Antre <span className="font-mono text-slate-400">{readyCount}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTableFilter('SENT')}
+              className={`px-2.5 py-1 rounded-[4px] cursor-pointer ${
+                tableFilter === 'SENT'
+                  ? 'bg-white text-slate-900 border border-slate-200/60 shadow-none'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Terkirim <span className="font-mono text-slate-400">{sentCount}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTableFilter('HIGH_REVIEWS')}
+              className={`px-2.5 py-1 rounded-[4px] cursor-pointer flex items-center gap-1 ${
+                tableFilter === 'HIGH_REVIEWS'
+                  ? 'bg-white text-slate-900 border border-slate-200/60 shadow-none font-semibold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              title="Tampilkan hanya bisnis dengan ulasan Maps >= 25 (potensi deal 3,5jt+)"
+            >
+              <span className="material-symbols-outlined text-[13px] text-amber-500" style={{ fontVariationSettings: "'FILL' 1" }}>
+                star
+              </span>
+              <span>Sultan (25+ ulasan)</span>
+              <span className="font-mono text-emerald-600 font-semibold">{sultanCount}</span>
             </button>
           </div>
         </div>
 
+        <div className="overflow-x-auto">
+          {filteredLeads.length === 0 ? (
+            <div className="p-8 text-center text-slate-400 text-xs">
+              Belum ada data prospek. Pilih Niche &amp; Wilayah di atas lalu klik &ldquo;Tarik prospek A1&rdquo;.
+            </div>
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-[#E5E7EB] bg-slate-50/30 text-[11px] uppercase font-semibold text-slate-500 tracking-[0.04em]">
+                  <th className="py-2.5 px-4 font-semibold">Nama Bisnis</th>
+                  <th className="py-2.5 px-4 font-semibold">Kota</th>
+                  <th className="py-2.5 px-4 font-semibold">WhatsApp</th>
+                  <th className="py-2.5 px-4 font-semibold">Rating Maps</th>
+                  <th className="py-2.5 px-4 font-semibold">Status</th>
+                  <th className="py-2.5 px-4 font-semibold text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-[12px]">
+                {filteredLeads.map((item) => (
+                  <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="py-2.5 px-4">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[13px] font-semibold text-slate-900">{item.businessName}</span>
+                        {(item.reviewsCount || 0) >= 25 && (
+                          <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-mono px-1.5 py-0.5 rounded font-semibold">
+                            A1+ SULTAN
+                          </span>
+                        )}
+                      </div>
+                      <div className="font-mono text-[11px] text-slate-500">
+                        {(item.reviewsCount || 0) >= 25 ? 'Est. Rp 3.500.000' : 'Est. Rp 2.500.000'}
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-4 text-slate-600">{item.city}</td>
+                    <td className="py-2.5 px-4 font-mono text-slate-700">{item.phone}</td>
+                    <td className="py-2.5 px-4 text-slate-600">
+                      {item.rating > 0 ? (
+                        <div className="flex items-center gap-1">
+                          <span
+                            className="material-symbols-outlined text-[14px] text-amber-500"
+                            style={{ fontVariationSettings: "'FILL' 1" }}
+                          >
+                            star
+                          </span>
+                          <span>
+                            {item.rating} · {item.reviewsCount} ulasan
+                          </span>
+                        </div>
+                      ) : (
+                        <span>—</span>
+                      )}
+                    </td>
+                    <td className="py-2.5 px-4">
+                      {item.status === 'sent' && (
+                        <span className="inline-flex items-center bg-blue-50 text-blue-700 border border-blue-200 text-[11px] px-2 py-0.5 rounded">
+                          Terkirim
+                        </span>
+                      )}
+                      {item.status === 'sending' && (
+                        <span className="inline-flex items-center bg-blue-50 text-blue-700 border border-blue-200 text-[11px] px-2 py-0.5 rounded animate-pulse">
+                          Mengirim…
+                        </span>
+                      )}
+                      {item.status === 'generating' && (
+                        <span className="inline-flex items-center bg-purple-50 text-purple-700 border border-purple-200 text-[11px] px-2 py-0.5 rounded">
+                          Claude AI…
+                        </span>
+                      )}
+                      {item.status === 'failed' && (
+                        <span className="inline-flex items-center bg-rose-50 text-rose-700 border border-rose-200 text-[11px] px-2 py-0.5 rounded">
+                          Gagal
+                        </span>
+                      )}
+                      {item.status === 'skipped' && (
+                        <span className="inline-flex items-center bg-slate-100 text-slate-500 border border-slate-200 text-[11px] px-2 py-0.5 rounded">
+                          Dilewati
+                        </span>
+                      )}
+                      {(item.status === 'ready' || item.status === 'in_queue' || item.status === 'pending') && (
+                        <span className="inline-flex items-center bg-slate-100 text-slate-600 border border-slate-200 text-[11px] px-2 py-0.5 rounded">
+                          Antre
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-2.5 px-4 text-right">
+                      <div className="inline-flex items-center gap-1.5 justify-end">
+                        {item.pitchMessage && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(item.pitchMessage || '');
+                              setCopiedPitchId(item.id);
+                              showToast('success', 'Draf pitch disalin.');
+                              setTimeout(() => setCopiedPitchId(null), 2000);
+                            }}
+                            className="border border-[#E5E7EB] hover:bg-slate-100 text-slate-600 p-1 rounded text-[11px] inline-flex items-center transition-colors cursor-pointer"
+                            title="Salin Draft Pitch"
+                          >
+                            <span className="material-symbols-outlined text-[13px]">
+                              {copiedPitchId === item.id ? 'check' : 'content_copy'}
+                            </span>
+                          </button>
+                        )}
+                        {onOpenPrototype && (
+                          <button
+                            onClick={() => onOpenPrototype(item)}
+                            className="border border-[#E5E7EB] hover:bg-slate-100 text-slate-700 px-2 py-1 rounded text-[11px] font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
+                            type="button"
+                          >
+                            <span>Prototype</span>
+                            <span className="material-symbols-outlined text-[12px]">open_in_new</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleManualWhatsApp(item)}
+                          className="border border-[#E5E7EB] hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 text-slate-700 px-2 py-1 rounded text-[11px] font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
+                          title="Buka WhatsApp dengan draft pitch terisi & otomatis catat ke Sheets"
+                        >
+                          <span>WhatsApp</span>
+                          <span className="material-symbols-outlined text-[12px] text-emerald-600">send</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       </section>
 
-      {/* ═════════════════════════════════════════════════════════════
-          MODAL: BULK IMPORT NOMOR WA LAMA (ANTI-DUPLIKASI SHEETS)
-      ═════════════════════════════════════════════════════════════ */}
-      {isImportModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
-            {/* Modal Header */}
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-                  <Upload className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">
-                    Import Nomor WA Lama (Anti-Duplikasi)
-                  </h3>
-                  <p className="text-[11px] text-slate-500">
-                    Nomor akan ditandai sebagai EXISTING_CHAT di Sheets agar dilewati otomatis.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!isImporting) setIsImportModalOpen(false);
-                }}
-                disabled={isImporting}
-                className="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
+      <footer
+        onClick={() => setShowTerminal(!showTerminal)}
+        className="bg-white border border-[#E5E7EB] px-4 py-2 rounded-[6px] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs cursor-pointer hover:bg-slate-50 transition-colors"
+      >
+        <div className="flex items-center gap-2 overflow-hidden">
+          <span className="material-symbols-outlined text-[14px] text-slate-400">
+            {showTerminal ? 'expand_more' : 'expand_less'}
+          </span>
+          <span className="font-medium text-slate-700 flex-shrink-0">Log telemetri</span>
+          <span className="text-slate-300">|</span>
+          <span className="font-mono text-[11px] text-slate-500 truncate">
+            {logs.length > 0 ? logs[0].message : 'Fonnte API connected · Claude 3.5 Sonnet ready'}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#059669]"></span>
+          <span className="text-slate-600 font-medium text-[11px]">Status: Operasional normal</span>
+        </div>
+      </footer>
+
+      {showTerminal && (
+        <div className="mt-2 bg-[#0B0F14] border border-[#1F2937] rounded-lg p-3 max-h-52 overflow-y-auto font-mono text-[11px] text-slate-300 flex flex-col gap-1">
+          {logs.map((l) => (
+            <div key={l.id} className="flex items-center gap-2 leading-tight">
+              <span className="text-slate-500 text-[10px]">{l.timestamp}</span>
+              <span
+                className={`uppercase text-[9px] px-1 rounded ${
+                  l.type === 'success'
+                    ? 'text-emerald-400 bg-emerald-950'
+                    : l.type === 'error'
+                    ? 'text-rose-400 bg-rose-950'
+                    : 'text-slate-400 bg-slate-800'
+                }`}
               >
-                <X className="w-4 h-4" />
-              </button>
+                {l.type}
+              </span>
+              <span>{l.message}</span>
             </div>
-
-            {/* Modal Body */}
-            <form onSubmit={handleBulkImportWa} className="p-5 flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-slate-800">
-                    Tempel Daftar Nomor WhatsApp:
-                  </label>
-                  {detectedValidNumbers.length > 0 && (
-                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      ✓ {detectedValidNumbers.length} nomor valid terdeteksi
-                    </span>
-                  )}
-                </div>
-                <textarea
-                  value={importText}
-                  onChange={(e) => setImportText(e.target.value)}
-                  disabled={isImporting}
-                  rows={6}
-                  placeholder={`Tempel daftar nomor HP/WA yang sudah pernah di-chat sebelumnya (pisahkan dengan koma atau baris baru enter)...\n\nContoh:\n081234567890\n082198765432, 6285712345678\n+62 813-4567-8901`}
-                  className="w-full text-xs font-mono p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900 focus:bg-white resize-none"
-                />
-                <p className="text-[11px] text-slate-500 leading-relaxed">
-                  Semua format (08xx, +62xx, 62xx) otomatis dibersihkan dan dinormalisasi ke standar <strong>628xxx</strong>.
-                </p>
-              </div>
-
-              {/* Modal Footer */}
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setIsImportModalOpen(false)}
-                  disabled={isImporting}
-                  className="h-9 px-4 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition cursor-pointer disabled:opacity-50"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  disabled={isImporting || detectedValidNumbers.length === 0}
-                  className="h-9 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 text-white text-xs font-semibold flex items-center gap-2 shadow-xs transition active:scale-[0.99] cursor-pointer"
-                >
-                  {isImporting ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Menyimpan ke Sheets…</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                      <span>Simpan ke Blacklist Sheets ({detectedValidNumbers.length})</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
+          ))}
         </div>
       )}
-
     </div>
   );
 }

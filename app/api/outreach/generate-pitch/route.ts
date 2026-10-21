@@ -9,6 +9,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const lead = body?.lead as OutreachLead | undefined;
     const highlightReview = body?.highlightReview as string | undefined;
+    const targetMode = (body?.targetMode || 'admin_gatekeeper') as 'admin_gatekeeper' | 'owner_direct';
 
     if (!lead || !lead.businessName) {
       return NextResponse.json(
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { message, source, angleUsed, timeGreeting } = await generatePersonalizedPitch({
+    const { message, source, angleUsed, timeGreeting, tokensUsed } = await generatePersonalizedPitch({
       businessName: lead.businessName,
       category: lead.category,
       city: lead.city,
@@ -25,6 +26,7 @@ export async function POST(req: NextRequest) {
       rating: lead.rating,
       reviewsCount: lead.reviewsCount,
       highlightReview,
+      targetMode,
     });
 
     return NextResponse.json({
@@ -33,6 +35,7 @@ export async function POST(req: NextRequest) {
       source,
       angleUsed,
       timeGreeting,
+      tokensUsed: tokensUsed || 450,
     });
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : 'Gagal menghasilkan pitch.';

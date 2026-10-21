@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
       reviewsCount = 0,
       highlightReview = '',
       forcedAngle,
+      targetMode = 'admin_gatekeeper',
     } = body;
 
     if (!businessName) {
@@ -34,6 +35,7 @@ export async function POST(req: NextRequest) {
       reviewsCount: reviewsCount || userRatingCount,
       highlightReview,
       forcedAngle,
+      targetMode,
     });
 
     return NextResponse.json({

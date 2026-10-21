@@ -9,9 +9,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Outreach Engine — Leads Machine',
+  title: 'Leads Machine — Sales Engine',
   description:
-    'Temukan prospek bisnis lokal, buat pesan personal dengan AI, dan kirim via WhatsApp otomatis — 100% anti-duplikasi berbasis Google Sheets.',
+    'Mesin akuisisi klien high-ticket untuk web developer freelance di Jawa Timur.',
 };
 
 export default function RootLayout({
@@ -21,7 +21,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id" className={inter.variable}>
-      <body className="h-full w-full overflow-hidden bg-slate-50 text-slate-900 antialiased font-sans">
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        />
+      </head>
+      <body className="h-full w-full overflow-hidden bg-[#FAFAFA] text-[#0F172A] antialiased font-sans">
         {children}
       </body>
     </html>

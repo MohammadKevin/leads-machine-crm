@@ -2,28 +2,9 @@
 
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import {
-  Zap,
-  History,
-  ShieldCheck,
-  CheckCircle2,
-  AlertTriangle,
-  XCircle,
-  Database,
-  Radio,
-  RefreshCw,
-  ExternalLink,
-  ChevronRight,
-  User,
-  Sliders,
-  Upload,
-  X,
-  Loader2,
-  FileSpreadsheet,
-} from 'lucide-react';
-import { normalizeIndonesianPhone, isValidIndonesianWhatsApp } from '@/lib/defensive-client';
 import OutreachMachine from '@/components/OutreachMachine';
 import HistoryPanel from '@/components/HistoryPanel';
+import PrototypeStudioTab from '@/components/prototype/PrototypeStudioTab';
 import {
   SheetLeadRecord,
   OutreachMetrics,
@@ -31,7 +12,7 @@ import {
   SheetResponseStatus,
 } from '@/types/outreach';
 
-type TabId = 'outreach' | 'history';
+type TabId = 'outreach' | 'history' | 'prototype';
 
 interface Toast {
   type: 'success' | 'error' | 'warn';
@@ -39,16 +20,17 @@ interface Toast {
   id: number;
 }
 
-// ── Inner component (uses searchParams) ──────────────────────────────────────
 function AppInner() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab') as TabId | null;
-  const activeTab: TabId = tabParam === 'history' ? 'history' : 'outreach';
+  const activeTab: TabId =
+    tabParam === 'history' ? 'history' : tabParam === 'prototype' ? 'prototype' : 'outreach';
 
   const [blacklist, setBlacklist] = useState<Set<string>>(new Set());
   const [sheetRecords, setSheetRecords] = useState<SheetLeadRecord[]>([]);
+  const [selectedLeadForPrototype, setSelectedLeadForPrototype] = useState<SheetLeadRecord | null>(null);
   const [metrics, setMetrics] = useState<OutreachMetrics>({
     totalUniqueContacted: 0,
     interestedCount: 0,
@@ -58,12 +40,27 @@ function AppInner() {
   });
   const [isSyncing, setIsSyncing] = useState(false);
   const [isSyncingFonnte, setIsSyncingFonnte] = useState(false);
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isDataToolsOpen, setIsDataToolsOpen] = useState(false);
   const [importText, setImportText] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  // ── Tab navigation ──────────────────────────────────────────────────────────
+  const [geraiToken, setGeraiToken] = useState<{
+    tokens: number | null;
+    formattedTokens: string;
+    fullTokensFormatted?: string;
+    usedInSession: number;
+    source?: string;
+  }>({
+    tokens: null,
+    formattedTokens: 'Claude Aktif',
+    usedInSession: 0,
+  });
+  const [isGeraiModalOpen, setIsGeraiModalOpen] = useState(false);
+  const [isCheckingGerai, setIsCheckingGerai] = useState(false);
+  const [cookieInput, setCookieInput] = useState('');
+  const [manualTokenInput, setManualTokenInput] = useState('');
+
   const goTab = useCallback(
     (tab: TabId) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -73,44 +70,46 @@ function AppInner() {
     [router, pathname, searchParams]
   );
 
-  // ── Toast System ────────────────────────────────────────────────────────────
+  const handleOpenPrototype = useCallback(
+    (record: SheetLeadRecord | OutreachLead) => {
+      const isSheetRecord =
+        'status' in record &&
+        typeof record.status === 'string' &&
+        ['CONTACTED', 'INTERESTED', 'IN_PROGRESS', 'CLOSED_DEAL', 'REJECTED'].includes(record.status);
+
+      const messageSent =
+        ('messageSent' in record && record.messageSent) ||
+        ('pitchMessage' in record && (record as OutreachLead).pitchMessage) ||
+        undefined;
+
+      const sheetFormat: SheetLeadRecord = isSheetRecord
+        ? { ...(record as SheetLeadRecord), messageSent: (record as SheetLeadRecord).messageSent || messageSent }
+        : {
+            id: record.id,
+            businessName: record.businessName,
+            category: record.category,
+            city: record.city,
+            phone: record.phone,
+            normalizedPhone: record.phone,
+            rating: record.rating,
+            reviewsCount: record.reviewsCount,
+            hasWebsite: record.hasWebsite,
+            website: record.website,
+            status: 'CONTACTED',
+            messageSent,
+          };
+      setSelectedLeadForPrototype(sheetFormat);
+      goTab('prototype');
+    },
+    [goTab]
+  );
+
   const showToast = useCallback((type: 'success' | 'error' | 'warn', message: string) => {
     const id = Date.now();
     setToasts((prev) => [...prev.slice(-3), { type, message, id }]);
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000);
   }, []);
 
-  // ── Dispatch Telemetry Logs (Live Terminal & Persistence) ───────────────────
-  const logTelemetry = useCallback((type: 'info' | 'success' | 'warn' | 'error', message: string) => {
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(
-        new CustomEvent('add-telemetry-log', {
-          detail: { type, message },
-        })
-      );
-      try {
-        const LOG_KEY = 'leads_logs_v5';
-        const existing = localStorage.getItem(LOG_KEY);
-        const parsed = existing ? JSON.parse(existing) : [];
-        const entry = {
-          id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-          timestamp: new Date().toLocaleTimeString('id-ID', {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-          }),
-          type,
-          message,
-        };
-        const updated = [entry, ...(Array.isArray(parsed) ? parsed : [])].slice(0, 300);
-        localStorage.setItem(LOG_KEY, JSON.stringify(updated));
-      } catch {
-        /* ignore storage error */
-      }
-    }
-  }, []);
-
-  // ── Sync Sheets (blacklist + records) ───────────────────────────────────────
   const syncFromSheets = useCallback(async () => {
     setIsSyncing(true);
     try {
@@ -119,169 +118,248 @@ function AppInner() {
         headers: { Accept: 'application/json' },
       });
       const rawText = await res.text().catch(() => '');
-      let data: { success?: boolean; blacklist?: string[]; records?: SheetLeadRecord[]; metrics?: OutreachMetrics; error?: string } | null = null;
+      let data: {
+        success?: boolean;
+        blacklist?: string[];
+        records?: SheetLeadRecord[];
+        metrics?: OutreachMetrics;
+        error?: string;
+      } | null = null;
       try {
         data = JSON.parse(rawText);
       } catch {
-        data = { success: false, error: rawText.slice(0, 150) || 'Format data Google Sheets tidak sesuai.' };
+        data = { success: false, error: 'Format data Google Sheets tidak sesuai.' };
       }
 
       if (res.ok && data?.success) {
-        const nums: string[] = data.blacklist || [];
-        setBlacklist(new Set(nums));
-        setSheetRecords(data.records || []);
-        if (data.metrics) setMetrics(data.metrics);
-        showToast('success', `Anti-duplikasi aktif — ${nums.length} nomor terproteksi.`);
+        const blacklistSet = new Set<string>(data.blacklist || []);
+        setBlacklist(blacklistSet);
+        if (Array.isArray(data.records)) {
+          setSheetRecords(data.records);
+        }
+        if (data.metrics) {
+          setMetrics(data.metrics);
+        }
+        showToast('success', `Tersinkron dengan ${blacklistSet.size} nomor terverifikasi di Sheets.`);
       } else {
-        showToast('warn', data?.error || 'Gagal memuat data Google Sheets.');
+        showToast('error', data?.error || 'Gagal menyinkronkan data dari Google Sheets.');
       }
     } catch (err: unknown) {
-      showToast('error', err instanceof Error ? err.message : 'Kesalahan jaringan.');
+      const msg = err instanceof Error ? err.message : 'Kesalahan jaringan saat sync Sheets.';
+      showToast('error', msg);
     } finally {
       setIsSyncing(false);
     }
   }, [showToast]);
 
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
+  const syncGeraiTokens = useCallback(
+    async (customToken?: string, manualAmount?: number) => {
+      setIsCheckingGerai(true);
+      try {
+        if (typeof manualAmount === 'number' && !isNaN(manualAmount)) {
+          localStorage.setItem('gk_remaining_tokens', String(manualAmount));
+          const formatted = manualAmount >= 1000 ? `${Math.round(manualAmount / 1000)}K Token` : `${manualAmount} Token`;
+          setGeraiToken((prev) => ({
+            ...prev,
+            tokens: manualAmount,
+            formattedTokens: formatted,
+            fullTokensFormatted: `${manualAmount.toLocaleString('id-ID')} Token`,
+            source: 'manual',
+          }));
+          showToast('success', `Sisa token disetel: ${manualAmount.toLocaleString('id-ID')} Token`);
+          setIsCheckingGerai(false);
+          return;
+        }
+
+        const tokenToSend =
+          customToken ||
+          (typeof window !== 'undefined' ? localStorage.getItem('gk_session_cookie') : '') ||
+          '';
+
+        if (tokenToSend) {
+          const res = await fetch('/api/geraikita/balance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cookieToken: tokenToSend }),
+          });
+          const json = await res.json();
+          if (res.ok && json.success && typeof json.tokens === 'number') {
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('gk_session_cookie', tokenToSend);
+              localStorage.setItem('gk_remaining_tokens', String(json.tokens));
+            }
+            setGeraiToken((prev) => ({
+              ...prev,
+              tokens: json.tokens,
+              formattedTokens: json.formattedTokens,
+              fullTokensFormatted: json.fullTokensFormatted || `${json.tokens.toLocaleString('id-ID')} Token`,
+              source: 'live_api',
+            }));
+            showToast('success', `Sisa token tersinkronisasi: ${json.fullTokensFormatted || json.formattedTokens}`);
+            return;
+          } else if (customToken) {
+            showToast('error', json.error || 'Sesi token ai.geraikita.com tidak valid.');
+          }
+        }
+
+        const savedTokens =
+          typeof window !== 'undefined'
+            ? localStorage.getItem('gk_remaining_tokens') || localStorage.getItem('gk_manual_balance')
+            : null;
+        if (savedTokens) {
+          const num = parseInt(savedTokens, 10);
+          if (!isNaN(num)) {
+            const formatted = num >= 1000 ? `${Math.round(num / 1000)}K Token` : `${num} Token`;
+            setGeraiToken((prev) => ({
+              ...prev,
+              tokens: num,
+              formattedTokens: formatted,
+              fullTokensFormatted: `${num.toLocaleString('id-ID')} Token`,
+              source: 'manual',
+            }));
+          }
+        }
+
+        const res = await fetch('/api/geraikita/balance');
+        const json = await res.json();
+        if (res.ok && json.success && typeof json.tokens === 'number') {
+          setGeraiToken((prev) => ({
+            ...prev,
+            tokens: json.tokens,
+            formattedTokens: json.formattedTokens,
+            fullTokensFormatted: json.fullTokensFormatted,
+            source: json.source,
+          }));
+        }
+      } catch {
+        // ignore
+      } finally {
+        setIsCheckingGerai(false);
+      }
+    },
+    [showToast]
+  );
+
   useEffect(() => {
-    syncFromSheets();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    syncGeraiTokens();
+  }, [syncGeraiTokens]);
+
+  useEffect(() => {
+    const handleDeduction = (e: Event) => {
+      const custom = e as CustomEvent<{ tokens?: number }>;
+      const deducted = custom.detail?.tokens || 0;
+      if (deducted > 0) {
+        setGeraiToken((prev) => {
+          const current = prev.tokens;
+          const nextVal = current !== null ? Math.max(0, current - deducted) : null;
+          if (nextVal !== null && typeof window !== 'undefined') {
+            localStorage.setItem('gk_remaining_tokens', String(nextVal));
+          }
+          return {
+            ...prev,
+            tokens: nextVal,
+            formattedTokens:
+              nextVal !== null
+                ? nextVal >= 1000
+                  ? `${Math.round(nextVal / 1000)}K Token`
+                  : `${nextVal} Token`
+                : 'Claude Aktif',
+            fullTokensFormatted: nextVal !== null ? `${nextVal.toLocaleString('id-ID')} Token` : 'Claude Aktif',
+            usedInSession: prev.usedInSession + deducted,
+          };
+        });
+      }
+    };
+
+    window.addEventListener('gk-token-deducted', handleDeduction);
+    return () => window.removeEventListener('gk-token-deducted', handleDeduction);
   }, []);
 
-  // ── Auto-Sync Nomor Lama dari public/fonnte-history.xlsx ke Sheets ───────────
-  const handleSyncFonnteFile = useCallback(async () => {
-    if (isSyncingFonnte) return;
+  const handleSyncFonnteFile = async () => {
     setIsSyncingFonnte(true);
-
-    logTelemetry('info', '[INFO] Membaca dan memproses public/fonnte-history.xlsx...');
-
     try {
       const res = await fetch('/api/sync-fonnte-file', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
       });
-      const rawText = await res.text().catch(() => '');
-      let data: { success?: boolean; totalInFile?: number; newInserted?: number; alreadyExisted?: number; message?: string } | null = null;
-      try {
-        data = JSON.parse(rawText);
-      } catch {
-        data = { success: false, message: rawText.slice(0, 150) || 'Gagal membaca respon server.' };
-      }
-
-      if (res.ok && data?.success) {
-        const total = data.totalInFile ?? 0;
-        const inserted = data.newInserted ?? 0;
-        const existed = data.alreadyExisted ?? 0;
-        logTelemetry(
-          'success',
-          `[SUCCESS] Berhasil membaca ${total} nomor dari fonnte-history.xlsx! ${inserted} nomor baru disinkronkan ke Google Sheets.`
-        );
-
-        // Refresh counter blacklist anti-duplikasi di sidebar kiri
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.success) {
+        showToast('success', json.message || 'Riwayat Fonnte berhasil disinkronkan ke Sheets.');
         await syncFromSheets();
-
-        showToast(
-          'success',
-          `Berhasil membaca ${total} nomor dari fonnte-history.xlsx! ${inserted} nomor baru disinkronkan ke Google Sheets (${existed} sudah ada).`
-        );
       } else {
-        const errMsg = data?.message || 'Gagal memproses file fonnte-history.xlsx.';
-        logTelemetry('error', `[ERROR] Gagal membaca fonnte-history.xlsx: ${errMsg}`);
-        showToast('error', errMsg);
+        showToast('error', json?.error || 'Gagal membaca riwayat Fonnte.');
       }
     } catch (err: unknown) {
-      const errMsg =
-        err instanceof Error ? err.message : 'Kesalahan jaringan saat memproses fonnte-history.xlsx.';
-      logTelemetry('error', `[ERROR] ${errMsg}`);
-      showToast('error', errMsg);
+      const msg = err instanceof Error ? err.message : 'Kesalahan koneksi saat sync Fonnte.';
+      showToast('error', msg);
     } finally {
       setIsSyncingFonnte(false);
     }
-  }, [isSyncingFonnte, logTelemetry, syncFromSheets, showToast]);
+  };
 
-  // ── Bulk Import WA Lama to Sheets ──────────────────────────────────────────
-  const detectedValidNumbers = React.useMemo(() => {
-    if (!importText.trim()) return [];
-    const items = importText.split(/[\r\n,;]+/).map((s) => s.trim()).filter(Boolean);
-    const valid = new Set<string>();
-    for (const item of items) {
-      const clean = normalizeIndonesianPhone(item);
-      if (clean && isValidIndonesianWhatsApp(clean)) {
-        valid.add(clean);
-      }
-    }
-    return Array.from(valid);
-  }, [importText]);
+  const handleBulkImportWa = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!importText.trim() || isImporting) return;
 
-  const handleBulkImportWa = useCallback(async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (detectedValidNumbers.length === 0) {
-      showToast('warn', 'Masukkan minimal satu nomor WhatsApp valid (format seluler 08xx/628xx).');
-      return;
-    }
     setIsImporting(true);
-    showToast('warn', `Menyimpan ${detectedValidNumbers.length} nomor ke Google Sheets...`);
     try {
       const res = await fetch('/api/sync-wa-history', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ numbers: detectedValidNumbers }),
+        body: JSON.stringify({ rawText: importText }),
       });
-      const rawText = await res.text().catch(() => '');
-      let data: { success?: boolean; newImported?: number; error?: string } | null = null;
-      try {
-        data = JSON.parse(rawText);
-      } catch {
-        data = { success: false, error: rawText.slice(0, 150) || 'Gagal menyimpan ke Sheets.' };
-      }
-
-      if (!res.ok || !data?.success) {
-        throw new Error(data?.error || 'Gagal menyimpan ke Sheets.');
-      }
-      if ((data.newImported ?? 0) > 0) {
-        showToast('success', `Berhasil menyimpan ${data.newImported} nomor ke Google Sheets!`);
-        syncFromSheets();
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.success) {
+        showToast(
+          'success',
+          `Berhasil mengimpor ${json.importedCount} nomor unik WhatsApp ke Google Sheets!`
+        );
+        setImportText('');
+        setIsImportModalOpen(false);
+        await syncFromSheets();
       } else {
-        showToast('warn', 'Semua nomor tersebut sudah terdaftar di Google Sheets.');
+        showToast('error', json?.error || 'Gagal memproses daftar nomor WhatsApp.');
       }
-      setIsImportModalOpen(false);
-      setImportText('');
     } catch (err: unknown) {
-      showToast('error', err instanceof Error ? err.message : 'Gagal impor nomor.');
+      const msg = err instanceof Error ? err.message : 'Kesalahan jaringan.';
+      showToast('error', msg);
     } finally {
       setIsImporting(false);
     }
-  }, [detectedValidNumbers, showToast, syncFromSheets]);
+  };
 
-  // ── Callback when WA is sent successfully ──────────────────────────────────
-  const handleContactSentSuccess = useCallback(
-    (phone: string, lead: OutreachLead) => {
-      setBlacklist((prev) => new Set([...prev, phone]));
-      const rec: SheetLeadRecord = {
-        id: `rec-${phone}-${Date.now()}`,
-        timestamp: new Date().toISOString(),
-        businessName: lead.businessName,
-        category: lead.category,
-        city: lead.city,
-        phone: lead.phone,
-        normalizedPhone: lead.phone,
-        mapsUrl: lead.address,
-        rating: lead.rating,
-        reviewsCount: lead.reviewsCount,
-        hasWebsite: lead.hasWebsite,
-        website: lead.website,
-        status: 'CONTACTED',
-        messageSent: lead.pitchMessage || '',
-        lastSyncAt: new Date().toISOString(),
-      };
-      setSheetRecords((prev) => [rec, ...prev]);
-      setMetrics((prev) => ({
-        ...prev,
-        totalUniqueContacted: prev.totalUniqueContacted + 1,
-      }));
-    },
-    []
-  );
+  useEffect(() => {
+    syncFromSheets();
+  }, [syncFromSheets]);
 
-  // ── Optimistic Status Update to Sheets ──────────────────────────────────────
+  const handleContactSentSuccess = useCallback((phone: string, lead: OutreachLead) => {
+    setBlacklist((prev) => new Set([...prev, phone]));
+    const rec: SheetLeadRecord = {
+      id: `rec-${phone}-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      businessName: lead.businessName,
+      category: lead.category,
+      city: lead.city,
+      phone: lead.phone,
+      normalizedPhone: lead.phone,
+      mapsUrl: lead.address,
+      rating: lead.rating,
+      reviewsCount: lead.reviewsCount,
+      hasWebsite: lead.hasWebsite,
+      website: lead.website,
+      status: 'CONTACTED',
+      messageSent: lead.pitchMessage || '',
+      lastSyncAt: new Date().toISOString(),
+    };
+    setSheetRecords((prev) => [rec, ...prev]);
+    setMetrics((prev) => ({
+      ...prev,
+      totalUniqueContacted: prev.totalUniqueContacted + 1,
+    }));
+  }, []);
+
   const handleUpdateStatus = useCallback(
     async (phone: string, newStatus: SheetResponseStatus): Promise<boolean> => {
       const prev = [...sheetRecords];
@@ -289,7 +367,6 @@ function AppInner() {
       if (!target) return false;
       const oldStatus = target.status;
 
-      // Optimistic update
       setSheetRecords((all) =>
         all.map((r) => (r.normalizedPhone === phone ? { ...r, status: newStatus } : r))
       );
@@ -308,10 +385,22 @@ function AppInner() {
           ...m,
           ...delta(oldStatus, -1),
           ...delta(newStatus, 1),
-          interestedCount: Math.max(0, m.interestedCount + (newStatus === 'INTERESTED' ? 1 : 0) + (oldStatus === 'INTERESTED' ? -1 : 0)),
-          closingDealCount: Math.max(0, m.closingDealCount + (newStatus === 'CLOSED_DEAL' ? 1 : 0) + (oldStatus === 'CLOSED_DEAL' ? -1 : 0)),
-          inProgressCount: Math.max(0, m.inProgressCount + (newStatus === 'IN_PROGRESS' ? 1 : 0) + (oldStatus === 'IN_PROGRESS' ? -1 : 0)),
-          rejectedCount: Math.max(0, m.rejectedCount + (newStatus === 'REJECTED' ? 1 : 0) + (oldStatus === 'REJECTED' ? -1 : 0)),
+          interestedCount: Math.max(
+            0,
+            m.interestedCount + (newStatus === 'INTERESTED' ? 1 : 0) + (oldStatus === 'INTERESTED' ? -1 : 0)
+          ),
+          closingDealCount: Math.max(
+            0,
+            m.closingDealCount + (newStatus === 'CLOSED_DEAL' ? 1 : 0) + (oldStatus === 'CLOSED_DEAL' ? -1 : 0)
+          ),
+          inProgressCount: Math.max(
+            0,
+            m.inProgressCount + (newStatus === 'IN_PROGRESS' ? 1 : 0) + (oldStatus === 'IN_PROGRESS' ? -1 : 0)
+          ),
+          rejectedCount: Math.max(
+            0,
+            m.rejectedCount + (newStatus === 'REJECTED' ? 1 : 0) + (oldStatus === 'REJECTED' ? -1 : 0)
+          ),
         };
       });
 
@@ -327,11 +416,11 @@ function AppInner() {
         });
         const json = await res.json();
         if (res.ok && json.success) return true;
-        setSheetRecords(prev); // rollback
+        setSheetRecords(prev);
         showToast('error', 'Gagal update status di Sheets — perubahan dibatalkan.');
         return false;
       } catch {
-        setSheetRecords(prev); // rollback
+        setSheetRecords(prev);
         showToast('error', 'Kesalahan jaringan — status dikembalikan.');
         return false;
       }
@@ -339,303 +428,268 @@ function AppInner() {
     [sheetRecords, showToast]
   );
 
+  const hotCount = sheetRecords.filter(
+    (r) => r.status === 'INTERESTED' || r.status === 'IN_PROGRESS'
+  ).length;
+  const closedCount = sheetRecords.filter((r) => r.status === 'CLOSED_DEAL').length;
+  const currentRevenue = closedCount * 2500000;
+  const progressPercent = Math.min(100, Math.round((currentRevenue / 25000000) * 100));
+
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 text-slate-900 font-sans">
-
-      {/* ═════════════════════════════════════════════════════════════
-          1.1 SIDEBAR KIRI (Fixed, lebar 260px)
-      ═════════════════════════════════════════════════════════════ */}
-      <aside className="w-[260px] shrink-0 h-full bg-white border-r border-slate-200 flex flex-col justify-between z-20 select-none">
-        
-        {/* Top Section */}
-        <div className="p-4 flex flex-col gap-6">
-
-          {/* Header Brand */}
-          <div className="flex flex-col gap-3">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#FAFAFA] text-on-surface antialiased font-sans">
+      <aside className="fixed left-0 top-0 h-full w-[240px] bg-[#0B0F14] border-r border-[#1F2937] z-50 flex flex-col justify-between p-4">
+        <div className="flex flex-col gap-4">
+          <div>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center shadow-xs">
-                  <Zap className="w-4 h-4 fill-white" />
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded bg-[#059669] text-white flex items-center justify-center font-bold text-xs">
+                  <span className="material-symbols-outlined text-[14px]">bolt</span>
                 </div>
-                <div>
-                  <h1 className="text-sm font-bold text-slate-900 tracking-tight leading-tight">
-                    Leads Machine
-                  </h1>
-                  <span className="text-[10px] text-slate-400 font-medium">B2B SaaS Engine</span>
-                </div>
+                <span className="text-[14px] font-medium text-white tracking-tight">Leads Machine</span>
               </div>
-
-              {/* Badge pill v3.2 Live */}
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                v3.2 Live
+              <span className="text-[10px] font-mono text-slate-400 bg-slate-800/80 px-1.5 py-0.5 rounded">
+                v3.2
               </span>
             </div>
-
-            {/* Indikator dot hijau berdenyut (pulse) dengan label Sheets Connected */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50/80 border border-emerald-100 text-emerald-800 text-xs font-medium">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-[#1F2937]/60">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#059669] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#059669]"></span>
               </span>
-              <span className="text-[11px] font-semibold">Sheets Connected</span>
-              <span className="ml-auto text-[10px] text-emerald-600 font-mono">200 OK</span>
+              <span className="text-[11px] text-slate-400">Sheets terhubung</span>
             </div>
           </div>
 
-          {/* Navigasi Utama */}
           <nav className="flex flex-col gap-1">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 px-2 mb-1">
-              Main Navigation
-            </span>
-
-            {/* Nav 1: Discovery & Outreach */}
             <button
               type="button"
               onClick={() => goTab('outreach')}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`h-9 flex items-center justify-between px-3 rounded-md transition-colors cursor-pointer ${
                 activeTab === 'outreach'
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  ? 'bg-[#161F2E] text-white border-l-2 border-[#059669] font-medium'
+                  : 'text-[13px] text-slate-400 hover:text-slate-200 hover:bg-[#161F2E]/50'
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <Zap className={`w-4 h-4 ${activeTab === 'outreach' ? 'text-amber-300' : 'text-slate-400'}`} />
-                <span>Discovery &amp; Outreach</span>
+                <span className="material-symbols-outlined text-[16px]">radar</span>
+                <span>Radar Klien</span>
               </div>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
-                activeTab === 'outreach' ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-600'
-              }`}>
-                Auto
-              </span>
             </button>
 
-            {/* Nav 2: Riwayat & Anti-Duplikasi */}
             <button
               type="button"
               onClick={() => goTab('history')}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`h-9 flex items-center justify-between px-3 rounded-md transition-colors cursor-pointer ${
                 activeTab === 'history'
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  ? 'bg-[#161F2E] text-white border-l-2 border-[#059669] font-medium'
+                  : 'text-[13px] text-slate-400 hover:text-slate-200 hover:bg-[#161F2E]/50'
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <History className={`w-4 h-4 ${activeTab === 'history' ? 'text-blue-300' : 'text-slate-400'}`} />
-                <span>Riwayat &amp; Database</span>
+                <span className="material-symbols-outlined text-[16px]">view_kanban</span>
+                <span>Deal Room</span>
               </div>
-              {blacklist.size > 0 && (
-                <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
-                  activeTab === 'history' ? 'bg-slate-800 text-slate-200' : 'bg-slate-200 text-slate-700'
-                }`}>
-                  {blacklist.size}
+              {hotCount > 0 && (
+                <span className="bg-amber-500/10 text-amber-500 font-mono text-[11px] px-1.5 py-0.5 rounded font-medium">
+                  {hotCount}
                 </span>
               )}
             </button>
+
+            <button
+              type="button"
+              onClick={() => goTab('prototype')}
+              className={`h-9 flex items-center justify-between px-3 rounded-md transition-colors cursor-pointer ${
+                activeTab === 'prototype'
+                  ? 'bg-[#161F2E] text-white border-l-2 border-[#059669] font-medium'
+                  : 'text-[13px] text-slate-400 hover:text-slate-200 hover:bg-[#161F2E]/50'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="material-symbols-outlined text-[16px]">terminal</span>
+                <span>Prototype Studio</span>
+              </div>
+            </button>
           </nav>
-
         </div>
 
-        {/* Footer Sidebar */}
-        <div className="p-4 border-t border-slate-100 flex flex-col gap-3 bg-slate-50/40">
-
-          {/* Kartu kecil: 🛡️ Anti-Duplikasi: [X] nomor terdaftar */}
-          <div className="p-3 rounded-lg border border-slate-200 bg-white shadow-2xs flex flex-col gap-1.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>Anti-Duplikasi</span>
-              </div>
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            </div>
-            <div className="text-[11px] text-slate-600">
-              <span className="font-bold text-slate-900 font-mono">{blacklist.size}</span> nomor terdaftar
-            </div>
-            <p className="text-[10px] text-slate-400 leading-tight">
-              Nomor yang ada di Sheets otomatis dilewati saat batch.
-            </p>
+        <div className="bg-[#111827] border border-[#1F2937] p-3 rounded-lg text-left">
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">Misi 16 Maret 2027</div>
+          <div className="text-[12px] font-mono font-medium text-white mt-1">
+            Rp {currentRevenue.toLocaleString('id-ID')}{' '}
+            <span className="text-slate-400 font-normal">/ Rp 25.000.000</span>
           </div>
-
-          {/* Badge profil minimalis di pojok bawah */}
-          <div className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-100 transition">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-full bg-slate-900 text-white text-[11px] font-bold flex items-center justify-center">
-                OP
-              </div>
-              <div className="flex flex-col text-left">
-                <span className="text-xs font-semibold text-slate-900 leading-none">Operator Lead</span>
-                <span className="text-[10px] text-slate-400 mt-0.5">B2B Pro Tier</span>
-              </div>
-            </div>
-            <span className="w-2 h-2 rounded-full bg-emerald-500" title="Aktif Online" />
+          <div className="w-full bg-slate-800 h-1 rounded-full mt-2 overflow-hidden">
+            <div className="bg-[#059669] h-full rounded-full" style={{ width: `${progressPercent}%` }}></div>
           </div>
-
+          <div className="text-[11px] text-slate-400 mt-1.5 flex justify-between items-center">
+            <span>Kemajuan</span>
+            <span className="text-slate-300 font-medium">{closedCount} dari 10 deal</span>
+          </div>
         </div>
-
       </aside>
 
-      {/* ═════════════════════════════════════════════════════════════
-          1.2 WORKSPACE UTAMA (Full-Viewport, Background: Slate-50)
-      ═════════════════════════════════════════════════════════════ */}
-      <div className="flex-1 min-w-0 h-full flex flex-col bg-slate-50 overflow-hidden">
-
-        {/* Top Navbar Header */}
-        <header className="h-14 px-6 lg:px-8 border-b border-slate-200 bg-white flex items-center justify-between shrink-0 z-10">
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-slate-400 font-medium">Dashboard</span>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
-            <span className="font-semibold text-slate-900">
-              {activeTab === 'outreach' ? '⚡ Discovery & Outreach Engine' : '📜 Riwayat & Anti-Duplikasi'}
-            </span>
+      <div className="pl-[240px] flex-1 flex flex-col h-full overflow-hidden">
+        <header className="fixed top-0 left-[240px] right-0 h-14 bg-white border-b border-[#E5E7EB] z-40 px-6 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 text-[13px] font-medium text-[#0F172A]">
+              <span className="text-slate-400 font-normal">Cockpit</span>
+              <span className="text-slate-300">/</span>
+              <span>
+                {activeTab === 'outreach'
+                  ? 'Radar Klien'
+                  : activeTab === 'history'
+                  ? 'Deal Room'
+                  : 'Prototype Studio'}
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => setIsImportModalOpen(true)}
-              className="h-8 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
-              title="Import daftar nomor WhatsApp yang pernah di-chat sebelumnya agar tidak terduplikasi"
+              onClick={() => setIsGeraiModalOpen(true)}
+              className="text-[11px] font-mono bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 px-3 py-1 rounded-full flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              title="Klik untuk melihat & mengelola sisa token GeraiKita AI"
             >
-              <Upload className="w-3 h-3 text-slate-500" />
-              <span>📥 Import WA Lama</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-[#059669] animate-pulse"></span>
+              <span className="font-semibold">
+                {geraiToken.tokens !== null
+                  ? `Sisa: ${geraiToken.tokens.toLocaleString('id-ID')} Token`
+                  : 'Token: Aktif'}
+              </span>
+              <span className="material-symbols-outlined text-[13px] text-emerald-600">generating_tokens</span>
             </button>
 
             <button
-              type="button"
-              onClick={handleSyncFonnteFile}
-              disabled={isSyncingFonnte || isSyncing}
-              className="h-8 px-3 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 disabled:opacity-50 text-emerald-800 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
-              title="Baca riwayat pesan dari public/fonnte-history.xlsx dan sinkronkan ke Google Sheets anti-duplikat"
-            >
-              {isSyncingFonnte ? (
-                <RefreshCw className="w-3 h-3 animate-spin text-emerald-700" />
-              ) : (
-                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-              )}
-              <span>{isSyncingFonnte ? 'Menyinkronkan…' : '⚡ Sync Fonnte-History.xlsx'}</span>
-            </button>
-
-            <button
-              type="button"
               onClick={syncFromSheets}
-              disabled={isSyncing || isSyncingFonnte}
-              className="h-8 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+              disabled={isSyncing}
+              className="text-[12px] font-medium border border-[#E5E7EB] hover:bg-slate-50 px-3 py-1.5 rounded-[6px] text-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
+              type="button"
             >
-              <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
-              <span>{isSyncing ? 'Sinkronisasi…' : 'Sync Sheets'}</span>
+              <span className={`material-symbols-outlined text-[15px] ${isSyncing ? 'animate-spin' : ''}`}>
+                sync
+              </span>
+              <span>{isSyncing ? 'Menyinkronkan…' : 'Sinkron Sheets'}</span>
             </button>
 
-            <div className="hidden sm:flex items-center gap-2 pl-3 border-l border-slate-200 text-xs text-slate-500">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span>Fonnte WA &amp; Gemini AI Ready</span>
+            <div className="relative flex items-center">
+              <button
+                onClick={() => setIsDataToolsOpen(!isDataToolsOpen)}
+                className="text-[12px] font-medium border border-[#E5E7EB] hover:bg-slate-50 px-3 py-1.5 rounded-[6px] text-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
+                type="button"
+              >
+                <span>Alat Data</span>
+                <span className="material-symbols-outlined text-[15px]">expand_more</span>
+              </button>
+
+              {isDataToolsOpen && (
+                <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-[#E5E7EB] rounded-lg shadow-lg p-1.5 z-50 text-xs">
+                  <button
+                    onClick={() => {
+                      setIsDataToolsOpen(false);
+                      setIsImportModalOpen(true);
+                    }}
+                    className="w-full text-left px-2.5 py-1.5 hover:bg-slate-50 rounded flex items-center gap-2 text-slate-700 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[15px]">upload</span>
+                    <span>Import WA Lama</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsDataToolsOpen(false);
+                      handleSyncFonnteFile();
+                    }}
+                    disabled={isSyncingFonnte}
+                    className="w-full text-left px-2.5 py-1.5 hover:bg-slate-50 rounded flex items-center gap-2 text-emerald-700 cursor-pointer disabled:opacity-50"
+                  >
+                    <span className="material-symbols-outlined text-[15px]">table_view</span>
+                    <span>Sync Fonnte-History.xlsx</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="w-8 h-8 rounded-full bg-[#059669] text-white flex items-center justify-center font-bold text-xs">
+              <span className="material-symbols-outlined text-white text-[18px]">person</span>
             </div>
           </div>
         </header>
 
-        {/* Main Workspace Body (Fills entire remaining viewport, no bottom void) */}
-        <main className="flex-1 min-h-0 overflow-y-auto p-6 lg:p-8 flex flex-col">
-          {activeTab === 'outreach' && (
-            <OutreachMachine
-              blacklist={blacklist}
-              onContactSentSuccess={handleContactSentSuccess}
-              showToast={showToast}
-              onSyncSuccess={syncFromSheets}
-            />
-          )}
+        <main className="w-full pt-14 min-h-screen bg-[#FAFAFA] overflow-y-auto">
+          <div className="max-w-[1440px] mx-auto p-6 lg:p-8">
+            {activeTab === 'outreach' && (
+              <OutreachMachine
+                blacklist={blacklist}
+                onContactSentSuccess={handleContactSentSuccess}
+                showToast={showToast}
+                onSyncSuccess={syncFromSheets}
+                onOpenPrototype={handleOpenPrototype}
+              />
+            )}
 
-          {activeTab === 'history' && (
-            <HistoryPanel
-              records={sheetRecords}
-              metrics={metrics}
-              isSyncing={isSyncing}
-              onSync={syncFromSheets}
-              onUpdateStatus={handleUpdateStatus}
-              showToast={showToast}
-            />
-          )}
+            {activeTab === 'history' && (
+              <HistoryPanel
+                records={sheetRecords}
+                metrics={metrics}
+                isSyncing={isSyncing}
+                onSync={syncFromSheets}
+                onUpdateStatus={handleUpdateStatus}
+                showToast={showToast}
+                onOpenPrototype={handleOpenPrototype}
+              />
+            )}
+
+            {activeTab === 'prototype' && (
+              <PrototypeStudioTab
+                sheetRecords={sheetRecords}
+                initialSelectedLead={selectedLeadForPrototype}
+                showToast={showToast}
+              />
+            )}
+          </div>
         </main>
-
       </div>
 
-      {/* ── MODAL: BULK IMPORT WA LAMA ─────────────────────────────── */}
       {isImportModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-                  <Upload className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">
-                    Import Nomor WA Lama (Anti-Duplikasi)
-                  </h3>
-                  <p className="text-[11px] text-slate-500">
-                    Nomor akan ditandai sebagai EXISTING_CHAT di Sheets agar dilewati otomatis.
-                  </p>
-                </div>
+          <div className="bg-white rounded-xl border border-slate-200 shadow-xl w-full max-w-lg overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-emerald-600">upload</span>
+                <h3 className="text-sm font-semibold text-slate-900">Import Nomor WA Lama</h3>
               </div>
               <button
                 type="button"
-                onClick={() => {
-                  if (!isImporting) setIsImportModalOpen(false);
-                }}
-                disabled={isImporting}
-                className="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
+                onClick={() => setIsImportModalOpen(false)}
+                className="w-7 h-7 rounded text-slate-400 hover:text-slate-700 flex items-center justify-center cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                ✕
               </button>
             </div>
 
-            <form onSubmit={handleBulkImportWa} className="p-5 flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-slate-800">
-                    Tempel Daftar Nomor WhatsApp:
-                  </label>
-                  {detectedValidNumbers.length > 0 && (
-                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      ✓ {detectedValidNumbers.length} nomor valid terdeteksi
-                    </span>
-                  )}
-                </div>
-                <textarea
-                  value={importText}
-                  onChange={(e) => setImportText(e.target.value)}
-                  disabled={isImporting}
-                  rows={6}
-                  placeholder={`Tempel daftar nomor HP/WA yang sudah pernah di-chat sebelumnya (pisahkan dengan koma atau baris baru enter)...\n\nContoh:\n081234567890\n082198765432, 6285712345678\n+62 813-4567-8901`}
-                  className="w-full text-xs font-mono p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900 focus:bg-white resize-none"
-                />
-                <p className="text-[11px] text-slate-500 leading-relaxed">
-                  Semua format (08xx, +62xx, 62xx) otomatis dibersihkan dan dinormalisasi ke standar <strong>628xxx</strong>.
-                </p>
-              </div>
-
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-2.5">
+            <form onSubmit={handleBulkImportWa} className="p-4 flex flex-col gap-3">
+              <textarea
+                value={importText}
+                onChange={(e) => setImportText(e.target.value)}
+                placeholder="Tempel nomor WA di sini, pisahkan baris atau koma (contoh: 08123456789, 628987654321)..."
+                rows={6}
+                className="w-full p-2.5 text-xs rounded-lg border border-slate-200 font-mono focus:ring-1 focus:ring-slate-900 outline-none"
+              />
+              <div className="flex items-center justify-end gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => setIsImportModalOpen(false)}
-                  disabled={isImporting}
-                  className="h-9 px-4 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+                  className="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900 cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  disabled={isImporting || detectedValidNumbers.length === 0}
-                  className="h-9 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 text-white text-xs font-semibold flex items-center gap-2 shadow-xs transition active:scale-[0.99] cursor-pointer"
+                  disabled={isImporting || !importText.trim()}
+                  className="px-4 py-1.5 text-xs font-semibold bg-[#0F172A] hover:bg-slate-800 disabled:opacity-50 text-white rounded-md cursor-pointer"
                 >
-                  {isImporting ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Menyimpan ke Sheets…</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                      <span>Simpan ke Blacklist Sheets ({detectedValidNumbers.length})</span>
-                    </>
-                  )}
+                  {isImporting ? 'Mengimpor…' : 'Impor ke Sheets'}
                 </button>
               </div>
             </form>
@@ -643,35 +697,184 @@ function AppInner() {
         </div>
       )}
 
-      {/* ── TOAST NOTIFICATIONS (shadcn/Vercel style) ─────────────── */}
-      <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none">
-        {toasts.map((t) => (
-          <div
-            key={t.id}
-            className={`pointer-events-auto animate-fade-in flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg text-xs font-medium border bg-white ${
-              t.type === 'success'
-                ? 'border-emerald-200 text-emerald-900'
-                : t.type === 'warn'
-                ? 'border-amber-200 text-amber-900'
-                : 'border-rose-200 text-rose-900'
-            }`}
-          >
-            {t.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />}
-            {t.type === 'warn' && <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />}
-            {t.type === 'error' && <XCircle className="w-4 h-4 text-rose-600 shrink-0" />}
-            <span>{t.message}</span>
-          </div>
-        ))}
-      </div>
+      {isGeraiModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs">
+                  <span className="material-symbols-outlined text-[16px]">generating_tokens</span>
+                </div>
+                <h3 className="text-sm font-semibold text-slate-900">Sisa Token &amp; Kuota GeraiKita AI</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsGeraiModalOpen(false)}
+                className="w-7 h-7 rounded text-slate-400 hover:text-slate-700 flex items-center justify-center cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
 
+            <div className="p-5 flex flex-col gap-4 text-xs">
+              <div className="p-4 rounded-lg bg-slate-900 text-white flex flex-col gap-2">
+                <div className="flex items-center justify-between text-[11px] text-slate-400">
+                  <span>SISA TOKEN AKTIF</span>
+                  <span className="flex items-center gap-1 text-emerald-400 font-semibold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Gateway Aktif
+                  </span>
+                </div>
+                <div className="text-[26px] font-bold font-mono text-emerald-400 leading-tight flex items-baseline gap-1.5">
+                  <span>{geraiToken.tokens !== null ? geraiToken.tokens.toLocaleString('id-ID') : 'Aktif'}</span>
+                  <span className="text-xs font-normal text-slate-400">Token</span>
+                </div>
+                <div className="text-[11px] text-slate-400 flex items-center justify-between pt-1 border-t border-slate-800">
+                  <span>Model: claude-sonnet-4-6</span>
+                  <span>
+                    Terpakai sesi ini: <strong className="text-slate-200">{geraiToken.usedInSession.toLocaleString('id-ID')}</strong> Token
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-semibold text-slate-700 uppercase tracking-wider">
+                  Preset Kuota Cepat:
+                </label>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[100000, 250000, 500000, 1000000].map((amt) => (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => {
+                        syncGeraiTokens(undefined, amt);
+                        setIsGeraiModalOpen(false);
+                      }}
+                      className="py-1.5 px-2 rounded-[6px] border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 text-[11px] font-medium text-slate-700 hover:text-emerald-800 transition cursor-pointer text-center"
+                    >
+                      {amt >= 1000000 ? `${amt / 1000000}M` : `${amt / 1000}K`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-semibold text-slate-700 uppercase tracking-wider">
+                  Setel Sisa Token Manual:
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={manualTokenInput}
+                    onChange={(e) => setManualTokenInput(e.target.value)}
+                    placeholder="contoh: 450000"
+                    className="flex-1 h-8 px-2.5 rounded-[6px] border border-slate-200 text-xs font-mono focus:border-slate-400 outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const num = parseInt(manualTokenInput, 10);
+                      if (!isNaN(num) && num >= 0) {
+                        syncGeraiTokens(undefined, num);
+                        setManualTokenInput('');
+                        setIsGeraiModalOpen(false);
+                      } else {
+                        showToast('error', 'Masukkan angka jumlah sisa token yang valid.');
+                      }
+                    }}
+                    className="h-8 px-3 rounded-[6px] bg-[#0F172A] hover:bg-slate-800 text-white font-medium text-xs transition cursor-pointer"
+                  >
+                    Simpan
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-100">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-semibold text-slate-700 uppercase tracking-wider">
+                    Sinkronisasi Otomatis (Live Token):
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="password"
+                    value={cookieInput}
+                    onChange={(e) => setCookieInput(e.target.value)}
+                    placeholder="Tempel token sesi ai.geraikita.com..."
+                    className="flex-1 h-8 px-2.5 rounded-[6px] border border-slate-200 text-xs font-mono focus:border-slate-400 outline-none"
+                  />
+                  <button
+                    type="button"
+                    disabled={isCheckingGerai || !cookieInput.trim()}
+                    onClick={async () => {
+                      await syncGeraiTokens(cookieInput);
+                      setCookieInput('');
+                    }}
+                    className="h-8 px-3 rounded-[6px] border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-medium text-xs transition cursor-pointer disabled:opacity-50"
+                  >
+                    {isCheckingGerai ? 'Sinkron…' : 'Sync Live'}
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-400 leading-normal">
+                  Sesi live didekripsi langsung via enkripsi AES-256-CBC dari api.geraikita.com.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                <a
+                  href="https://ai.geraikita.com/topup"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-emerald-700 hover:underline font-medium inline-flex items-center gap-1"
+                >
+                  <span>Buka Top Up ai.geraikita.com</span>
+                  <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => setIsGeraiModalOpen(false)}
+                  className="h-8 px-4 rounded-[6px] border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium cursor-pointer"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toasts.length > 0 && (
+        <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+          {toasts.map((t) => (
+            <div
+              key={t.id}
+              className={`px-3 py-2 rounded-lg text-xs font-medium shadow-md flex items-center gap-2 animate-fade-in ${
+                t.type === 'success'
+                  ? 'bg-emerald-800 text-white'
+                  : t.type === 'error'
+                  ? 'bg-rose-800 text-white'
+                  : 'bg-amber-600 text-white'
+              }`}
+            >
+              <span>{t.message}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-// ── Export default page wrapped in Suspense ──────────────────────────────────
-export default function Page() {
+export default function Home() {
   return (
-    <Suspense>
+    <Suspense
+      fallback={
+        <div className="h-screen w-screen flex items-center justify-center bg-[#FAFAFA] text-slate-500 font-mono text-xs">
+          Memuat Leads Machine…
+        </div>
+      }
+    >
       <AppInner />
     </Suspense>
   );

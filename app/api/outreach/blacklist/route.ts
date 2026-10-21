@@ -72,10 +72,26 @@ export async function GET() {
     let rejectedCount = 0;
 
     for (const item of json.data) {
+      const name = String(item.business_name || item.nama_bisnis || item.name || '');
       const rawPhone = String(item.phone_number || item.phone || item.no_telepon || '');
       const cleanPhone = normalizeIndonesianPhone(
         String(item.normalized_phone || item.normalizedPhone || rawPhone)
       );
+
+      // Exclude WB & MMC explicitly (user requested: MMC only 500k, not in 25jt high ticket deals)
+      const nameLower = name.toLowerCase();
+      const phoneNorm = cleanPhone || '';
+      if (
+        nameLower.includes('wb') ||
+        nameLower.includes('rindu') ||
+        nameLower.includes('mmc') ||
+        nameLower.includes('mas poer') ||
+        phoneNorm.includes('553829266') ||
+        phoneNorm.includes('333469032') ||
+        phoneNorm.includes('3666555')
+      ) {
+        continue;
+      }
 
       const rawStatus = String(item.lead_status || item.status_lead || item.status || 'CONTACTED').toUpperCase();
 

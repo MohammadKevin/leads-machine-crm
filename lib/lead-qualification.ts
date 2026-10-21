@@ -122,6 +122,13 @@ export const FRANCHISE_BLACKLIST_KEYWORDS = [
   'bri',
   'prudential',
   'allianz',
+  'warung madura',
+  'toko kelontong',
+  'tambal ban',
+  'laundry kiloan',
+  'cuci helm',
+  'counter pulsa',
+  'fotocopy',
 ];
 
 export const FREE_WEBSITE_DOMAINS = [
