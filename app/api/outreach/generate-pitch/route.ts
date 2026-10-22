@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { message, source, angleUsed, timeGreeting, tokensUsed } = await generatePersonalizedPitch({
+    const { message, source, angleUsed, timeGreeting, tokensUsed, researchSnippets } = await generatePersonalizedPitch({
       businessName: lead.businessName,
       category: lead.category,
       city: lead.city,
@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
       angleUsed,
       timeGreeting,
       tokensUsed: tokensUsed || 450,
+      researchSnippets: researchSnippets || [],
     });
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : 'Gagal menghasilkan pitch.';

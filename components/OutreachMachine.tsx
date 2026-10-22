@@ -95,6 +95,14 @@ export default function OutreachMachine({
   const [copiedPitchId, setCopiedPitchId] = useState<string | null>(null);
   const [showTerminal, setShowTerminal] = useState(false);
 
+  // Modal Preview & Chat Claude 3.5
+  const [previewPitchLead, setPreviewPitchLead] = useState<OutreachLead | null>(null);
+  const [previewPitchText, setPreviewPitchText] = useState<string>('');
+  const [previewPitchResearch, setPreviewPitchResearch] = useState<string[]>([]);
+  const [isGeneratingPitchId, setIsGeneratingPitchId] = useState<string | null>(null);
+  const [isRegeneratingPitch, setIsRegeneratingPitch] = useState<boolean>(false);
+  const [testPhoneInput, setTestPhoneInput] = useState<string>('');
+
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isCooldown, setIsCooldown] = useState(false);
@@ -126,20 +134,29 @@ export default function OutreachMachine({
       const q = localStorage.getItem(QUEUE_KEY);
       if (q) {
         const p = JSON.parse(q);
-        if (Array.isArray(p) && p.length > 0) setLeads(p);
+        if (Array.isArray(p)) {
+          const valid = p.filter((item): item is OutreachLead => Boolean(item && typeof item === 'object' && item.id));
+          if (valid.length > 0) setLeads(valid);
+        }
       }
       const l = localStorage.getItem(LOG_KEY);
       if (l) {
         const p = JSON.parse(l);
-        if (Array.isArray(p)) setLogs(p);
+        if (Array.isArray(p)) {
+          const validLogs = p.filter((item): item is BatchLogEntry => Boolean(item && typeof item === 'object' && item.id));
+          setLogs(validLogs);
+        }
       }
     } catch {}
   }, []);
 
   const saveQueue = useCallback((next: OutreachLead[]) => {
-    setLeads(next);
+    const clean = Array.isArray(next)
+      ? next.filter((item): item is OutreachLead => Boolean(item && typeof item === 'object' && item.id))
+      : [];
+    setLeads(clean);
     try {
-      localStorage.setItem(QUEUE_KEY, JSON.stringify(next));
+      localStorage.setItem(QUEUE_KEY, JSON.stringify(clean));
     } catch {}
   }, []);
 
@@ -191,7 +208,9 @@ export default function OutreachMachine({
 
     const totalCities = selectedCities.length;
     let processedIndex = 0;
-    let collectedLeads: OutreachLead[] = [...leadsRef.current];
+    let collectedLeads: OutreachLead[] = [...leadsRef.current].filter(
+      (l): l is OutreachLead => Boolean(l && typeof l === 'object')
+    );
     let newlyFoundCount = 0;
     let totalSkipped = 0;
 
@@ -219,7 +238,7 @@ export default function OutreachMachine({
               strictA1: true,
               blacklist: [
                 ...Array.from(blacklist),
-                ...collectedLeads.map((l) => l.phone),
+                ...collectedLeads.map((l) => l.phone).filter(Boolean),
               ],
             }),
           });
@@ -258,8 +277,11 @@ export default function OutreachMachine({
           });
 
           if (fetched.length > 0) {
-            const existingPhones = new Set(collectedLeads.map((l) => l.phone));
-            const newItems = fetched.filter((l) => !existingPhones.has(l.phone));
+            const validFetched = fetched.filter(
+              (l): l is OutreachLead => Boolean(l && typeof l === 'object' && l.phone)
+            );
+            const existingPhones = new Set(collectedLeads.map((l) => l.phone).filter(Boolean));
+            const newItems = validFetched.filter((l) => !existingPhones.has(l.phone));
             if (newItems.length > 0) {
               newlyFoundCount += newItems.length;
               collectedLeads = [...collectedLeads, ...newItems].slice(0, 150);
@@ -319,7 +341,7 @@ export default function OutreachMachine({
 
   const runBatch = async () => {
     if (runningRef.current) return;
-    const queue = leadsRef.current;
+    const queue = leadsRef.current.filter((l): l is OutreachLead => Boolean(l && typeof l === 'object'));
     const pending = queue
       .map((l, i) =>
         l.status === 'ready' || l.status === 'failed' || l.status === 'in_queue' ? i : -1
@@ -516,12 +538,13 @@ export default function OutreachMachine({
   };
 
   const handleExportCsv = () => {
-    if (leads.length === 0) return;
+    const validLeads = leads.filter((l): l is OutreachLead => Boolean(l && typeof l === 'object'));
+    if (validLeads.length === 0) return;
     const header = 'Nama Bisnis,WhatsApp,Kota,Kategori,Rating,Ulasan,Status\n';
-    const rows = leads
+    const rows = validLeads
       .map(
         (l) =>
-          `"${(l.businessName || '').replace(/"/g, '""')}","${l.phone}","${l.city || ''}","${l.category || ''}",${l.rating || 0},${l.reviewsCount || 0},"${l.status}"`
+          `"${(l.businessName || '').replace(/"/g, '""')}","${l.phone || ''}","${l.city || ''}","${l.category || ''}",${l.rating || 0},${l.reviewsCount || 0},"${l.status || ''}"`
       )
       .join('\n');
     const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' });
@@ -535,13 +558,135 @@ export default function OutreachMachine({
     showToast('success', `${leads.length} data prospek berhasil diekspor ke CSV.`);
   };
 
-  const handleManualWhatsApp = async (item: OutreachLead) => {
+  const handleOpenPitchPreview = async (item: OutreachLead) => {
+    setPreviewPitchLead(item);
+    if (item.pitchMessage) {
+      setPreviewPitchText(item.pitchMessage);
+      return;
+    }
+
+    setIsGeneratingPitchId(item.id);
+    let pitch = '';
+    try {
+      const gr = await fetch('/api/outreach/generate-pitch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lead: item, targetMode }),
+      });
+      const gd = await gr.json();
+      if (gr.ok && gd.success && gd.message) {
+        pitch = gd.message;
+        if (Array.isArray(gd.researchSnippets)) {
+          setPreviewPitchResearch(gd.researchSnippets);
+        }
+        if (typeof window !== 'undefined' && gd.tokensUsed) {
+          window.dispatchEvent(new CustomEvent('gk-token-deducted', { detail: { tokens: gd.tokensUsed } }));
+        }
+      }
+    } catch {}
+
+    if (!pitch) {
+      pitch = getDynamicFallbackPitch({
+        businessName: item.businessName,
+        category: item.category,
+        city: item.city,
+        address: item.address,
+        rating: item.rating,
+        reviewsCount: item.reviewsCount,
+        targetMode,
+      });
+    }
+
+    setPreviewPitchText(pitch);
+    const updatedLead: OutreachLead = { ...item, pitchMessage: pitch };
+    const nextLeads = leadsRef.current.filter(Boolean).map((l) => (l.id === item.id ? updatedLead : l));
+    saveQueue(nextLeads);
+    setIsGeneratingPitchId(null);
+  };
+
+  const handleRegeneratePitch = async () => {
+    if (!previewPitchLead) return;
+    setIsRegeneratingPitch(true);
+    let pitch = '';
+    try {
+      const gr = await fetch('/api/outreach/generate-pitch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lead: previewPitchLead, targetMode }),
+      });
+      const gd = await gr.json();
+      if (gr.ok && gd.success && gd.message) {
+        pitch = gd.message;
+        if (Array.isArray(gd.researchSnippets)) {
+          setPreviewPitchResearch(gd.researchSnippets);
+        }
+        if (typeof window !== 'undefined' && gd.tokensUsed) {
+          window.dispatchEvent(new CustomEvent('gk-token-deducted', { detail: { tokens: gd.tokensUsed } }));
+        }
+      }
+    } catch {}
+
+    if (!pitch) {
+      pitch = getDynamicFallbackPitch({
+        businessName: previewPitchLead.businessName,
+        category: previewPitchLead.category,
+        city: previewPitchLead.city,
+        address: previewPitchLead.address,
+        rating: previewPitchLead.rating,
+        reviewsCount: previewPitchLead.reviewsCount,
+        targetMode,
+      });
+    }
+
+    setPreviewPitchText(pitch);
+    const updatedLead: OutreachLead = { ...previewPitchLead, pitchMessage: pitch };
+    setPreviewPitchLead(updatedLead);
+    const nextLeads = leadsRef.current.filter(Boolean).map((l) => (l.id === previewPitchLead.id ? updatedLead : l));
+    saveQueue(nextLeads);
+    setIsRegeneratingPitch(false);
+    showToast('success', 'Pesan 3 paragraf berhasil diracik ulang oleh Claude.');
+  };
+
+  const handleSendTestToSelf = () => {
+    if (!testPhoneInput.trim()) {
+      showToast('warn', 'Masukkan nomor WhatsApp Anda untuk tes.');
+      return;
+    }
+    const rawClean = testPhoneInput.replace(/\D/g, '');
+    let normalized = rawClean;
+    if (normalized.startsWith('0')) normalized = '62' + normalized.slice(1);
+    else if (normalized.startsWith('8')) normalized = '62' + normalized;
+
+    const waUrl = `https://wa.me/${normalized}?text=${encodeURIComponent(previewPitchText)}`;
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
+    showToast('success', `Membuka WhatsApp ke nomor tes ${normalized}!`);
+  };
+
+  const handleManualWhatsApp = async (item: OutreachLead, customMessage?: string) => {
     const rawClean = item.phone.replace(/\D/g, '');
     let normalized = rawClean;
     if (normalized.startsWith('0')) normalized = '62' + normalized.slice(1);
     else if (normalized.startsWith('8')) normalized = '62' + normalized;
 
-    let pitch = item.pitchMessage;
+    let pitch = customMessage || item.pitchMessage;
+    if (!pitch) {
+      showToast('warn', `Meracik pesan 3 paragraf via Claude untuk ${item.businessName}...`);
+      try {
+        const gr = await fetch('/api/outreach/generate-pitch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lead: item, targetMode }),
+        });
+        const gd = await gr.json();
+        if (gr.ok && gd.success && gd.message) {
+          pitch = gd.message;
+          if (typeof window !== 'undefined' && gd.tokensUsed) {
+            window.dispatchEvent(new CustomEvent('gk-token-deducted', { detail: { tokens: gd.tokensUsed } }));
+          }
+        }
+      } catch {}
+    }
+
     if (!pitch) {
       pitch = getDynamicFallbackPitch({
         businessName: item.businessName,
@@ -558,7 +703,7 @@ export default function OutreachMachine({
     window.open(waUrl, '_blank', 'noopener,noreferrer');
 
     const updatedLead: OutreachLead = { ...item, status: 'sent', pitchMessage: pitch };
-    const nextLeads = leadsRef.current.map((l) => (l.id === item.id ? updatedLead : l));
+    const nextLeads = leadsRef.current.filter(Boolean).map((l) => (l.id === item.id ? updatedLead : l));
     saveQueue(nextLeads);
     onContactSentSuccess(normalized, updatedLead);
 
@@ -580,19 +725,20 @@ export default function OutreachMachine({
     if (onSyncSuccess) onSyncSuccess();
   };
 
-  const totalLeads = leads.length;
-  const sentCount = leads.filter((l) => l.status === 'sent').length;
-  const failedCount = leads.filter((l) => l.status === 'failed').length;
-  const skipCount = leads.filter((l) => l.status === 'skipped').length;
-  const readyCount = leads.filter(
+  const validLeads = leads.filter((l): l is OutreachLead => Boolean(l && typeof l === 'object'));
+  const totalLeads = validLeads.length;
+  const sentCount = validLeads.filter((l) => l.status === 'sent').length;
+  const failedCount = validLeads.filter((l) => l.status === 'failed').length;
+  const skipCount = validLeads.filter((l) => l.status === 'skipped').length;
+  const readyCount = validLeads.filter(
     (l) => l.status === 'ready' || l.status === 'in_queue' || l.status === 'pending'
   ).length;
   const processedCount = sentCount + failedCount + skipCount;
   const progressPct = totalLeads > 0 ? Math.round((processedCount / totalLeads) * 100) : 0;
   const estimatedQueueValue = readyCount * 2500000;
-  const sultanCount = leads.filter((l) => (l.reviewsCount || 0) >= 25).length;
+  const sultanCount = validLeads.filter((l) => (l.reviewsCount || 0) >= 25).length;
 
-  const filteredLeads = leads.filter((l) => {
+  const filteredLeads = validLeads.filter((l) => {
     if (tableFilter === 'READY') {
       return l.status === 'ready' || l.status === 'in_queue' || l.status === 'pending';
     }
@@ -1008,6 +1154,18 @@ export default function OutreachMachine({
                     </td>
                     <td className="py-2.5 px-4 text-right">
                       <div className="inline-flex items-center gap-1.5 justify-end">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenPitchPreview(item)}
+                          disabled={isGeneratingPitchId === item.id}
+                          className="border border-[#E5E7EB] hover:bg-slate-100 text-slate-700 px-2 py-1 rounded text-[11px] font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
+                          title="Lihat & Edit Draft Pesan 3 Paragraf dari Claude"
+                        >
+                          <span className={`material-symbols-outlined text-[13px] text-purple-600 ${isGeneratingPitchId === item.id ? 'animate-spin' : ''}`}>
+                            {isGeneratingPitchId === item.id ? 'refresh' : 'chat_bubble'}
+                          </span>
+                          <span>{isGeneratingPitchId === item.id ? 'Meracik…' : 'Chat / Pitch'}</span>
+                        </button>
                         {item.pitchMessage && (
                           <button
                             type="button"
@@ -1093,6 +1251,135 @@ export default function OutreachMachine({
               <span>{l.message}</span>
             </div>
           ))}
+        </div>
+      )}
+      {previewPitchLead && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-[#E5E7EB] rounded-[10px] max-w-2xl w-full p-5 sm:p-6 shadow-2xl flex flex-col gap-4 max-h-[92vh] overflow-hidden">
+            <div className="flex items-start justify-between border-b border-slate-100 pb-3">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="material-symbols-outlined text-[20px] text-purple-600">forum</span>
+                  <h3 className="text-[16px] font-bold text-slate-900">
+                    Draft Pesan Outreach: {previewPitchLead.businessName}
+                  </h3>
+                  <span className="bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-mono px-2 py-0.5 rounded-full font-semibold">
+                    Claude 3.5 Sonnet
+                  </span>
+                </div>
+                <p className="text-[12px] text-slate-500 mt-1">
+                  Target: <strong>{targetMode === 'admin_gatekeeper' ? 'Lewat Admin (Gatekeeper)' : 'Langsung ke Owner'}</strong> · {previewPitchLead.city} {previewPitchLead.rating > 0 ? `· ★ ${previewPitchLead.rating} (${previewPitchLead.reviewsCount} ulasan)` : ''}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewPitchLead(null)}
+                className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="bg-amber-50/70 border border-amber-200/80 rounded-[6px] p-2.5 text-[11px] text-amber-900 flex items-start gap-2">
+              <span className="material-symbols-outlined text-[16px] text-amber-600 flex-shrink-0 mt-0.5">verified</span>
+              <div>
+                <strong>Pesan Otentik Hasil Riset Google (Bukan Template):</strong> Dirancang dari fakta nyata toko/usaha, mengangkat kendala operasional yang spesifik, dan menawarkan sampel pratinjau konsep (hanya melihat sampelnya yang cuma-cuma tanpa komitmen).
+              </div>
+            </div>
+
+            {previewPitchResearch.length > 0 && (
+              <details className="bg-purple-50/60 border border-purple-200 rounded-[6px] p-2 text-[11px] text-purple-950">
+                <summary className="font-semibold cursor-pointer text-purple-800 flex items-center gap-1.5 select-none">
+                  <span className="material-symbols-outlined text-[15px] text-purple-600">travel_explore</span>
+                  <span>Temuan Riset Web Live Google ({previewPitchResearch.length} data spesifik terdeteksi)</span>
+                </summary>
+                <div className="mt-2 space-y-1 pl-2 border-l-2 border-purple-300 text-purple-900 font-sans text-[10.5px] leading-relaxed max-h-32 overflow-y-auto">
+                  {previewPitchResearch.map((snippet, idx) => (
+                    <div key={idx} className="bg-white/90 p-1.5 rounded border border-purple-100">{snippet}</div>
+                  ))}
+                </div>
+              </details>
+            )}
+
+            <div className="flex flex-col gap-1.5 flex-1 min-h-[160px]">
+              <div className="flex items-center justify-between text-[11px] text-slate-500">
+                <span>Isi Pesan Siap Kirim (bisa Anda edit bebas):</span>
+                <span className="font-mono text-slate-400">{previewPitchText.length} karakter</span>
+              </div>
+              <textarea
+                value={previewPitchText}
+                onChange={(e) => setPreviewPitchText(e.target.value)}
+                rows={9}
+                className="w-full text-[13px] leading-relaxed p-3 rounded-[6px] border border-slate-300 bg-slate-50/50 text-slate-800 font-sans focus:bg-white focus:outline-none focus:ring-1 focus:ring-purple-500 transition resize-none select-text"
+                placeholder="Sedang meracik draf pesan..."
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-100">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={isRegeneratingPitch}
+                  onClick={handleRegeneratePitch}
+                  className="px-3 py-1.5 border border-purple-200 text-purple-700 hover:bg-purple-50 rounded-[6px] text-[12px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                  title="Minta Claude meracik ulang dengan variasi kalimat baru"
+                >
+                  <span className={`material-symbols-outlined text-[14px] ${isRegeneratingPitch ? 'animate-spin' : ''}`}>
+                    autorenew
+                  </span>
+                  <span>{isRegeneratingPitch ? 'Meracik…' : 'Racik Ulang Claude'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(previewPitchText);
+                    showToast('success', 'Pesan disalin ke clipboard.');
+                  }}
+                  className="px-3 py-1.5 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-[6px] text-[12px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[14px]">content_copy</span>
+                  <span>Salin</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleManualWhatsApp(previewPitchLead, previewPitchText);
+                    setPreviewPitchLead(null);
+                  }}
+                  className="px-4 py-1.5 bg-[#059669] hover:bg-emerald-700 text-white rounded-[6px] text-[12px] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                >
+                  <span className="material-symbols-outlined text-[15px]">send</span>
+                  <span>Buka WA Klien &amp; Simpan</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200 rounded-[6px] p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
+              <div className="flex items-center gap-1.5 text-slate-600">
+                <span className="material-symbols-outlined text-[15px] text-slate-400">phonelink_ring</span>
+                <span>Ingin tes tampilan di WA Anda dulu?</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="text"
+                  placeholder="08123456789 (Nomor Anda)"
+                  value={testPhoneInput}
+                  onChange={(e) => setTestPhoneInput(e.target.value)}
+                  className="h-7 px-2 text-[11px] rounded border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 w-40 focus:outline-none focus:border-slate-500 font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={handleSendTestToSelf}
+                  className="h-7 px-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded text-[11px] font-medium cursor-pointer"
+                >
+                  Tes Kirim ke Saya
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

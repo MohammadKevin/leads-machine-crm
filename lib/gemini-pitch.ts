@@ -111,7 +111,7 @@ function getGreetingByTime(timeGreeting: 'pagi' | 'siang' | 'sore' | 'malam', ta
 }
 
 /**
- * Fallback Ringkas & Mematikan (Micro-Pitch 2 Paragraf Pendek)
+ * Fallback Ringkas & Terstruktur (3 Paragraf: Pujian, Masalah, Tawaran Pratinjau)
  */
 export function getDynamicFallbackPitch(params: GeneratePitchParams): string {
   const {
@@ -135,23 +135,110 @@ export function getDynamicFallbackPitch(params: GeneratePitchParams): string {
 
   // ── Opsi 1: Mode Admin (Menembus Gatekeeper) ───────────────────────────────
   if (targetMode === 'admin_gatekeeper') {
-    return `${greeting} Tadi saya sempat lihat profil ${cleanName} di Google Maps ${city}, ${ratingPhrase} ramai sekali. Mau tanya Kak, untuk penanggung jawab atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+    return `${greeting} Tadi saya sempat melihat profil ${cleanName} di Google Maps daerah ${city}, ${ratingPhrase} yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
 
-Soalnya kebetulan kami ada buatin contoh pratinjau konsep website kilat gratis khusus untuk ${cleanName} — tujuannya biar admin nggak capek ${pain.adminPain}.
+Saya perhatikan bisnis sebagus ${cleanName} pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus ${pain.adminPain} satu per satu secara manual via chat.
 
-Kira-kira berkenan kalau saya kirimkan link pratinjaunya ke nomor ini untuk dilihat santai atau diteruskan ke Owner, Kak? 🙏`;
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk ${cleanName} agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏`;
   }
 
   // ── Opsi 2: Mode Owner (Langsung ke Decision Maker) ────────────────────────
-  return `${greeting} Saya Kevin, konsultan web lokal dari Malang. Tadi saya sempat melihat profil ${cleanName} di Google Maps daerah ${city}, ${ratingPhrase} yang aktif melayani pelanggan.
+  return `${greeting} Saya Kevin, web developer lokal dari Malang, Jawa Timur. Tadi saya sempat melihat profil ${cleanName} di Google Maps daerah ${city}, ${ratingPhrase} yang sangat bagus dan aktif melayani pelanggan.
 
-Sayang sekali tempat sebagus ini belum memiliki link profil mandiri di Google, padahal banyak pelaku usaha ${category} menghadapi kendala ${pain.ownerPain}.
+Sebagai sesama pelaku usaha, sayang sekali bisnis dengan reputasi sebaik ini belum memiliki website profil resmi mandiri di Google Maps. Padahal di bidang ${category}, banyak pemilik usaha menghadapi kendala ${pain.ownerPain}.
 
-Kebetulan kami sudah menyiapkan 1 contoh konsep website kilat yang ringan dibuka di HP khusus untuk ${cleanName}. Kalau kami kirimkan tautan pratinjaunya tanpa biaya untuk dilihat-lihat santai, apakah berkenan Kak? 🙏`;
+Maka dari itu, saya sudah sempat menyiapkan *1 sampel pratinjau konsep website modern* yang sangat ringan dibuka di HP khusus untuk ${cleanName}. Sampel rancangan awal ini murni saya buatkan cuma-cuma sekadar untuk dilihat dan dinilai terlebih dahulu tanpa ikatan komitmen apapun.
+
+Boleh izin saya bagikan tautan sampel pratinjaunya di sini untuk dilihat-lihat santai, Kak? 🙏`;
 }
 
 /**
- * Generate personal B2B outreach pitch via Gemini API dengan kontrol Mode Admin vs Owner.
+ * Riset otomatis online tentang profil bisnis calon klien via Google Serper Search API
+ */
+export async function researchBusinessOnline(businessName: string, city?: string): Promise<{
+  snippets: string[];
+  knowledgeGraphText?: string;
+  summaryContext: string;
+}> {
+  const apiKey = process.env.SERPER_API_KEY;
+  const cleanName = businessName.replace(/[:\-–].*$/, '').trim() || businessName;
+  const searchQuery = city ? `${cleanName} ${city}` : cleanName;
+
+  if (!apiKey) {
+    return {
+      snippets: [],
+      summaryContext: 'Riset live Google tidak tersedia (SERPER_API_KEY tidak dikonfigurasi). Mengandalkan analisis nama dan profil Maps.',
+    };
+  }
+
+  try {
+    const response = await fetchWithRetry('https://google.serper.dev/search', {
+      method: 'POST',
+      headers: {
+        'X-API-KEY': apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        q: searchQuery,
+        gl: 'id',
+        hl: 'id',
+      }),
+      timeoutMs: 6000,
+      retries: 1,
+    });
+
+    if (!response.ok) {
+      return {
+        snippets: [],
+        summaryContext: `Pencarian web Serper menghasilkan status ${response.status}.`,
+      };
+    }
+
+    const data = await response.json();
+    const organic = Array.isArray(data.organic) ? data.organic : [];
+    const snippets: string[] = [];
+
+    // Ambil maksimal 4 snippet paling relevan
+    for (const item of organic.slice(0, 4)) {
+      if (item.title && item.snippet) {
+        snippets.push(`- [${item.title}]: ${item.snippet}`);
+      }
+    }
+
+    let kgText = '';
+    if (data.knowledgeGraph) {
+      const kg = data.knowledgeGraph;
+      kgText = [
+        kg.title ? `Nama Resmi: ${kg.title}` : '',
+        kg.type ? `Jenis: ${kg.type}` : '',
+        kg.description ? `Deskripsi: ${kg.description}` : '',
+        kg.attributes ? JSON.stringify(kg.attributes) : '',
+      ].filter(Boolean).join(' | ');
+    }
+
+    const summaryContext = [
+      kgText ? `Knowledge Graph Google: ${kgText}` : '',
+      snippets.length > 0 ? `Temuan Web Organik:\n${snippets.join('\n')}` : '',
+    ].filter(Boolean).join('\n\n') || 'Tidak ada data web spesifik yang ditemukan di Google.';
+
+    return {
+      snippets,
+      knowledgeGraphText: kgText,
+      summaryContext,
+    };
+  } catch {
+    return {
+      snippets: [],
+      summaryContext: 'Pencarian web dilewati karena timeout jaringan.',
+    };
+  }
+}
+
+/**
+ * Generate personal B2B outreach pitch via Claude 3.5 / Gemini API dengan kontrol Mode Admin vs Owner.
+ * Menggunakan pendekatan "Riset Dulu Baru Susun Pesan" (Research-First Copywriting).
  */
 export async function generatePersonalizedPitch(params: GeneratePitchParams): Promise<{
   message: string;
@@ -159,19 +246,11 @@ export async function generatePersonalizedPitch(params: GeneratePitchParams): Pr
   angleUsed?: string;
   timeGreeting?: 'pagi' | 'siang' | 'sore' | 'malam';
   tokensUsed?: number;
+  researchSnippets?: string[];
 }> {
   const apiKey = process.env.GEMINI_API_KEY;
   const timeGreeting = getTimeOfDayWIB();
   const targetMode = params.targetMode || 'admin_gatekeeper';
-
-  if (!apiKey) {
-    return {
-      message: getDynamicFallbackPitch(params),
-      source: 'fallback',
-      angleUsed: targetMode === 'admin_gatekeeper' ? 'Admin_Gatekeeper_Fallback' : 'Owner_Direct_Fallback',
-      timeGreeting,
-    };
-  }
 
   const {
     businessName,
@@ -187,58 +266,45 @@ export async function generatePersonalizedPitch(params: GeneratePitchParams): Pr
   const targetCity = city || address || 'Jawa Timur';
   const pain = getCategorySpecificPainPoint(category);
 
+  // ── Jalankan Riset Live Web Terlebih Dahulu ───────────────────────────────
+  const research = await researchBusinessOnline(cleanName, targetCity);
+
   const nightInstruction =
     timeGreeting === 'malam'
       ? `\n- NADA BICARA MALAM HARI: Wajib gunakan nada bicara ekstra santun dan meminta maaf secara halus jika menghubungi di waktu istirahat malam.`
       : '';
 
-  // ── Prompt Khusus Mode Admin vs Mode Owner ───────────────────────────────
-  const modeSpecificPrompt =
-    targetMode === 'admin_gatekeeper'
-      ? `TARGET PENERIMA: ADMIN / CUSTOMER SERVICE TOKO (GATEKEEPER).
-Nomor WhatsApp ini kemungkinan besar dipegang admin/kasir, BUKAN pemilik langsung.
-MISI: Buat admin merasa dihargai, mengerti masalah capeknya admin menjawab chat berulang, lalu meminta izin secara sopan untuk mengirimkan link pratinjau website atau diteruskan ke Owner/PIC.
+  const systemPrompt = `Anda adalah Kevin, seorang web developer lokal profesional dari Jawa Timur yang santun, ramah, dan sangat cerdas dalam memahami model bisnis lokal.
+Tugas Anda adalah meriset dan memahami calon klien terlebih dahulu, lalu menuliskan pesan cold outreach WhatsApp pembuka B2B (minimal 3 paragraf terpisah) yang 100% UNIK, PERSONAL, dan ANTI-TEMPLATE.
 
-STRUKTUR PESAN (MAKSIMAL 2 PARAGRAF SINGKAT, RAMAH LAYAR HP):
-Paragraf 1:
-- Sapaan pembuka santun menggunakan '${timeGreeting}' kepada Kak admin.
-- Puji bisnis "${cleanName}" di ${targetCity} yang ramai dengan rating ${rating > 0 ? `${rating} bintang` : 'bagus'}.
-- Tanya sopan: "Mau tanya Kak admin, untuk penanggung jawab atau Owner biasanya pegang nomor ini atau ada kontak khusus ya?"
+PRINSIP WAJIB:
+1. DILARANG MENGGUNAKAN TEMPLATE KLISE ATAU POLA HAFALAN!
+   Setiap usaha memiliki keunikan, lokasi, fasilitas, produk unggulan, dan masalah operasional yang BERBEDA. Dilarang memakai kalimat seragam.
+2. ANALISIS & REKONSTRUKSI MASALAH BISNIS SECARA NYATA:
+   Berdasarkan profil usaha dan hasil temuan riset web di bawah, tebak dan angkat 2-3 contoh pertanyaan berulang atau kerepotan operasional yang PALING MENGURAS WAKTU admin/owner bisnis ini setiap hari.
+   (Contoh kos: ketersediaan kamar AC/pasutri, parkir mobil, foto kamar mandi dalam. Contoh klinik: jadwal dokter, biaya tambal/scaling, antrean. Contoh interior: estimasi biaya per meter, survey lokasi, portofolio rumah 2 lantai).
+3. STRUKTUR 3 PARAGRAF BERMUTU TINGGI:
+   - Paragraf 1 (Pembuka & Pujian Spesifik): Sapaan '${timeGreeting}' santun. Sebutkan fakta spesifik yang Anda temukan dari riset (nama jalan/lokasi, fasilitas, akses strategis, atau reputasi nyata dari ulasan pelanggan) yang membuktikan Anda benar-benar meriset tempat mereka. Tanyakan penanggung jawab secara sopan.
+   - Paragraf 2 (Empati Masalah & Analisis Riil): Mengulas tuntas kerepotan admin mengulang-ulang jawaban pertanyaan yang sama lewat chat secara manual, atau risiko kehilangan calon pelanggan yang tanya di luar jam operasional karena belum ada katalog informasi resmi mandiri.
+   - Paragraf 3 (Tawaran Sampel Pratinjau Desain & CTA Santun): Sampaikan bahwa Anda sudah mencoba merancang *sampel pratinjau konsep katalog/website interaktif* yang ringan dibuka di HP khusus untuk ${cleanName}.
+     PERINGATAN KERAS ANTI-SALAH PAHAM: Tegaskan dengan jelas dan lugas bahwa yang disiapkan cuma-cuma/bebas biaya HANYA "sampel pratinjau konsep rancangannya" untuk sekadar diintip dan dilihat dulu di HP tanpa biaya dan tanpa ikatan komitmen apa pun — BUKAN pembuatan websitenya yang gratis.
+4. GAYA BAHASA: Bahasa Indonesia profesional, luwes, hangat, khas anak muda Jawa Timur yang sopan. Dilarang kata-kata spam murahan.
+5. HANYA keluarkan isi teks pesan WhatsApp yang siap kirim tanpa tanda kutip, tanpa judul, dan tanpa catatan pembuka/penutup.`;
 
-Paragraf 2:
-- Jelaskan alasan: "Kebetulan kami ada buatkan contoh konsep website/katalog kilat gratis khusus untuk ${cleanName} biar admin nggak capek ${pain.adminPain}."
-- CTA rendah hambatan: "Kira-kira berkenan kalau kami kirimkan link pratinjaunya ke nomor ini buat dilihat santai atau diteruskan ke Owner, Kak? 🙏"`
-      : `TARGET PENERIMA: OWNER / DECISION MAKER LANGSUNG.
-MISI: Hook singkat, profesional, fokus pada reputasi brand, kemudahan pelanggan, dan penawaran melihat draft website kilat cuma-cuma.
+  const userPrompt = `Lakukan riset bisnis dan tulis pesan WhatsApp pembuka untuk bisnis ini:
+Nama Bisnis: ${cleanName}
+Kategori Usaha: ${category}
+Kota / Wilayah: ${targetCity} ${address ? `(${address})` : ''}
+Rating Google Maps: ${rating > 0 ? `${rating} bintang (${reviewsCount} ulasan)` : 'Aktif melayani pelanggan'}
+${highlightReview ? `Contoh ulasan pelanggan: "${highlightReview}"` : ''}
+Target Penerima: ${targetMode === 'admin_gatekeeper' ? 'Lewat Admin / Customer Service (admin_gatekeeper)' : 'Langsung ke Owner / Pemilik (owner_direct)'}
 
-STRUKTUR PESAN (MAKSIMAL 2 PARAGRAF SINGKAT, RAMAH LAYAR HP):
-Paragraf 1:
-- Sapaan pembuka '${timeGreeting}', perkenalkan diri santun: "Saya Kevin, web developer lokal dari Malang."
-- Apresiasi tulus reputasi "${cleanName}" di ${targetCity} (${rating > 0 ? `${rating} bintang` : 'aktif & ramai'}).
+HASIL TEMUAN RISET GOOGLE & WEB NYATA:
+${research.summaryContext}
 
-Paragraf 2:
-- Sampaikan masukan konstruktif bahwa sayang sekali belum ada link resmi mandiri di Google Maps, padahal bidang ${category} sering menghadapi kendala ${pain.ownerPain}.
-- Tawarkan teaser preview: "Kebetulan kami sudah siapkan 1 konsep website kilat yang ringan dibuka di HP khusus untuk ${cleanName}. Boleh izin kami bagikan tautan pratinjaunya tanpa biaya untuk dilihat santai, Kak? 🙏"`;
-
-  const systemPrompt = `Anda adalah Kevin, seorang web developer lokal dari Jawa Timur yang santun, ramah, dan profesional. Anda sedang menulis pesan pembuka cold outreach WhatsApp yang RINGKAS, PERSONAL, dan ANTI-READ (tidak seperti robot sales).
-
-INSTRUKSI WAKTU WIB (GMT+7):
-Saat ini waktu '${timeGreeting}' di Indonesia. Sapaan pembuka WAJIB diawali waktu '${timeGreeting}'.${nightInstruction}
-
-PROSPEK BISNIS:
-- Nama: ${cleanName}
-- Kategori: ${category}
-- Kota: ${targetCity}
-- Rating Google Maps: ${rating > 0 ? `${rating} bintang (${reviewsCount} ulasan)` : 'Aktif & Positif'}
-${highlightReview ? `- Contoh ulasan nyata: "${highlightReview}"` : ''}
-
-${modeSpecificPrompt}
-
-ATURAN KETAT:
-- PANJANG PESAN: Sangat ringkas (maksimal 70-110 kata total, tepat 2 paragraf terpisah \n\n).
-- DILARANG menulis panjang berbelit-belit seperti skripsi atau email formal.
-- DILARANG menggunakan kata-kata spam ("DISKON BESAR", "PROMO SPESIAL", "HARGA MURAH").
-- HANYA keluarkan isi teks pesan WhatsApp yang siap kirim tanpa tanda kutip.`;
+Instruksi Khusus:
+- Analisis data riset di atas untuk merangkai pesan yang terasa 'sangat paham tempat mereka'.
+- Tuliskan pesan WhatsApp minimal 3 paragraf sekarang:`;
 
   // ── 1. PRIORITAS UTAMA: Claude 3.5 Sonnet via GeraiKita AI ───────────────────
   const geraiKitaKey = process.env.GERAIKITA_API_KEY;
@@ -258,15 +324,12 @@ ATURAN KETAT:
             model: claudeModel,
             messages: [
               { role: 'system', content: systemPrompt },
-              {
-                role: 'user',
-                content: `Tulis pesan WhatsApp ringkas (tepat 2 paragraf pendek) untuk ${cleanName} sekarang. HANYA teks pesan siap kirim. Dilarang menyertakan judul atau catatan pengantar.`,
-              },
+              { role: 'user', content: userPrompt },
             ],
-            temperature: 0.65,
-            max_tokens: 600,
+            temperature: 0.7,
+            max_tokens: 950,
           }),
-          timeoutMs: 9000,
+          timeoutMs: 14000,
           retries: 1,
         });
 
@@ -280,13 +343,14 @@ ATURAN KETAT:
               .trim()
               .replace(/^["']|["']$/g, '');
 
-            if (cleanedText.length > 50 && cleanedText.length < 900) {
+            if (cleanedText.length > 80 && cleanedText.length < 1800) {
               return {
                 message: cleanedText,
                 source: 'claude',
-                angleUsed: targetMode === 'admin_gatekeeper' ? 'Claude_Admin_Gatekeeper' : 'Claude_Owner_Direct',
+                angleUsed: targetMode === 'admin_gatekeeper' ? 'Claude_Research_Admin_Gatekeeper' : 'Claude_Research_Owner_Direct',
                 timeGreeting,
-                tokensUsed: json?.usage?.total_tokens || 450,
+                tokensUsed: json?.usage?.total_tokens || 580,
+                researchSnippets: research.snippets,
               };
             }
           }
@@ -298,73 +362,75 @@ ATURAN KETAT:
   }
 
   // ── 2. CADANGAN: Google Gemini AI ──────────────────────────────────────────
-  const modelsToTry = [
-    'gemini-3.5-flash',
-    'gemini-3.8-flash',
-    'gemini-3.5-flash-lite',
-    'gemini-flash-latest',
-  ];
+  if (apiKey) {
+    const modelsToTry = [
+      'gemini-2.5-flash-lite',
+      'gemini-3.8-flash',
+      'gemini-3.5-flash',
+      'gemini-flash-latest',
+    ];
 
-  for (const model of modelsToTry) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      const response = await fetchWithRetry(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemPrompt }] },
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                {
-                  text: `Tulis pesan WhatsApp ringkas (tepat 2 paragraf pendek) untuk ${cleanName} sekarang. HANYA teks pesan.`,
-                },
-              ],
+    for (const model of modelsToTry) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const response = await fetchWithRetry(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+            contents: [
+              {
+                role: 'user',
+                parts: [{ text: userPrompt }],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 1000,
             },
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 800,
-          },
-        }),
-        timeoutMs: 8000,
-        retries: 1,
-      });
+          }),
+          timeoutMs: 9000,
+          retries: 1,
+        });
 
-      if (response.ok) {
-        const json = await response.json();
-        const parts = json.candidates?.[0]?.content?.parts || [];
-        const textPart =
-          parts.find((p: { text?: string; thought?: boolean }) => !p.thought && typeof p.text === 'string')?.text ||
-          parts[parts.length - 1]?.text ||
-          parts[0]?.text;
+        if (response.ok) {
+          const json = await response.json();
+          const parts = json.candidates?.[0]?.content?.parts || [];
+          const textPart =
+            parts.find((p: { text?: string; thought?: boolean }) => !p.thought && typeof p.text === 'string')?.text ||
+            parts[parts.length - 1]?.text ||
+            parts[0]?.text;
 
-        if (textPart && typeof textPart === 'string') {
-          const cleanedText = textPart
-            .replace(/<thought>[\s\S]*?<\/thought>/gi, '')
-            .trim()
-            .replace(/^["']|["']$/g, '');
+          if (textPart && typeof textPart === 'string') {
+            const cleanedText = textPart
+              .replace(/<thought>[\s\S]*?<\/thought>/gi, '')
+              .trim()
+              .replace(/^["']|["']$/g, '');
 
-          if (cleanedText.length > 50 && cleanedText.length < 900) {
-            return {
-              message: cleanedText,
-              source: 'gemini',
-              angleUsed: targetMode === 'admin_gatekeeper' ? 'Admin_Gatekeeper_Hook' : 'Owner_Direct_Hook',
-              timeGreeting,
-            };
+            if (cleanedText.length > 80 && cleanedText.length < 1800) {
+              return {
+                message: cleanedText,
+                source: 'gemini',
+                angleUsed: targetMode === 'admin_gatekeeper' ? 'Gemini_Research_Admin_Gatekeeper' : 'Gemini_Research_Owner_Direct',
+                timeGreeting,
+                researchSnippets: research.snippets,
+              };
+            }
           }
         }
+      } catch {
+        // Coba model berikutnya
       }
-    } catch {
-      // Coba model berikutnya
     }
   }
 
   return {
     message: getDynamicFallbackPitch(params),
     source: 'fallback',
-    angleUsed: targetMode === 'admin_gatekeeper' ? 'Admin_Gatekeeper_Fallback' : 'Owner_Direct_Fallback',
+    angleUsed: targetMode === 'admin_gatekeeper' ? 'Admin_Gatekeeper_Fallback_3P' : 'Owner_Direct_Fallback_3P',
     timeGreeting,
+    researchSnippets: research.snippets,
   };
 }
+
+

@@ -1,24 +1,122 @@
 [
   {
-    "id": "proto-villa-puncak-arjuna-1792612716067",
-    "slug": "villa-puncak-arjuna",
-    "businessName": "Villa Puncak Arjuna",
-    "category": "Layanan Profesional",
+    "id": "proto-kost-49-ekslusif-surabaya-kosthessasurab-1792626804039",
+    "slug": "kost-49-ekslusif-surabaya-kosthessasurab",
+    "businessName": "Kost 49 Ekslusif Surabaya (@kosthessasurabaya)",
+    "category": "Hotel jangka panjang",
     "niche": "villa",
-    "city": "Malang / Jawa Timur",
-    "phone": "6281234567890",
-    "address": "Jl. Utama Bisnis No. 12, Malang / Jawa Timur",
-    "rating": 4.9,
-    "reviewsCount": 48,
+    "city": "Surabaya",
+    "phone": "6285100990771",
+    "address": "Kota Surabaya",
+    "rating": 4.7,
+    "reviewsCount": 17,
+    "badgeText": "Staycation & Liburan Private Eksklusif",
+    "headline": "Penginapan Private Nyaman & Asri di Kawasan Surabaya",
+    "subheadline": "Nikmati suasana tenang bersama keluarga dengan pemandangan indah, fasilitas lengkap, dan jaminan harga terbaik tanpa potongan komisi aplikasi.",
+    "heroImage": "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80",
+    "primaryColor": "#0284c7",
+    "themeStyle": "luxury",
+    "promoBanner": "🏡 Direct Booking Promo: Diskon Spesial Booking Langsung via WhatsApp Tanpa Komisi OTA",
+    "services": [
+      {
+        "title": "Sewa Full Villa (Private Pool)",
+        "description": "Akses penuh ke seluruh properti termasuk private pool, dapur lengkap, dan ruang santai keluarga.",
+        "price": "Mulai Rp 1.500.000 / Malam",
+        "badge": "Favorit Tamu",
+        "image": "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        "title": "Paket Staycation Weekend & BBQ",
+        "description": "Paket menginap 2 hari 1 malam lengkap dengan sarapan dan set alat BBQ siap pakai.",
+        "price": "Harga Spesial Rombongan",
+        "image": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        "title": "Sewa Harian / Transit Keluarga",
+        "description": "Kamar nyaman dan bersih dengan fasilitas air hangat, smart TV, dan wifi kencang.",
+        "price": "Mulai Rp 450.000 / Malam",
+        "image": "https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        "title": "Event Santai & Gathering Intim",
+        "description": "Lokasi pas untuk arisan, perayaan ulang tahun, atau kumpul komunitas kecil.",
+        "price": "Kapasitas s/d 25 Orang",
+        "image": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80"
+      }
+    ],
+    "features": [
+      "Private Swimming Pool & Taman Asri",
+      "Dapur Lengkap (Kompor, Kulkas, Dispenser)",
+      "Smart TV + Netflix & High-Speed WiFi",
+      "Area Parkir Luas & Aman 24 Jam"
+    ],
+    "gallery": [
+      {
+        "url": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80",
+        "title": "Teras & Private Pool View"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=600&q=80",
+        "title": "Kamar Tidur Utama Luas & Nyaman"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80",
+        "title": "Ruang Keluarga & Dapur Bersih"
+      }
+    ],
+    "testimonials": [
+      {
+        "name": "Dimas Prasetyo",
+        "comment": "Tempatnya jauh lebih bagus dari fotonya! Sangat bersih, udara sejuk, dan pemiliknya ramah sekali.",
+        "rating": 5,
+        "role": "Tamu Keluarga"
+      },
+      {
+        "name": "Nadia Rahmawati",
+        "comment": "Anak-anak suka sekali kolam renangnya. Sangat puas booking langsung via WA, prosesnya cepat dan dapat harga lebih murah.",
+        "rating": 5,
+        "role": "Staycation Weekend"
+      }
+    ],
+    "businessHours": "Check-in: 14.00 WIB | Check-out: 12.00 WIB (Resepsionis 24 Jam)",
     "customDomain": "corecraft.my.id",
     "subdomainEnabled": true,
     "status": "published",
-    "publishedAt": "2026-10-21T19:58:36.067Z",
+    "publishedAt": "2026-10-21T23:53:24.039Z",
     "viewCount": 1,
-    "createdAt": "2026-10-21T19:58:36.067Z",
-    "updatedAt": "2026-10-21T19:58:36.067Z",
+    "createdAt": "2026-10-21T23:53:24.039Z",
+    "updatedAt": "2026-10-21T23:53:24.465Z",
+    "faqs": [
+      {
+        "question": "Bagaimana cara booking dan cek tanggal kosong?",
+        "answer": "Cukup klik tombol WhatsApp, admin kami akan langsung memberikan kalender tanggal yang masih tersedia beserta foto unit terkini."
+      },
+      {
+        "question": "Apakah diperbolehkan membawa makanan dari luar?",
+        "answer": "Sangat diperbolehkan! Villa dilengkapi dapur lengkap dengan kulkas, kompor, dan alat makan siap pakai."
+      }
+    ]
+  },
+  {
+    "id": "proto-villa-puncak-arjuna-1792646946355",
+    "slug": "villa-puncak-arjuna",
+    "businessName": "Villa Puncak Arjuna",
+    "category": "Villa & Glamping",
+    "niche": "villa",
+    "city": "Batu",
+    "phone": "6281234908812",
+    "address": "Batu, Malang",
+    "rating": 4.9,
+    "reviewsCount": 184,
+    "customDomain": "corecraft.my.id",
+    "subdomainEnabled": true,
+    "status": "published",
+    "publishedAt": "2026-10-22T05:29:06.355Z",
+    "viewCount": 1,
+    "createdAt": "2026-10-22T05:29:06.355Z",
+    "updatedAt": "2026-10-22T05:29:07.896Z",
     "badgeText": "Staycation & Liburan Private Eksklusif",
-    "headline": "Penginapan Private Nyaman & Asri di Kawasan Malang / Jawa Timur",
+    "headline": "Penginapan Private Nyaman & Asri di Kawasan Batu",
     "subheadline": "Nikmati suasana tenang bersama keluarga dengan pemandangan indah, fasilitas lengkap, dan jaminan harga terbaik tanpa potongan komisi aplikasi.",
     "heroImage": "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80",
     "primaryColor": "#0284c7",

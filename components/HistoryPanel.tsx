@@ -47,16 +47,20 @@ export default function HistoryPanel({
   const [closerTab, setCloserTab] = useState<'proposal' | 'objections' | 'voicenote' | 'invoice'>('proposal');
   const [selectedTier, setSelectedTier] = useState<'esensial' | 'bisnis' | 'vip'>('bisnis');
 
-  const closedCount = records.filter((r) => r.status === 'CLOSED_DEAL').length;
+  const safeRecords = Array.isArray(records)
+    ? records.filter((r): r is SheetLeadRecord => Boolean(r && typeof r === 'object'))
+    : [];
+
+  const closedCount = safeRecords.filter((r) => r.status === 'CLOSED_DEAL').length;
   const currentRevenue = closedCount * 2_500_000;
   const progressPct = Math.min(100, Math.round((currentRevenue / TARGET_REVENUE) * 100));
   const daysRemaining = calculateDaysRemaining();
 
-  const hotLeads = records.filter(
+  const hotLeads = safeRecords.filter(
     (r) => r.status === 'INTERESTED' || r.status === 'IN_PROGRESS'
   );
 
-  const filteredRecords = records.filter((r) => {
+  const filteredRecords = safeRecords.filter((r) => {
     if (statusFilter === 'HOT') {
       if (r.status !== 'INTERESTED' && r.status !== 'IN_PROGRESS') return false;
     } else if (statusFilter !== 'ALL' && r.status !== statusFilter) {
@@ -66,10 +70,10 @@ export default function HistoryPanel({
     if (search.trim()) {
       const q = search.toLowerCase();
       return (
-        r.businessName.toLowerCase().includes(q) ||
-        r.normalizedPhone.includes(q) ||
-        r.phone.includes(q) ||
-        r.category.toLowerCase().includes(q) ||
+        (r.businessName || '').toLowerCase().includes(q) ||
+        (r.normalizedPhone || '').includes(q) ||
+        (r.phone || '').includes(q) ||
+        (r.category || '').toLowerCase().includes(q) ||
         (r.city && r.city.toLowerCase().includes(q))
       );
     }
@@ -430,7 +434,7 @@ Mohon kirimkan bukti transfer di sini agar tim langsung mengunci domain resmi da
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Terkirim <span className="font-mono text-slate-400">{records.filter((r) => r.status === 'CONTACTED').length}</span>
+            Terkirim <span className="font-mono text-slate-400">{safeRecords.filter((r) => r.status === 'CONTACTED').length}</span>
           </button>
         </div>
 
