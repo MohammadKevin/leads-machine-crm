@@ -10,10 +10,12 @@ import { getDynamicFallbackPitch } from '@/lib/gemini-pitch';
 
 interface Props {
   blacklist: Set<string>;
+  todayChatsCount?: number;
   onContactSentSuccess: (phone: string, lead: OutreachLead) => void;
   showToast: (type: 'success' | 'error' | 'warn', message: string) => void;
   onSyncSuccess?: () => void;
   onOpenPrototype?: (lead: OutreachLead) => void;
+  onViewHistoryToday?: () => void;
 }
 
 const QUEUE_KEY = 'leads_queue_v5';
@@ -77,10 +79,12 @@ function randomCooldownSeconds(min = 180, max = 300) {
 
 export default function OutreachMachine({
   blacklist,
+  todayChatsCount = 0,
   onContactSentSuccess,
   showToast,
   onSyncSuccess,
   onOpenPrototype,
+  onViewHistoryToday,
 }: Props) {
   const [activeNicheId, setActiveNicheId] = useState<string>('villa');
   const [selectedCities, setSelectedCities] = useState<string[]>(CITY_PRESETS[0].cities);
@@ -702,7 +706,12 @@ export default function OutreachMachine({
     const waUrl = `https://wa.me/${normalized}?text=${encodeURIComponent(pitch)}`;
     window.open(waUrl, '_blank', 'noopener,noreferrer');
 
-    const updatedLead: OutreachLead = { ...item, status: 'sent', pitchMessage: pitch };
+    const updatedLead: OutreachLead = {
+      ...item,
+      status: 'sent',
+      pitchMessage: pitch,
+      sentAt: new Date().toISOString(),
+    };
     const nextLeads = leadsRef.current.filter(Boolean).map((l) => (l.id === item.id ? updatedLead : l));
     saveQueue(nextLeads);
     onContactSentSuccess(normalized, updatedLead);
@@ -890,38 +899,91 @@ export default function OutreachMachine({
       </section>
 
       <section className="mb-6">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white border border-[#E5E7EB] p-4 rounded-[8px]">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">
-              ANTREAN SIAP KIRIM
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div
+            onClick={onViewHistoryToday}
+            className={`bg-white border rounded-[8px] p-4 transition-all relative overflow-hidden flex flex-col justify-between ${
+              onViewHistoryToday
+                ? 'cursor-pointer hover:border-emerald-400 hover:shadow-xs group border-emerald-200 bg-emerald-50/20'
+                : 'border-[#E5E7EB]'
+            }`}
+          >
+            <div>
+              <div className="flex items-center justify-between">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-emerald-700 flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>CHAT HARI INI</span>
+                </div>
+                {onViewHistoryToday && (
+                  <span className="material-symbols-outlined text-[15px] text-slate-400 group-hover:text-emerald-600 transition-colors">
+                    arrow_forward
+                  </span>
+                )}
+              </div>
+              <div className="font-mono text-[28px] font-bold text-slate-900 mt-1 leading-none flex items-baseline gap-1.5">
+                <span>{todayChatsCount}</span>
+                <span className="text-[12px] font-sans font-normal text-slate-400">kontak</span>
+              </div>
             </div>
-            <div className="font-mono text-[28px] font-semibold text-slate-900 mt-1 leading-none">
-              {readyCount}
+            <div className="mt-2.5 pt-2 border-t border-slate-100 text-[10px] text-slate-500 flex items-center justify-between font-mono">
+              <span>Target: 50–75</span>
+              <span className={todayChatsCount >= 50 ? 'text-emerald-600 font-semibold' : 'text-amber-600 font-medium'}>
+                {todayChatsCount >= 50 ? '✓ Capai target' : `${Math.max(0, 50 - todayChatsCount)} lagi`}
+              </span>
             </div>
           </div>
 
-          <div className="bg-white border border-[#E5E7EB] p-4 rounded-[8px]">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">TERKIRIM</div>
-            <div className="font-mono text-[28px] font-semibold text-slate-900 mt-1 leading-none">
-              {sentCount}
+          <div className="bg-white border border-[#E5E7EB] p-4 rounded-[8px] flex flex-col justify-between">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">
+                ANTREAN SIAP KIRIM
+              </div>
+              <div className="font-mono text-[28px] font-semibold text-slate-900 mt-1 leading-none">
+                {readyCount}
+              </div>
+            </div>
+            <div className="mt-2.5 pt-2 border-t border-slate-100 text-[10px] text-slate-400 font-mono">
+              Tier A1 terverifikasi
             </div>
           </div>
 
-          <div className="bg-white border border-[#E5E7EB] p-4 rounded-[8px]">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">
-              DILEWATI / DUPLIKAT
+          <div className="bg-white border border-[#E5E7EB] p-4 rounded-[8px] flex flex-col justify-between">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">TERKIRIM SESI INI</div>
+              <div className="font-mono text-[28px] font-semibold text-slate-900 mt-1 leading-none">
+                {sentCount}
+              </div>
             </div>
-            <div className="font-mono text-[28px] font-semibold text-slate-400 mt-1 leading-none">
-              {skipCount}
+            <div className="mt-2.5 pt-2 border-t border-slate-100 text-[10px] text-slate-400 font-mono">
+              {failedCount > 0 ? `${failedCount} gagal dikirim` : 'Sesi aktif di antrean'}
             </div>
           </div>
 
-          <div className="bg-white border border-[#E5E7EB] p-4 rounded-[8px]">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">
-              ESTIMASI PIPELINE
+          <div className="bg-white border border-[#E5E7EB] p-4 rounded-[8px] flex flex-col justify-between">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">
+                DILEWATI / DUPLIKAT
+              </div>
+              <div className="font-mono text-[28px] font-semibold text-slate-400 mt-1 leading-none">
+                {skipCount}
+              </div>
             </div>
-            <div className="font-mono text-[28px] font-semibold text-emerald-700 mt-1 leading-none">
-              Rp {estimatedQueueValue.toLocaleString('id-ID')}
+            <div className="mt-2.5 pt-2 border-t border-slate-100 text-[10px] text-slate-400 font-mono">
+              Sudah ada di database
+            </div>
+          </div>
+
+          <div className="bg-white border border-[#E5E7EB] p-4 rounded-[8px] flex flex-col justify-between">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">
+                ESTIMASI PIPELINE
+              </div>
+              <div className="font-mono text-[28px] font-semibold text-emerald-700 mt-1 leading-none">
+                Rp {estimatedQueueValue.toLocaleString('id-ID')}
+              </div>
+            </div>
+            <div className="mt-2.5 pt-2 border-t border-slate-100 text-[10px] text-slate-400 font-mono">
+              Potensi deal antrean
             </div>
           </div>
         </div>
