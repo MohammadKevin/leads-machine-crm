@@ -108,3 +108,4 @@ export function addExpense(exp: Omit<ExpenseModel, 'id' | 'tanggal'> & { tanggal
   saveExpenses(current);
   return newExp;
 }
+
