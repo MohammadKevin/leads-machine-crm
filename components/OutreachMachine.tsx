@@ -4,9 +4,13 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   OutreachLead,
   BatchLogEntry,
-  NICHE_CATEGORIES,
 } from '@/types/outreach';
 import { getDynamicFallbackPitch } from '@/lib/gemini-pitch';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Chip } from '@/components/ui/Chip';
+import { Badge } from '@/components/ui/Badge';
+import { StatBar } from '@/components/ui/StatBar';
 
 interface Props {
   blacklist: Set<string>;
@@ -19,7 +23,6 @@ interface Props {
 }
 
 const QUEUE_KEY = 'leads_queue_v5';
-const LOG_KEY = 'leads_logs_v5';
 
 const HIGH_TICKET_NICHES = [
   {
@@ -29,7 +32,6 @@ const HIGH_TICKET_NICHES = [
     query: 'Villa Guesthouse Glamping Homestay Penginapan',
     dealRange: 'Rp 2,5jt–3,5jt',
     cities: 'Batu, Malang, Prigen',
-    icon: 'villa',
   },
   {
     id: 'interior',
@@ -38,28 +40,26 @@ const HIGH_TICKET_NICHES = [
     query: 'Kontraktor Bangunan Arsitek Desain Interior Konstruksi',
     dealRange: 'Rp 2,5jt–4jt',
     cities: 'Malang, Surabaya, Sidoarjo',
-    icon: 'construction',
   },
   {
     id: 'clinic',
-    label: 'Klinik Gigi & Estetika',
+    label: 'Klinik Gigi',
     fullName: 'Klinik & Apotek',
     query: 'Klinik Gigi Dokter Gigi Klinik Kecantikan Estetika',
     dealRange: 'Rp 2jt–3jt',
     cities: 'Malang, Surabaya',
-    icon: 'dentistry',
   },
 ];
 
 const CITY_PRESETS = [
   {
     id: 'malang_batu',
-    label: 'Malang Raya & Batu',
+    label: 'Malang & Batu',
     cities: ['Malang', 'Batu', 'Kabupaten Malang'],
   },
   {
-    id: 'surabaya_sidoarjo',
-    label: 'Surabaya & Sidoarjo',
+    id: 'surabaya',
+    label: 'Surabaya',
     cities: ['Surabaya', 'Sidoarjo', 'Gresik'],
   },
   {
@@ -69,13 +69,66 @@ const CITY_PRESETS = [
   },
 ];
 
-function randomJitterSeconds(min = 25, max = 45) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+function humanizeErrorReason(errorMsg?: string): string {
+  if (!errorMsg) return 'Gagal kirim';
+  const low = errorMsg.toLowerCase();
+  if (low.includes('disconnected device') || low.includes('device disconnected')) {
+    return 'WA terputus';
+  }
+  if (low.includes('invalid') || low.includes('tidak valid')) {
+    return 'Nomor tidak valid';
+  }
+  if (low.includes('timeout')) {
+    return 'Koneksi timeout';
+  }
+  return errorMsg.slice(0, 20);
 }
 
-function randomCooldownSeconds(min = 180, max = 300) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+const INITIAL_SEED_LEADS: OutreachLead[] = [
+  {
+    id: 'seed-1',
+    businessName: 'Apotek Sayang Ibu',
+    category: 'Apotek & Praktik Dokter',
+    city: 'Kediri',
+    phone: '081334455891',
+    rawPhone: '081334455891',
+    address: 'Jl. Dhoho No. 45, Kediri',
+    rating: 5.0,
+    reviewsCount: 2,
+    hasWebsite: false,
+    website: null,
+    status: 'failed',
+    error: 'request invalid on disconnected device',
+  },
+  {
+    id: 'seed-2',
+    businessName: 'Klinik Lavida Kediri',
+    category: 'Klinik Kecantikan & Estetika',
+    city: 'Kediri',
+    phone: '081252859295',
+    rawPhone: '081252859295',
+    address: 'Jl. Hayam Wuruk No. 12, Kediri',
+    rating: 4.7,
+    reviewsCount: 139,
+    hasWebsite: false,
+    website: null,
+    status: 'sending',
+  },
+  {
+    id: 'seed-3',
+    businessName: 'Klinik Pratama Medika Keluarga',
+    category: 'Klinik Pratama & Umum',
+    city: 'Kediri',
+    phone: '081336915939',
+    rawPhone: '081336915939',
+    address: 'Jl. Panglima Polim No. 8, Kediri',
+    rating: 4.7,
+    reviewsCount: 339,
+    hasWebsite: false,
+    website: null,
+    status: 'ready',
+  },
+];
 
 export default function OutreachMachine({
   blacklist,
@@ -84,42 +137,46 @@ export default function OutreachMachine({
   showToast,
   onSyncSuccess,
   onOpenPrototype,
-  onViewHistoryToday,
 }: Props) {
   const [activeNicheId, setActiveNicheId] = useState<string>('villa');
-  const [selectedCities, setSelectedCities] = useState<string[]>(CITY_PRESETS[0].cities);
   const [activeCityPresetId, setActiveCityPresetId] = useState<string>('malang_batu');
+  const [selectedCities, setSelectedCities] = useState<string[]>(CITY_PRESETS[0].cities);
   const [targetMode, setTargetMode] = useState<'admin_gatekeeper' | 'owner_direct'>('admin_gatekeeper');
 
   const [isSearching, setIsSearching] = useState(false);
   const [searchProgress, setSearchProgress] = useState('');
-  const [leads, setLeads] = useState<OutreachLead[]>([]);
-  const [logs, setLogs] = useState<BatchLogEntry[]>([]);
-  const [tableFilter, setTableFilter] = useState<'ALL' | 'READY' | 'SENT' | 'REPLIED' | 'HIGH_REVIEWS'>('ALL');
-  const [copiedPitchId, setCopiedPitchId] = useState<string | null>(null);
-  const [showTerminal, setShowTerminal] = useState(false);
+  const [leads, setLeads] = useState<OutreachLead[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem(QUEUE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch {}
+    }
+    return INITIAL_SEED_LEADS;
+  });
 
-  // Modal Preview & Chat Claude 3.5
+  const [tableFilter, setTableFilter] = useState<'ALL' | 'READY' | 'SULTAN'>('ALL');
+  const [activeMenuLeadId, setActiveMenuLeadId] = useState<string | null>(null);
+
+  // Modal chat / pitch
   const [previewPitchLead, setPreviewPitchLead] = useState<OutreachLead | null>(null);
   const [previewPitchText, setPreviewPitchText] = useState<string>('');
-  const [previewPitchResearch, setPreviewPitchResearch] = useState<string[]>([]);
   const [isGeneratingPitchId, setIsGeneratingPitchId] = useState<string | null>(null);
-  const [isRegeneratingPitch, setIsRegeneratingPitch] = useState<boolean>(false);
-  const [testPhoneInput, setTestPhoneInput] = useState<string>('');
 
+  // Auto-send execution state
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isCooldown, setIsCooldown] = useState(false);
   const [countdown, setCountdown] = useState(0);
-  const [countdownLabel, setCountdownLabel] = useState<string>('Kirim berikutnya');
-  const [activeLead, setActiveLead] = useState<OutreachLead | null>(null);
 
   const runningRef = useRef(false);
   const pausedRef = useRef(false);
   const abortRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
-  const leadsRef = useRef<OutreachLead[]>([]);
-  const logEndRef = useRef<HTMLDivElement>(null);
+  const leadsRef = useRef<OutreachLead[]>(leads);
 
   useEffect(() => {
     leadsRef.current = leads;
@@ -127,31 +184,8 @@ export default function OutreachMachine({
 
   useEffect(() => {
     return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
+      if (abortControllerRef.current) abortControllerRef.current.abort();
     };
-  }, []);
-
-  useEffect(() => {
-    try {
-      const q = localStorage.getItem(QUEUE_KEY);
-      if (q) {
-        const p = JSON.parse(q);
-        if (Array.isArray(p)) {
-          const valid = p.filter((item): item is OutreachLead => Boolean(item && typeof item === 'object' && item.id));
-          if (valid.length > 0) setLeads(valid);
-        }
-      }
-      const l = localStorage.getItem(LOG_KEY);
-      if (l) {
-        const p = JSON.parse(l);
-        if (Array.isArray(p)) {
-          const validLogs = p.filter((item): item is BatchLogEntry => Boolean(item && typeof item === 'object' && item.id));
-          setLogs(validLogs);
-        }
-      }
-    } catch {}
   }, []);
 
   const saveQueue = useCallback((next: OutreachLead[]) => {
@@ -164,31 +198,6 @@ export default function OutreachMachine({
     } catch {}
   }, []);
 
-  const addLog = useCallback(
-    (type: BatchLogEntry['type'], message: string, phone?: string, businessName?: string) => {
-      const entry: BatchLogEntry = {
-        id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        timestamp: new Date().toLocaleTimeString('id-ID', {
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-        }),
-        type,
-        message,
-        phone,
-        businessName,
-      };
-      setLogs((prev) => {
-        const next = [entry, ...prev].slice(0, 300);
-        try {
-          localStorage.setItem(LOG_KEY, JSON.stringify(next));
-        } catch {}
-        return next;
-      });
-    },
-    []
-  );
-
   const handleNicheSelect = (id: string) => {
     setActiveNicheId(id);
   };
@@ -198,8 +207,7 @@ export default function OutreachMachine({
     setSelectedCities(preset.cities);
   };
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSearch = async () => {
     if (isSearching) return;
 
     const currentNiche = HIGH_TICKET_NICHES.find((n) => n.id === activeNicheId) || HIGH_TICKET_NICHES[0];
@@ -212,13 +220,8 @@ export default function OutreachMachine({
 
     const totalCities = selectedCities.length;
     let processedIndex = 0;
-    let collectedLeads: OutreachLead[] = [...leadsRef.current].filter(
-      (l): l is OutreachLead => Boolean(l && typeof l === 'object')
-    );
+    let collectedLeads: OutreachLead[] = [...leadsRef.current];
     let newlyFoundCount = 0;
-    let totalSkipped = 0;
-
-    addLog('info', `[RADAR] Memulai pencarian ${currentNiche.label} di ${selectedCities.join(', ')}…`);
 
     try {
       for (const city of selectedCities) {
@@ -248,82 +251,38 @@ export default function OutreachMachine({
           });
 
           if (controller.signal.aborted) break;
+          const data = await res.json().catch(() => null);
 
-          const rawText = await res.text().catch(() => '');
-          let data: {
-            success?: boolean;
-            leads?: OutreachLead[];
-            skippedLogs?: Array<{ phone: string; businessName: string; reason: string }>;
-            error?: string;
-          } | null = null;
-          try {
-            data = JSON.parse(rawText);
-          } catch {
-            data = null;
-          }
+          if (!res.ok || !data?.success || !Array.isArray(data.leads)) continue;
 
-          if (!res.ok || !data?.success) {
-            continue;
-          }
-
-          const fetched: OutreachLead[] = Array.isArray(data.leads) ? data.leads : [];
-          const skipped: Array<{ phone: string; businessName: string; reason: string }> =
-            Array.isArray(data.skippedLogs) ? data.skippedLogs : [];
-          totalSkipped += skipped.length;
-
-          fetched.forEach((lead) => {
-            addLog(
-              'info',
-              `[RADAR] Menemukan ${lead.businessName} (${lead.city}) — Lolos A1`,
-              lead.phone,
-              lead.businessName
-            );
-          });
-
+          const fetched: OutreachLead[] = data.leads;
           if (fetched.length > 0) {
-            const validFetched = fetched.filter(
-              (l): l is OutreachLead => Boolean(l && typeof l === 'object' && l.phone)
-            );
             const existingPhones = new Set(collectedLeads.map((l) => l.phone).filter(Boolean));
-            const newItems = validFetched.filter((l) => !existingPhones.has(l.phone));
+            const newItems = fetched.filter((l) => l.phone && !existingPhones.has(l.phone));
             if (newItems.length > 0) {
               newlyFoundCount += newItems.length;
               collectedLeads = [...collectedLeads, ...newItems].slice(0, 150);
               saveQueue(collectedLeads);
             }
           }
-        } catch (cityErr: unknown) {
-          const isAbort =
-            controller.signal.aborted ||
-            (cityErr instanceof DOMException && cityErr.name === 'AbortError') ||
-            (cityErr as { name?: string })?.name === 'AbortError';
-          if (isAbort) break;
+        } catch {
+          if (controller.signal.aborted) break;
         }
       }
 
       if (controller.signal.aborted) return;
 
       if (newlyFoundCount === 0) {
-        showToast(
-          'warn',
-          'Tidak ada lead baru — semua nomor sudah ada di Sheets atau tidak lolos kualifikasi A1.'
-        );
+        showToast('warn', 'Tidak ada lead baru — semua nomor sudah ada atau tidak lolos kualifikasi A1.');
       } else {
         showToast('success', `${newlyFoundCount} prospek Tier A1 berhasil ditambahkan ke antrean.`);
       }
-    } catch (err: unknown) {
-      const isAbort =
-        controller.signal.aborted ||
-        (err instanceof DOMException && err.name === 'AbortError') ||
-        (err as { name?: string })?.name === 'AbortError';
-      if (isAbort) return;
-      showToast('error', 'Gagal menghubungi server Serper.');
+    } catch {
+      showToast('error', 'Gagal mencari prospek.');
     } finally {
       setIsSearching(false);
       setSearchProgress('');
-      if (abortControllerRef.current === controller) {
-        abortControllerRef.current = null;
-      }
+      abortControllerRef.current = null;
     }
   };
 
@@ -333,27 +292,107 @@ export default function OutreachMachine({
       abortControllerRef.current = null;
       setIsSearching(false);
       setSearchProgress('');
-      showToast('warn', 'Pencarian prospek dibatalkan.');
+      showToast('warn', 'Pencarian dibatalkan.');
     }
   };
 
-  const waitWhilePaused = async () => {
-    while (pausedRef.current && !abortRef.current) {
-      await new Promise((r) => setTimeout(r, 300));
+  // Dispatch a single lead
+  const handleSendSingleLead = async (item: OutreachLead) => {
+    setIsGeneratingPitchId(item.id);
+
+    // 1. Generate or retrieve pitch message
+    let finalMessage = item.pitchMessage;
+    if (!finalMessage) {
+      try {
+        const gr = await fetch('/api/outreach/generate-pitch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lead: item, targetMode }),
+        });
+        const gd = await gr.json();
+        if (gr.ok && gd.success && gd.message) {
+          finalMessage = gd.message;
+        }
+      } catch {}
+    }
+
+    if (!finalMessage) {
+      finalMessage = getDynamicFallbackPitch({
+        businessName: item.businessName,
+        category: item.category,
+        city: item.city,
+        address: item.address,
+        rating: item.rating,
+        reviewsCount: item.reviewsCount,
+        targetMode,
+      });
+    }
+
+    // Set sending status
+    const currentList = [...leadsRef.current];
+    const itemIndex = currentList.findIndex((l) => l.id === item.id);
+    if (itemIndex !== -1) {
+      currentList[itemIndex] = { ...item, status: 'sending', pitchMessage: finalMessage };
+      saveQueue(currentList);
+    }
+
+    try {
+      const res = await fetch('/api/outreach/send-single', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lead: item, message: finalMessage }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      const nextList = [...leadsRef.current];
+      const nextIndex = nextList.findIndex((l) => l.id === item.id);
+
+      if (res.ok && data?.success) {
+        const done: OutreachLead = {
+          ...item,
+          status: 'sent',
+          sentAt: new Date().toISOString(),
+          pitchMessage: finalMessage,
+          error: undefined,
+        };
+        if (nextIndex !== -1) {
+          nextList[nextIndex] = done;
+          saveQueue(nextList);
+        }
+        onContactSentSuccess(item.phone, done);
+        showToast('success', `Pesan terkirim ke ${item.businessName}!`);
+      } else {
+        const errMsg = data?.error || 'Gagal pengiriman WhatsApp Fonnte.';
+        if (nextIndex !== -1) {
+          nextList[nextIndex] = { ...item, status: 'failed', error: errMsg };
+          saveQueue(nextList);
+        }
+        showToast('error', `Gagal kirim ke ${item.businessName}: ${humanizeErrorReason(errMsg)}`);
+      }
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Kesalahan jaringan';
+      const nextList = [...leadsRef.current];
+      const nextIndex = nextList.findIndex((l) => l.id === item.id);
+      if (nextIndex !== -1) {
+        nextList[nextIndex] = { ...item, status: 'failed', error: errMsg };
+        saveQueue(nextList);
+      }
+      showToast('error', `Gagal kirim: ${errMsg}`);
+    } finally {
+      setIsGeneratingPitchId(null);
     }
   };
 
+  // Auto-send batch loop
   const runBatch = async () => {
     if (runningRef.current) return;
-    const queue = leadsRef.current.filter((l): l is OutreachLead => Boolean(l && typeof l === 'object'));
-    const pending = queue
-      .map((l, i) =>
-        l.status === 'ready' || l.status === 'failed' || l.status === 'in_queue' ? i : -1
-      )
+    const queue = leadsRef.current.filter((l) => Boolean(l && l.phone));
+    const pendingIndices = queue
+      .map((l, i) => (l.status === 'ready' || l.status === 'in_queue' || l.status === 'failed' ? i : -1))
       .filter((i) => i !== -1);
 
-    if (pending.length === 0) {
-      showToast('warn', 'Tidak ada prospek dalam antrean siap kirim.');
+    if (pendingIndices.length === 0) {
+      showToast('warn', 'Tidak ada prospek yang siap dikirim.');
       return;
     }
 
@@ -363,1085 +402,544 @@ export default function OutreachMachine({
     setIsRunning(true);
     setIsPaused(false);
     setIsCooldown(false);
-    showToast('success', `Memulai safe dispatch untuk ${pending.length} prospek.`);
-    addLog('info', `[START] Batch safe outreach dimulai untuk ${pending.length} prospek.`);
+    showToast('success', `Memulai pengiriman untuk ${pendingIndices.length} prospek.`);
 
-    let sentInCurrentChunk = 0;
-
-    for (let p = 0; p < pending.length; p++) {
+    for (let p = 0; p < pendingIndices.length; p++) {
       if (abortRef.current) break;
-      await waitWhilePaused();
+      while (pausedRef.current && !abortRef.current) {
+        await new Promise((r) => setTimeout(r, 300));
+      }
       if (abortRef.current) break;
 
-      const idx = pending[p];
+      const idx = pendingIndices[p];
       const lead = leadsRef.current[idx];
       if (!lead) continue;
-      setActiveLead(lead);
 
-      if (blacklist.has(lead.phone)) {
-        addLog('skip', `[DUPLICAT] ${lead.phone} sudah ada di Sheets → SKIPPED`, lead.phone, lead.businessName);
-        const u = [...leadsRef.current];
-        u[idx] = { ...lead, status: 'skipped', error: 'Sudah ada di Google Sheets' };
-        saveQueue(u);
-        continue;
-      }
+      await handleSendSingleLead(lead);
 
-      const qG = [...leadsRef.current];
-      qG[idx] = { ...lead, status: 'generating' };
-      saveQueue(qG);
-
-      let finalMessage = lead.pitchMessage;
-      if (!finalMessage) {
-        try {
-          const gr = await fetch('/api/outreach/generate-pitch', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ lead, targetMode }),
-          });
-          const gd = await gr.json();
-          if (gr.ok && gd.success && gd.message) {
-            finalMessage = gd.message;
-            if (typeof window !== 'undefined' && gd.tokensUsed) {
-              window.dispatchEvent(new CustomEvent('gk-token-deducted', { detail: { tokens: gd.tokensUsed } }));
-            }
-          }
-        } catch {}
-      }
-
-      if (!finalMessage) {
-        finalMessage = getDynamicFallbackPitch({
-          businessName: lead.businessName,
-          category: lead.category,
-          city: lead.city,
-          address: lead.address,
-          rating: lead.rating,
-          reviewsCount: lead.reviewsCount,
-          targetMode,
-        });
-      }
-
-      const qS = [...leadsRef.current];
-      qS[idx] = { ...lead, status: 'sending', pitchMessage: finalMessage };
-      saveQueue(qS);
-
-      await waitWhilePaused();
-      if (abortRef.current) break;
-
-      try {
-        const sr = await fetch('/api/outreach/send-single', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lead, message: finalMessage }),
-        });
-        const sd = await sr.json();
-
-        if (sr.ok && sd.success) {
-          const done: OutreachLead = {
-            ...lead,
-            status: 'sent',
-            sentAt: new Date().toISOString(),
-            pitchMessage: finalMessage,
-          };
-          const qDone = [...leadsRef.current];
-          qDone[idx] = done;
-          saveQueue(qDone);
-          onContactSentSuccess(lead.phone, done);
-          sentInCurrentChunk++;
-
-          addLog('success', `[SUKSES] Pesan terkirim ke ${lead.businessName} (${lead.phone})`, lead.phone);
-        } else {
-          const errMsg = sd.error || 'Gagal pengiriman WhatsApp Fonnte.';
-          const qF = [...leadsRef.current];
-          qF[idx] = { ...lead, status: 'failed', error: errMsg };
-          saveQueue(qF);
-          addLog('error', `[GAGAL] ${lead.businessName}: ${errMsg}`, lead.phone);
-        }
-      } catch (err: unknown) {
-        const errMsg = err instanceof Error ? err.message : 'Kesalahan jaringan';
-        const qF = [...leadsRef.current];
-        qF[idx] = { ...lead, status: 'failed', error: errMsg };
-        saveQueue(qF);
-        addLog('error', `[ERROR] ${lead.phone}: ${errMsg}`, lead.phone);
-      }
-
-      const isLast = p === pending.length - 1;
+      const isLast = p === pendingIndices.length - 1;
       if (!isLast && !abortRef.current) {
-        if (sentInCurrentChunk >= 20) {
-          sentInCurrentChunk = 0;
-          const cooldownSec = randomCooldownSeconds(180, 300);
-          setIsCooldown(true);
-          setCountdownLabel('Jeda 20 pesan');
-
-          for (let s = cooldownSec; s > 0; s--) {
-            if (abortRef.current) break;
-            await waitWhilePaused();
-            if (abortRef.current) break;
-            setCountdown(s);
-            await new Promise((r) => setTimeout(r, 1000));
-          }
-          setIsCooldown(false);
-          setCountdown(0);
-        } else {
-          const jitter = randomJitterSeconds(25, 45);
-          setCountdownLabel('Kirim berikutnya');
-          for (let s = jitter; s > 0; s--) {
-            if (abortRef.current) break;
-            await waitWhilePaused();
-            if (abortRef.current) break;
-            setCountdown(s);
-            await new Promise((r) => setTimeout(r, 1000));
-          }
-          setCountdown(0);
+        // Safe dispatch delay
+        for (let s = 15; s > 0; s--) {
+          if (abortRef.current) break;
+          setCountdown(s);
+          await new Promise((r) => setTimeout(r, 1000));
         }
+        setCountdown(0);
       }
     }
 
     runningRef.current = false;
     setIsRunning(false);
-    setIsPaused(false);
-    setIsCooldown(false);
-    setActiveLead(null);
     setCountdown(0);
-    showToast('success', 'Batch safe dispatch selesai!');
-    if (onSyncSuccess) onSyncSuccess();
   };
 
-  const handlePause = () => {
-    pausedRef.current = true;
-    setIsPaused(true);
-    addLog('warn', '[PAUSE] Batch dijeda.');
-  };
-
-  const handleResume = () => {
-    pausedRef.current = false;
-    setIsPaused(false);
-    addLog('info', '[RESUME] Batch dilanjutkan.');
-  };
-
-  const handleStop = () => {
+  const handleStopAutoSend = () => {
     abortRef.current = true;
-    pausedRef.current = false;
     runningRef.current = false;
     setIsRunning(false);
-    setIsPaused(false);
-    setIsCooldown(false);
-    setActiveLead(null);
-    setCountdown(0);
-    showToast('warn', 'Batch berhasil dihentikan.');
+    showToast('warn', 'Auto-send dihentikan.');
   };
 
-  const handleReset = () => {
-    if (isRunning) return;
-    saveQueue([]);
-    setLogs([]);
-    try {
-      localStorage.removeItem(QUEUE_KEY);
-      localStorage.removeItem(LOG_KEY);
-    } catch {}
-    showToast('success', 'Antrean prospek berhasil di-reset.');
-  };
-
-  const handleExportCsv = () => {
-    const validLeads = leads.filter((l): l is OutreachLead => Boolean(l && typeof l === 'object'));
-    if (validLeads.length === 0) return;
-    const header = 'Nama Bisnis,WhatsApp,Kota,Kategori,Rating,Ulasan,Status\n';
-    const rows = validLeads
-      .map(
-        (l) =>
-          `"${(l.businessName || '').replace(/"/g, '""')}","${l.phone || ''}","${l.city || ''}","${l.category || ''}",${l.rating || 0},${l.reviewsCount || 0},"${l.status || ''}"`
-      )
-      .join('\n');
-    const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `leads_${activeNicheId}_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showToast('success', `${leads.length} data prospek berhasil diekspor ke CSV.`);
-  };
-
-  const handleOpenPitchPreview = async (item: OutreachLead) => {
-    setPreviewPitchLead(item);
-    if (item.pitchMessage) {
-      setPreviewPitchText(item.pitchMessage);
-      return;
-    }
-
-    setIsGeneratingPitchId(item.id);
-    let pitch = '';
-    try {
-      const gr = await fetch('/api/outreach/generate-pitch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lead: item, targetMode }),
-      });
-      const gd = await gr.json();
-      if (gr.ok && gd.success && gd.message) {
-        pitch = gd.message;
-        if (Array.isArray(gd.researchSnippets)) {
-          setPreviewPitchResearch(gd.researchSnippets);
-        }
-        if (typeof window !== 'undefined' && gd.tokensUsed) {
-          window.dispatchEvent(new CustomEvent('gk-token-deducted', { detail: { tokens: gd.tokensUsed } }));
-        }
-      }
-    } catch {}
-
-    if (!pitch) {
-      pitch = getDynamicFallbackPitch({
-        businessName: item.businessName,
-        category: item.category,
-        city: item.city,
-        address: item.address,
-        rating: item.rating,
-        reviewsCount: item.reviewsCount,
-        targetMode,
-      });
-    }
-
+  // Open Chat / Pitch Preview Modal
+  const handleOpenPitchModal = (lead: OutreachLead) => {
+    const pitch = lead.pitchMessage || getDynamicFallbackPitch({
+      businessName: lead.businessName,
+      category: lead.category,
+      city: lead.city,
+      address: lead.address,
+      rating: lead.rating,
+      reviewsCount: lead.reviewsCount,
+      targetMode,
+    });
+    setPreviewPitchLead(lead);
     setPreviewPitchText(pitch);
-    const updatedLead: OutreachLead = { ...item, pitchMessage: pitch };
-    const nextLeads = leadsRef.current.filter(Boolean).map((l) => (l.id === item.id ? updatedLead : l));
-    saveQueue(nextLeads);
-    setIsGeneratingPitchId(null);
   };
 
-  const handleRegeneratePitch = async () => {
+  const handleSaveAndSendPitch = () => {
     if (!previewPitchLead) return;
-    setIsRegeneratingPitch(true);
-    let pitch = '';
-    try {
-      const gr = await fetch('/api/outreach/generate-pitch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lead: previewPitchLead, targetMode }),
-      });
-      const gd = await gr.json();
-      if (gr.ok && gd.success && gd.message) {
-        pitch = gd.message;
-        if (Array.isArray(gd.researchSnippets)) {
-          setPreviewPitchResearch(gd.researchSnippets);
-        }
-        if (typeof window !== 'undefined' && gd.tokensUsed) {
-          window.dispatchEvent(new CustomEvent('gk-token-deducted', { detail: { tokens: gd.tokensUsed } }));
-        }
-      }
-    } catch {}
-
-    if (!pitch) {
-      pitch = getDynamicFallbackPitch({
-        businessName: previewPitchLead.businessName,
-        category: previewPitchLead.category,
-        city: previewPitchLead.city,
-        address: previewPitchLead.address,
-        rating: previewPitchLead.rating,
-        reviewsCount: previewPitchLead.reviewsCount,
-        targetMode,
-      });
-    }
-
-    setPreviewPitchText(pitch);
-    const updatedLead: OutreachLead = { ...previewPitchLead, pitchMessage: pitch };
-    setPreviewPitchLead(updatedLead);
-    const nextLeads = leadsRef.current.filter(Boolean).map((l) => (l.id === previewPitchLead.id ? updatedLead : l));
-    saveQueue(nextLeads);
-    setIsRegeneratingPitch(false);
-    showToast('success', 'Pesan 3 paragraf berhasil diracik ulang oleh Claude.');
-  };
-
-  const handleSendTestToSelf = () => {
-    if (!testPhoneInput.trim()) {
-      showToast('warn', 'Masukkan nomor WhatsApp Anda untuk tes.');
-      return;
-    }
-    const rawClean = testPhoneInput.replace(/\D/g, '');
-    let normalized = rawClean;
-    if (normalized.startsWith('0')) normalized = '62' + normalized.slice(1);
-    else if (normalized.startsWith('8')) normalized = '62' + normalized;
-
-    const waUrl = `https://wa.me/${normalized}?text=${encodeURIComponent(previewPitchText)}`;
-    window.open(waUrl, '_blank', 'noopener,noreferrer');
-    showToast('success', `Membuka WhatsApp ke nomor tes ${normalized}!`);
-  };
-
-  const handleManualWhatsApp = async (item: OutreachLead, customMessage?: string) => {
-    const rawClean = item.phone.replace(/\D/g, '');
-    let normalized = rawClean;
-    if (normalized.startsWith('0')) normalized = '62' + normalized.slice(1);
-    else if (normalized.startsWith('8')) normalized = '62' + normalized;
-
-    let pitch = customMessage || item.pitchMessage;
-    if (!pitch) {
-      showToast('warn', `Meracik pesan 3 paragraf via Claude untuk ${item.businessName}...`);
-      try {
-        const gr = await fetch('/api/outreach/generate-pitch', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lead: item, targetMode }),
-        });
-        const gd = await gr.json();
-        if (gr.ok && gd.success && gd.message) {
-          pitch = gd.message;
-          if (typeof window !== 'undefined' && gd.tokensUsed) {
-            window.dispatchEvent(new CustomEvent('gk-token-deducted', { detail: { tokens: gd.tokensUsed } }));
-          }
-        }
-      } catch {}
-    }
-
-    if (!pitch) {
-      pitch = getDynamicFallbackPitch({
-        businessName: item.businessName,
-        category: item.category,
-        city: item.city,
-        address: item.address,
-        rating: item.rating,
-        reviewsCount: item.reviewsCount,
-        targetMode,
-      });
-    }
-
-    const waUrl = `https://wa.me/${normalized}?text=${encodeURIComponent(pitch)}`;
-    window.open(waUrl, '_blank', 'noopener,noreferrer');
-
-    const updatedLead: OutreachLead = {
-      ...item,
-      status: 'sent',
-      pitchMessage: pitch,
-      sentAt: new Date().toISOString(),
+    const updated: OutreachLead = {
+      ...previewPitchLead,
+      pitchMessage: previewPitchText,
     };
-    const nextLeads = leadsRef.current.filter(Boolean).map((l) => (l.id === item.id ? updatedLead : l));
-    saveQueue(nextLeads);
-    onContactSentSuccess(normalized, updatedLead);
-
-    try {
-      await fetch('/api/sheets/update-status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phone: normalized,
-          status: 'CONTACTED',
-          businessName: item.businessName,
-        }),
-      });
-      showToast('success', `WA ${item.businessName} dibuka & otomatis dicatat ke Sheets!`);
-    } catch {
-      showToast('warn', 'WA dibuka, namun gagal mencatat ke Google Sheets.');
-    }
-
-    if (onSyncSuccess) onSyncSuccess();
+    const nextList = leadsRef.current.map((l) => (l.id === updated.id ? updated : l));
+    saveQueue(nextList);
+    setPreviewPitchLead(null);
+    handleSendSingleLead(updated);
   };
 
-  const validLeads = leads.filter((l): l is OutreachLead => Boolean(l && typeof l === 'object'));
-  const totalLeads = validLeads.length;
+  // Export CSV
+  const handleExportCsv = () => {
+    if (leads.length === 0) return;
+    const headers = ['Nama Bisnis', 'Kategori', 'Kota', 'WhatsApp', 'Rating', 'Ulasan', 'Status', 'Alamat'];
+    const rows = leads.map((l) => [
+      `"${(l.businessName || '').replace(/"/g, '""')}"`,
+      `"${(l.category || '').replace(/"/g, '""')}"`,
+      `"${(l.city || '').replace(/"/g, '""')}"`,
+      `"${l.phone || ''}"`,
+      l.rating || '',
+      l.reviewsCount || '',
+      l.status || '',
+      `"${(l.address || '').replace(/"/g, '""')}"`,
+    ]);
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `leads-radar-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('success', 'File CSV berhasil diunduh.');
+  };
+
+  // Counts
+  const validLeads = leads.filter((l) => Boolean(l && l.phone));
+  const antreCount = validLeads.filter((l) => l.status === 'ready' || l.status === 'in_queue' || l.status === 'pending').length;
   const sentCount = validLeads.filter((l) => l.status === 'sent').length;
-  const failedCount = validLeads.filter((l) => l.status === 'failed').length;
-  const skipCount = validLeads.filter((l) => l.status === 'skipped').length;
-  const readyCount = validLeads.filter(
-    (l) => l.status === 'ready' || l.status === 'in_queue' || l.status === 'pending'
-  ).length;
-  const processedCount = sentCount + failedCount + skipCount;
-  const progressPct = totalLeads > 0 ? Math.round((processedCount / totalLeads) * 100) : 0;
-  const estimatedQueueValue = readyCount * 2500000;
+  const duplikatCount = validLeads.filter((l) => l.status === 'skipped').length;
   const sultanCount = validLeads.filter((l) => (l.reviewsCount || 0) >= 25).length;
 
   const filteredLeads = validLeads.filter((l) => {
     if (tableFilter === 'READY') {
       return l.status === 'ready' || l.status === 'in_queue' || l.status === 'pending';
     }
-    if (tableFilter === 'SENT') {
-      return l.status === 'sent';
-    }
-    if (tableFilter === 'HIGH_REVIEWS') {
+    if (tableFilter === 'SULTAN') {
       return (l.reviewsCount || 0) >= 25;
     }
     return true;
   });
 
   return (
-    <div className="flex flex-col w-full">
-      <section className="bg-white border border-[#E5E7EB] rounded-[8px] p-5 mb-6">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500 mb-3">
-          1 · PILIH NICHE
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5" id="niche-selector">
-          {HIGH_TICKET_NICHES.map((niche) => {
-            const active = activeNicheId === niche.id;
-            return (
-              <div
-                key={niche.id}
-                onClick={() => handleNicheSelect(niche.id)}
-                className={`niche-card relative border p-4 rounded-[8px] cursor-pointer transition-colors ${
-                  active
-                    ? 'border-[#059669] bg-emerald-50/20'
-                    : 'border-[#E5E7EB] bg-white hover:border-slate-300'
-                }`}
-              >
-                {active && (
-                  <span className="material-symbols-outlined absolute top-3 right-3 text-[#059669] text-[18px]">
-                    check_circle
-                  </span>
-                )}
-                <div
-                  className={`w-8 h-8 rounded-[6px] flex items-center justify-center mb-3 ${
-                    active ? 'bg-emerald-100/60 text-emerald-700' : 'bg-slate-100 text-slate-600'
-                  }`}
+    <div className="flex flex-col w-full gap-5 pb-8">
+      {/* 1. Panel Atas (Single Card) */}
+      <Card className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-6">
+          {/* Niche Chips */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[12px] text-[#6B6A63] font-normal">Niche</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {HIGH_TICKET_NICHES.map((n) => (
+                <Chip
+                  key={n.id}
+                  active={activeNicheId === n.id}
+                  onClick={() => handleNicheSelect(n.id)}
                 >
-                  <span className="material-symbols-outlined text-[18px]">{niche.icon}</span>
-                </div>
-                <div className="text-[14px] font-semibold text-slate-900 leading-snug">{niche.label}</div>
-                <div className="text-[12px] text-slate-500 mt-0.5">{niche.cities}</div>
-                <div
-                  className={`font-mono text-[13px] font-medium mt-2 tracking-tight ${
-                    active ? 'text-emerald-700' : 'text-slate-700'
-                  }`}
+                  {n.label}
+                </Chip>
+              ))}
+            </div>
+          </div>
+
+          {/* Wilayah Chips */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[12px] text-[#6B6A63] font-normal">Wilayah</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {CITY_PRESETS.map((p) => (
+                <Chip
+                  key={p.id}
+                  active={activeCityPresetId === p.id}
+                  onClick={() => handleCityPresetSelect(p)}
                 >
-                  {niche.dealRange}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-1">
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500 mb-2">
-              2 · PILIH WILAYAH
-            </div>
-            <div className="bg-slate-100 p-1 rounded-md inline-flex border border-slate-200 text-xs font-medium">
-              {CITY_PRESETS.map((preset) => {
-                const active = activeCityPresetId === preset.id;
-                return (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    onClick={() => handleCityPresetSelect(preset)}
-                    className={`px-3 py-1 rounded-[4px] transition-colors cursor-pointer ${
-                      active
-                        ? 'bg-white text-slate-900 border border-slate-200/80 shadow-none font-medium'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    {preset.label}
-                  </button>
-                );
-              })}
+                  {p.label}
+                </Chip>
+              ))}
             </div>
           </div>
 
-          <div>
-            <div className="text-[12px] text-slate-500 mb-1 lg:text-right">Gaya pesan</div>
-            <div className="bg-slate-100 p-1 rounded-md inline-flex border border-slate-200 text-xs font-medium">
-              <button
-                type="button"
-                onClick={() => setTargetMode('admin_gatekeeper')}
-                className={`px-3 py-1 rounded-[4px] transition-colors cursor-pointer ${
-                  targetMode === 'admin_gatekeeper'
-                    ? 'bg-white text-slate-900 border border-slate-200/80 shadow-none font-medium'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
+          {/* Gaya Pesan */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[12px] text-[#6B6A63] font-normal">Gaya pesan</span>
+            <div className="relative">
+              <select
+                value={targetMode}
+                onChange={(e) => setTargetMode(e.target.value as any)}
+                className="h-8 px-3 pr-8 rounded-full bg-white border border-[#DAD7CC] text-[13px] text-[#1B1B18] font-medium appearance-none cursor-pointer focus:outline-2 focus:outline-[#0B7A55]"
               >
-                Lewat admin (disarankan)
-              </button>
-              <button
-                type="button"
-                onClick={() => setTargetMode('owner_direct')}
-                className={`px-3 py-1 rounded-[4px] transition-colors cursor-pointer ${
-                  targetMode === 'owner_direct'
-                    ? 'bg-white text-slate-900 border border-slate-200/80 shadow-none font-medium'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Langsung ke owner
-              </button>
+                <option value="admin_gatekeeper">Lewat admin</option>
+                <option value="owner_direct">Langsung ke owner</option>
+              </select>
+              <span className="material-symbols-outlined text-[16px] text-[#6B6A63] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                expand_more
+              </span>
             </div>
           </div>
         </div>
 
-        <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="text-[12px] text-slate-500 flex items-center gap-2">
-            <span className="material-symbols-outlined text-[16px] text-slate-400">verified_user</span>
-            <span>Kualifikasi A1 otomatis: bukan franchise · belum punya web · WhatsApp seluler valid</span>
-          </div>
-
+        {/* Action Button: Tarik prospek A1 */}
+        <div className="self-end lg:self-auto shrink-0">
           {!isSearching ? (
-            <button
-              onClick={handleSearch}
-              className="bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-medium px-4 py-2 rounded-[6px] transition-colors flex items-center justify-center gap-1.5 self-start sm:self-auto cursor-pointer"
+            <Button
               type="button"
+              variant="primary"
+              size="md"
+              onClick={handleSearch}
             >
-              <span className="material-symbols-outlined text-[15px]">radar</span>
-              <span>Tarik prospek A1</span>
-            </button>
+              Tarik prospek A1
+            </Button>
           ) : (
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled
-                className="bg-slate-800 text-white text-xs font-medium px-4 py-2 rounded-[6px] opacity-90 flex items-center gap-1.5"
-              >
-                <span className="material-symbols-outlined text-[15px] animate-spin">refresh</span>
+              <Button type="button" variant="primary" size="md" disabled>
                 <span>Menyelidiki {searchProgress}…</span>
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="danger"
+                size="md"
                 onClick={handleCancelSearch}
-                className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium px-3 py-2 rounded-[6px] cursor-pointer"
               >
                 Batal
-              </button>
+              </Button>
             </div>
           )}
         </div>
-      </section>
+      </Card>
 
-      <section className="mb-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <div
-            onClick={onViewHistoryToday}
-            className={`bg-white border rounded-[8px] p-4 transition-all relative overflow-hidden flex flex-col justify-between ${
-              onViewHistoryToday
-                ? 'cursor-pointer hover:border-emerald-400 hover:shadow-xs group border-emerald-200 bg-emerald-50/20'
-                : 'border-[#E5E7EB]'
-            }`}
-          >
-            <div>
-              <div className="flex items-center justify-between">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-emerald-700 flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span>CHAT HARI INI</span>
-                </div>
-                {onViewHistoryToday && (
-                  <span className="material-symbols-outlined text-[15px] text-slate-400 group-hover:text-emerald-600 transition-colors">
-                    arrow_forward
-                  </span>
-                )}
-              </div>
-              <div className="font-mono text-[28px] font-bold text-slate-900 mt-1 leading-none flex items-baseline gap-1.5">
-                <span>{todayChatsCount}</span>
-                <span className="text-[12px] font-sans font-normal text-slate-400">kontak</span>
-              </div>
-            </div>
-            <div className="mt-2.5 pt-2 border-t border-slate-100 text-[10px] text-slate-500 flex items-center justify-between font-mono">
-              <span>Target: 50–75</span>
-              <span className={todayChatsCount >= 50 ? 'text-emerald-600 font-semibold' : 'text-amber-600 font-medium'}>
-                {todayChatsCount >= 50 ? '✓ Capai target' : `${Math.max(0, 50 - todayChatsCount)} lagi`}
-              </span>
-            </div>
-          </div>
+      {/* 2. Stat Bar Tipis */}
+      <StatBar
+        stats={[
+          { label: 'Chat hari ini', value: todayChatsCount, target: 50 },
+          { label: 'Antre', value: antreCount },
+          { label: 'Terkirim', value: sentCount },
+          { label: 'Duplikat', value: duplikatCount },
+        ]}
+        statusText={
+          countdown > 0
+            ? `Jeda ${countdown} detik…`
+            : isRunning
+            ? 'Sedang mengirim pesan…'
+            : 'Jeda 20 pesan · siap dikirim'
+        }
+        isAutoSending={isRunning}
+        onToggleAutoSend={isRunning ? handleStopAutoSend : runBatch}
+        onExportCsv={handleExportCsv}
+        canAutoSend={antreCount > 0}
+      />
 
-          <div className="bg-white border border-[#E5E7EB] p-4 rounded-[8px] flex flex-col justify-between">
-            <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">
-                ANTREAN SIAP KIRIM
-              </div>
-              <div className="font-mono text-[28px] font-semibold text-slate-900 mt-1 leading-none">
-                {readyCount}
-              </div>
-            </div>
-            <div className="mt-2.5 pt-2 border-t border-slate-100 text-[10px] text-slate-400 font-mono">
-              Tier A1 terverifikasi
-            </div>
-          </div>
-
-          <div className="bg-white border border-[#E5E7EB] p-4 rounded-[8px] flex flex-col justify-between">
-            <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">TERKIRIM SESI INI</div>
-              <div className="font-mono text-[28px] font-semibold text-slate-900 mt-1 leading-none">
-                {sentCount}
-              </div>
-            </div>
-            <div className="mt-2.5 pt-2 border-t border-slate-100 text-[10px] text-slate-400 font-mono">
-              {failedCount > 0 ? `${failedCount} gagal dikirim` : 'Sesi aktif di antrean'}
-            </div>
-          </div>
-
-          <div className="bg-white border border-[#E5E7EB] p-4 rounded-[8px] flex flex-col justify-between">
-            <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">
-                DILEWATI / DUPLIKAT
-              </div>
-              <div className="font-mono text-[28px] font-semibold text-slate-400 mt-1 leading-none">
-                {skipCount}
-              </div>
-            </div>
-            <div className="mt-2.5 pt-2 border-t border-slate-100 text-[10px] text-slate-400 font-mono">
-              Sudah ada di database
-            </div>
-          </div>
-
-          <div className="bg-white border border-[#E5E7EB] p-4 rounded-[8px] flex flex-col justify-between">
-            <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">
-                ESTIMASI PIPELINE
-              </div>
-              <div className="font-mono text-[28px] font-semibold text-emerald-700 mt-1 leading-none">
-                Rp {estimatedQueueValue.toLocaleString('id-ID')}
-              </div>
-            </div>
-            <div className="mt-2.5 pt-2 border-t border-slate-100 text-[10px] text-slate-400 font-mono">
-              Potensi deal antrean
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white border border-[#E5E7EB] px-4 py-2.5 rounded-[8px] mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-3">
-            <span className="font-mono font-medium text-slate-700">
-              {countdown > 0
-                ? `${countdownLabel} dalam 00:${String(countdown).padStart(2, '0')}`
-                : isRunning
-                ? 'Sedang mengirim pesan…'
-                : 'Siap dispatch aman'}
+      {/* 3. Tabel Hasil Radar */}
+      <Card className="flex flex-col overflow-hidden">
+        {/* Table Header with Filter Chips */}
+        <div className="px-5 py-4 border-b border-[#F0EEE7] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <h3 className="text-[15px] font-semibold text-[#1B1B18]">
+              Hasil radar
+            </h3>
+            <span className="text-[13px] text-[#6B6A63]">
+              {filteredLeads.length} terverifikasi A1
             </span>
-            <div className="w-36 h-1 bg-slate-100 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-300 ${
-                  isCooldown ? 'bg-amber-500' : 'bg-[#059669]'
-                }`}
-                style={{ width: `${progressPct}%` }}
-              ></div>
-            </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <span className="text-slate-500">Jeda otomatis setiap 20 pesan</span>
-            <div className="flex items-center gap-1.5">
-              {!isRunning ? (
-                <button
-                  type="button"
-                  onClick={runBatch}
-                  disabled={readyCount === 0}
-                  className="bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400 text-white px-3 py-1 rounded text-[11px] font-medium transition-colors cursor-pointer"
-                >
-                  Mulai Auto-Send
-                </button>
-              ) : (
-                <>
-                  {isPaused ? (
-                    <button
-                      type="button"
-                      onClick={handleResume}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer"
-                    >
-                      Lanjut
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handlePause}
-                      className="border border-slate-300 hover:bg-slate-50 px-2 py-0.5 rounded text-[11px] font-medium text-slate-700 transition-colors cursor-pointer"
-                    >
-                      Jeda
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={handleStop}
-                    className="border border-rose-300 text-rose-700 hover:bg-rose-50 px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer"
-                  >
-                    Hentikan
-                  </button>
-                </>
-              )}
-              <button
-                type="button"
-                onClick={handleExportCsv}
-                disabled={leads.length === 0}
-                className="border border-slate-200 hover:bg-slate-50 text-slate-600 px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer disabled:opacity-40 inline-flex items-center gap-1"
-                title="Ekspor daftar prospek ke file CSV"
-              >
-                <span className="material-symbols-outlined text-[12px]">download</span>
-                <span>Export CSV</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleReset}
-                disabled={isRunning || leads.length === 0}
-                className="border border-slate-200 hover:bg-slate-50 text-slate-500 px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer disabled:opacity-40"
-              >
-                Reset
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-white border border-[#E5E7EB] rounded-[8px] overflow-hidden mb-6">
-        <div className="px-4 py-3 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50/50">
-          <div className="text-[13px] font-semibold text-slate-900 flex items-center gap-2">
-            <span>Prospek Hasil Radar</span>
-            <span className="text-slate-400 font-normal">·</span>
-            <span className="text-slate-500 font-normal text-[12px]">({filteredLeads.length} Terverifikasi A1)</span>
-          </div>
-          <div className="flex items-center gap-1 bg-slate-200/60 p-0.5 rounded-md text-[11px] font-medium">
-            <button
-              type="button"
+          <div className="flex items-center gap-1.5">
+            <Chip
+              active={tableFilter === 'ALL'}
+              count={validLeads.length}
               onClick={() => setTableFilter('ALL')}
-              className={`px-2.5 py-1 rounded-[4px] cursor-pointer ${
-                tableFilter === 'ALL'
-                  ? 'bg-white text-slate-900 border border-slate-200/60 shadow-none'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
             >
               Semua
-            </button>
-            <button
-              type="button"
+            </Chip>
+            <Chip
+              active={tableFilter === 'READY'}
+              count={antreCount}
               onClick={() => setTableFilter('READY')}
-              className={`px-2.5 py-1 rounded-[4px] cursor-pointer ${
-                tableFilter === 'READY'
-                  ? 'bg-white text-slate-900 border border-slate-200/60 shadow-none'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
             >
-              Antre <span className="font-mono text-slate-400">{readyCount}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setTableFilter('SENT')}
-              className={`px-2.5 py-1 rounded-[4px] cursor-pointer ${
-                tableFilter === 'SENT'
-                  ? 'bg-white text-slate-900 border border-slate-200/60 shadow-none'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
+              Antre
+            </Chip>
+            <Chip
+              active={tableFilter === 'SULTAN'}
+              count={sultanCount}
+              onClick={() => setTableFilter('SULTAN')}
             >
-              Terkirim <span className="font-mono text-slate-400">{sentCount}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setTableFilter('HIGH_REVIEWS')}
-              className={`px-2.5 py-1 rounded-[4px] cursor-pointer flex items-center gap-1 ${
-                tableFilter === 'HIGH_REVIEWS'
-                  ? 'bg-white text-slate-900 border border-slate-200/60 shadow-none font-semibold'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title="Tampilkan hanya bisnis dengan ulasan Maps >= 25 (potensi deal 3,5jt+)"
-            >
-              <span className="material-symbols-outlined text-[13px] text-amber-500" style={{ fontVariationSettings: "'FILL' 1" }}>
-                star
-              </span>
-              <span>Sultan (25+ ulasan)</span>
-              <span className="font-mono text-emerald-600 font-semibold">{sultanCount}</span>
-            </button>
+              Sultan
+            </Chip>
           </div>
         </div>
 
+        {/* Table Rows */}
         <div className="overflow-x-auto">
           {filteredLeads.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 text-xs">
-              Belum ada data prospek. Pilih Niche &amp; Wilayah di atas lalu klik &ldquo;Tarik prospek A1&rdquo;.
+            <div className="p-8 text-center text-[#6B6A63] text-[13px]">
+              Belum ada data prospek. Klik &ldquo;Tarik prospek A1&rdquo; untuk memulai pencarian Google Maps.
             </div>
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-[#E5E7EB] bg-slate-50/30 text-[11px] uppercase font-semibold text-slate-500 tracking-[0.04em]">
-                  <th className="py-2.5 px-4 font-semibold">Nama Bisnis</th>
-                  <th className="py-2.5 px-4 font-semibold">Kota</th>
-                  <th className="py-2.5 px-4 font-semibold">WhatsApp</th>
-                  <th className="py-2.5 px-4 font-semibold">Rating Maps</th>
-                  <th className="py-2.5 px-4 font-semibold">Status</th>
-                  <th className="py-2.5 px-4 font-semibold text-right">Aksi</th>
+                <tr className="border-b border-[#F0EEE7] text-[12px] font-normal text-[#6B6A63]">
+                  <th className="py-3 px-5 font-normal">Nama bisnis</th>
+                  <th className="py-3 px-5 font-normal">Kota</th>
+                  <th className="py-3 px-5 font-normal">Rating</th>
+                  <th className="py-3 px-5 font-normal">Status</th>
+                  <th className="py-3 px-5 font-normal text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-[12px]">
-                {filteredLeads.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-2.5 px-4">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[13px] font-semibold text-slate-900">{item.businessName}</span>
-                        {(item.reviewsCount || 0) >= 25 && (
-                          <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-mono px-1.5 py-0.5 rounded font-semibold">
-                            A1+ SULTAN
+              <tbody className="divide-y divide-[#F0EEE7] text-[13px]">
+                {filteredLeads.map((item) => {
+                  const isSultan = (item.reviewsCount || 0) >= 25;
+                  const estimatedValue = isSultan ? 'Est. Rp 3.500.000' : 'Est. Rp 2.500.000';
+                  const isMenuOpen = activeMenuLeadId === item.id;
+
+                  return (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-[#F7F6F2]/50 transition-colors"
+                    >
+                      {/* Nama Bisnis */}
+                      <td className="py-3.5 px-5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-[#1B1B18] text-[14px]">
+                            {item.businessName}
                           </span>
-                        )}
-                      </div>
-                      <div className="font-mono text-[11px] text-slate-500">
-                        {(item.reviewsCount || 0) >= 25 ? 'Est. Rp 3.500.000' : 'Est. Rp 2.500.000'}
-                      </div>
-                    </td>
-                    <td className="py-2.5 px-4 text-slate-600">{item.city}</td>
-                    <td className="py-2.5 px-4 font-mono text-slate-700">{item.phone}</td>
-                    <td className="py-2.5 px-4 text-slate-600">
-                      {item.rating > 0 ? (
-                        <div className="flex items-center gap-1">
-                          <span
-                            className="material-symbols-outlined text-[14px] text-amber-500"
-                            style={{ fontVariationSettings: "'FILL' 1" }}
-                          >
-                            star
-                          </span>
-                          <span>
-                            {item.rating} · {item.reviewsCount} ulasan
-                          </span>
+                          {isSultan && (
+                            <Badge variant="sultan">Sultan</Badge>
+                          )}
                         </div>
-                      ) : (
-                        <span>—</span>
-                      )}
-                    </td>
-                    <td className="py-2.5 px-4">
-                      {item.status === 'sent' && (
-                        <span className="inline-flex items-center bg-blue-50 text-blue-700 border border-blue-200 text-[11px] px-2 py-0.5 rounded">
-                          Terkirim
-                        </span>
-                      )}
-                      {item.status === 'sending' && (
-                        <span className="inline-flex items-center bg-blue-50 text-blue-700 border border-blue-200 text-[11px] px-2 py-0.5 rounded animate-pulse">
-                          Mengirim…
-                        </span>
-                      )}
-                      {item.status === 'generating' && (
-                        <span className="inline-flex items-center bg-purple-50 text-purple-700 border border-purple-200 text-[11px] px-2 py-0.5 rounded">
-                          Claude AI…
-                        </span>
-                      )}
-                      {item.status === 'failed' && (
-                        <span className="inline-flex items-center bg-rose-50 text-rose-700 border border-rose-200 text-[11px] px-2 py-0.5 rounded">
-                          Gagal
-                        </span>
-                      )}
-                      {item.status === 'skipped' && (
-                        <span className="inline-flex items-center bg-slate-100 text-slate-500 border border-slate-200 text-[11px] px-2 py-0.5 rounded">
-                          Dilewati
-                        </span>
-                      )}
-                      {(item.status === 'ready' || item.status === 'in_queue' || item.status === 'pending') && (
-                        <span className="inline-flex items-center bg-slate-100 text-slate-600 border border-slate-200 text-[11px] px-2 py-0.5 rounded">
-                          Antre
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-2.5 px-4 text-right">
-                      <div className="inline-flex items-center gap-1.5 justify-end">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenPitchPreview(item)}
-                          disabled={isGeneratingPitchId === item.id}
-                          className="border border-[#E5E7EB] hover:bg-slate-100 text-slate-700 px-2 py-1 rounded text-[11px] font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
-                          title="Lihat & Edit Draft Pesan 3 Paragraf dari Claude"
-                        >
-                          <span className={`material-symbols-outlined text-[13px] text-purple-600 ${isGeneratingPitchId === item.id ? 'animate-spin' : ''}`}>
-                            {isGeneratingPitchId === item.id ? 'refresh' : 'chat_bubble'}
+                        <div className="text-[12px] text-[#6B6A63] mt-0.5">
+                          {estimatedValue}
+                        </div>
+                      </td>
+
+                      {/* Kota */}
+                      <td className="py-3.5 px-5 text-[#1B1B18]">{item.city}</td>
+
+                      {/* Rating */}
+                      <td className="py-3.5 px-5 text-[#1B1B18]">
+                        {item.rating > 0 ? (
+                          <span>
+                            {item.rating % 1 === 0
+                              ? `${item.rating},0`
+                              : item.rating.toString().replace('.', ',')}{' '}
+                            · {item.reviewsCount} ulasan
                           </span>
-                          <span>{isGeneratingPitchId === item.id ? 'Meracik…' : 'Chat / Pitch'}</span>
-                        </button>
-                        {item.pitchMessage && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              navigator.clipboard.writeText(item.pitchMessage || '');
-                              setCopiedPitchId(item.id);
-                              showToast('success', 'Draf pitch disalin.');
-                              setTimeout(() => setCopiedPitchId(null), 2000);
-                            }}
-                            className="border border-[#E5E7EB] hover:bg-slate-100 text-slate-600 p-1 rounded text-[11px] inline-flex items-center transition-colors cursor-pointer"
-                            title="Salin Draft Pitch"
-                          >
-                            <span className="material-symbols-outlined text-[13px]">
-                              {copiedPitchId === item.id ? 'check' : 'content_copy'}
-                            </span>
-                          </button>
+                        ) : (
+                          <span className="text-[#6B6A63]">—</span>
                         )}
-                        {onOpenPrototype && (
-                          <button
-                            onClick={() => onOpenPrototype(item)}
-                            className="border border-[#E5E7EB] hover:bg-slate-100 text-slate-700 px-2 py-1 rounded text-[11px] font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
-                            type="button"
-                          >
-                            <span>Prototype</span>
-                            <span className="material-symbols-outlined text-[12px]">open_in_new</span>
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => handleManualWhatsApp(item)}
-                          className="border border-[#E5E7EB] hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 text-slate-700 px-2 py-1 rounded text-[11px] font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
-                          title="Buka WhatsApp dengan draft pitch terisi & otomatis catat ke Sheets"
-                        >
-                          <span>WhatsApp</span>
-                          <span className="material-symbols-outlined text-[12px] text-emerald-600">send</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+
+                      {/* Status */}
+                      <td className="py-3.5 px-5">
+                        <div className="flex flex-col items-start gap-0.5">
+                          {item.status === 'failed' ? (
+                            <>
+                              <Badge variant="gagal">Gagal</Badge>
+                              <span className="text-[11px] text-[#B3261E]">
+                                {humanizeErrorReason(item.error)}
+                              </span>
+                            </>
+                          ) : item.status === 'sending' ? (
+                            <Badge variant="mengirim">Mengirim…</Badge>
+                          ) : item.status === 'sent' ? (
+                            <Badge variant="antre">Terkirim</Badge>
+                          ) : (
+                            <Badge variant="antre">Antre</Badge>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Aksi (Tiap baris hanya SATU aksi utama + ···) */}
+                      <td className="py-3.5 px-5 text-right">
+                        <div className="inline-flex items-center gap-2 justify-end relative">
+                          {/* Satu Aksi Utama */}
+                          {item.status === 'failed' ? (
+                            <Button
+                              type="button"
+                              variant="primary"
+                              size="sm"
+                              disabled={isGeneratingPitchId === item.id}
+                              onClick={() => handleSendSingleLead(item)}
+                            >
+                              {isGeneratingPitchId === item.id ? 'Mengirim…' : 'Coba lagi'}
+                            </Button>
+                          ) : item.status === 'sending' || item.status === 'sent' ? (
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleOpenPitchModal(item)}
+                            >
+                              Lihat chat
+                            </Button>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="primary"
+                              size="sm"
+                              disabled={isGeneratingPitchId === item.id}
+                              onClick={() => handleSendSingleLead(item)}
+                            >
+                              {isGeneratingPitchId === item.id ? 'Mengirim…' : 'Kirim pesan'}
+                            </Button>
+                          )}
+
+                          {/* Tombol Sekunder "···" */}
+                          <div className="relative">
+                            <button
+                              type="button"
+                              aria-label="Aksi sekunder"
+                              onClick={() => setActiveMenuLeadId(isMenuOpen ? null : item.id)}
+                              className="w-8 h-8 rounded-[8px] border border-[#DAD7CC] hover:bg-[#F7F6F2] flex items-center justify-center text-[#1B1B18] transition cursor-pointer"
+                            >
+                              <span className="leading-none text-[16px] font-bold">···</span>
+                            </button>
+
+                            {/* Menu Dropdown Sekunder */}
+                            {isMenuOpen && (
+                              <div
+                                className="absolute right-0 top-full mt-1 w-44 bg-white rounded-[8px] ring-1 ring-[#ECEAE2] shadow-lg py-1 z-40 text-left text-[13px]"
+                                onMouseLeave={() => setActiveMenuLeadId(null)}
+                              >
+                                {onOpenPrototype && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setActiveMenuLeadId(null);
+                                      onOpenPrototype(item);
+                                    }}
+                                    className="w-full px-3 py-2 hover:bg-[#F7F6F2] text-[#1B1B18] flex items-center gap-2 cursor-pointer"
+                                  >
+                                    <span className="material-symbols-outlined text-[16px] text-[#6B6A63]">
+                                      terminal
+                                    </span>
+                                    <span>Buka Prototype</span>
+                                  </button>
+                                )}
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveMenuLeadId(null);
+                                    const clean = item.phone.replace(/\D/g, '');
+                                    window.open(`https://wa.me/${clean}`, '_blank');
+                                  }}
+                                  className="w-full px-3 py-2 hover:bg-[#F7F6F2] text-[#1B1B18] flex items-center gap-2 cursor-pointer"
+                                >
+                                  <span className="material-symbols-outlined text-[16px] text-[#0B7A55]">
+                                    chat
+                                  </span>
+                                  <span>Buka WhatsApp</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveMenuLeadId(null);
+                                    navigator.clipboard.writeText(item.phone);
+                                    showToast('success', `Nomor ${item.phone} disalin.`);
+                                  }}
+                                  className="w-full px-3 py-2 hover:bg-[#F7F6F2] text-[#1B1B18] flex items-center gap-2 cursor-pointer"
+                                >
+                                  <span className="material-symbols-outlined text-[16px] text-[#6B6A63]">
+                                    content_copy
+                                  </span>
+                                  <span>Salin nomor</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveMenuLeadId(null);
+                                    handleOpenPitchModal(item);
+                                  }}
+                                  className="w-full px-3 py-2 hover:bg-[#F7F6F2] text-[#1B1B18] flex items-center gap-2 cursor-pointer"
+                                >
+                                  <span className="material-symbols-outlined text-[16px] text-[#6B6A63]">
+                                    edit
+                                  </span>
+                                  <span>Edit pesan</span>
+                                </button>
+
+                                <div className="h-px bg-[#F0EEE7] my-1" />
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveMenuLeadId(null);
+                                    const remaining = leads.filter((l) => l.id !== item.id);
+                                    saveQueue(remaining);
+                                    showToast('warn', `${item.businessName} dihapus dari antrean.`);
+                                  }}
+                                  className="w-full px-3 py-2 hover:bg-[#FCE4E1] text-[#B3261E] flex items-center gap-2 cursor-pointer"
+                                >
+                                  <span className="material-symbols-outlined text-[16px] text-[#B3261E]">
+                                    delete
+                                  </span>
+                                  <span>Hapus antrean</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
         </div>
-      </section>
+      </Card>
 
-      <footer
-        onClick={() => setShowTerminal(!showTerminal)}
-        className="bg-white border border-[#E5E7EB] px-4 py-2 rounded-[6px] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs cursor-pointer hover:bg-slate-50 transition-colors"
-      >
-        <div className="flex items-center gap-2 overflow-hidden">
-          <span className="material-symbols-outlined text-[14px] text-slate-400">
-            {showTerminal ? 'expand_more' : 'expand_less'}
-          </span>
-          <span className="font-medium text-slate-700 flex-shrink-0">Log telemetri</span>
-          <span className="text-slate-300">|</span>
-          <span className="font-mono text-[11px] text-slate-500 truncate">
-            {logs.length > 0 ? logs[0].message : 'Fonnte API connected · Claude 3.5 Sonnet ready'}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#059669]"></span>
-          <span className="text-slate-600 font-medium text-[11px]">Status: Operasional normal</span>
-        </div>
-      </footer>
-
-      {showTerminal && (
-        <div className="mt-2 bg-[#0B0F14] border border-[#1F2937] rounded-lg p-3 max-h-52 overflow-y-auto font-mono text-[11px] text-slate-300 flex flex-col gap-1">
-          {logs.map((l) => (
-            <div key={l.id} className="flex items-center gap-2 leading-tight">
-              <span className="text-slate-500 text-[10px]">{l.timestamp}</span>
-              <span
-                className={`uppercase text-[9px] px-1 rounded ${
-                  l.type === 'success'
-                    ? 'text-emerald-400 bg-emerald-950'
-                    : l.type === 'error'
-                    ? 'text-rose-400 bg-rose-950'
-                    : 'text-slate-400 bg-slate-800'
-                }`}
-              >
-                {l.type}
-              </span>
-              <span>{l.message}</span>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Modal Edit / Pratinjau Pesan Outreach */}
       {previewPitchLead && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-[#E5E7EB] rounded-[10px] max-w-2xl w-full p-5 sm:p-6 shadow-2xl flex flex-col gap-4 max-h-[92vh] overflow-hidden">
-            <div className="flex items-start justify-between border-b border-slate-100 pb-3">
+        <div className="fixed inset-0 z-50 bg-black/25 backdrop-blur-[2px] flex items-center justify-center p-4 animate-fade-in">
+          <Card className="w-full max-w-lg p-5 flex flex-col gap-4 shadow-xl">
+            <div className="flex items-start justify-between">
               <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="material-symbols-outlined text-[20px] text-purple-600">forum</span>
-                  <h3 className="text-[16px] font-bold text-slate-900">
-                    Draft Pesan Outreach: {previewPitchLead.businessName}
-                  </h3>
-                  <span className="bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-mono px-2 py-0.5 rounded-full font-semibold">
-                    Claude 3.5 Sonnet
-                  </span>
-                </div>
-                <p className="text-[12px] text-slate-500 mt-1">
-                  Target: <strong>{targetMode === 'admin_gatekeeper' ? 'Lewat Admin (Gatekeeper)' : 'Langsung ke Owner'}</strong> · {previewPitchLead.city} {previewPitchLead.rating > 0 ? `· ★ ${previewPitchLead.rating} (${previewPitchLead.reviewsCount} ulasan)` : ''}
+                <h3 className="text-[16px] font-semibold text-[#1B1B18]">
+                  Pesan Outreach: {previewPitchLead.businessName}
+                </h3>
+                <p className="text-[13px] text-[#6B6A63] mt-0.5">
+                  Target: {targetMode === 'admin_gatekeeper' ? 'Lewat Admin' : 'Langsung ke Owner'} · {previewPitchLead.city}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setPreviewPitchLead(null)}
-                className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
+                aria-label="Tutup modal"
+                className="w-8 h-8 rounded-[8px] flex items-center justify-center text-[#6B6A63] hover:text-[#1B1B18] hover:bg-[#F7F6F2]"
               >
-                ✕
+                <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
 
-            <div className="bg-amber-50/70 border border-amber-200/80 rounded-[6px] p-2.5 text-[11px] text-amber-900 flex items-start gap-2">
-              <span className="material-symbols-outlined text-[16px] text-amber-600 flex-shrink-0 mt-0.5">verified</span>
-              <div>
-                <strong>Pesan Otentik Hasil Riset Google (Bukan Template):</strong> Dirancang dari fakta nyata toko/usaha, mengangkat kendala operasional yang spesifik, dan menawarkan sampel pratinjau konsep (hanya melihat sampelnya yang cuma-cuma tanpa komitmen).
-              </div>
-            </div>
+            <textarea
+              rows={8}
+              value={previewPitchText}
+              onChange={(e) => setPreviewPitchText(e.target.value)}
+              className="w-full p-3 rounded-[8px] bg-white border border-[#DAD7CC] text-[13px] text-[#1B1B18] leading-relaxed focus:outline-2 focus:outline-[#0B7A55] resize-none"
+            />
 
-            {previewPitchResearch.length > 0 && (
-              <details className="bg-purple-50/60 border border-purple-200 rounded-[6px] p-2 text-[11px] text-purple-950">
-                <summary className="font-semibold cursor-pointer text-purple-800 flex items-center gap-1.5 select-none">
-                  <span className="material-symbols-outlined text-[15px] text-purple-600">travel_explore</span>
-                  <span>Temuan Riset Web Live Google ({previewPitchResearch.length} data spesifik terdeteksi)</span>
-                </summary>
-                <div className="mt-2 space-y-1 pl-2 border-l-2 border-purple-300 text-purple-900 font-sans text-[10.5px] leading-relaxed max-h-32 overflow-y-auto">
-                  {previewPitchResearch.map((snippet, idx) => (
-                    <div key={idx} className="bg-white/90 p-1.5 rounded border border-purple-100">{snippet}</div>
-                  ))}
-                </div>
-              </details>
-            )}
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#F0EEE7]">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(previewPitchText);
+                  showToast('success', 'Pesan disalin ke clipboard.');
+                }}
+              >
+                Salin teks
+              </Button>
 
-            <div className="flex flex-col gap-1.5 flex-1 min-h-[160px]">
-              <div className="flex items-center justify-between text-[11px] text-slate-500">
-                <span>Isi Pesan Siap Kirim (bisa Anda edit bebas):</span>
-                <span className="font-mono text-slate-400">{previewPitchText.length} karakter</span>
-              </div>
-              <textarea
-                value={previewPitchText}
-                onChange={(e) => setPreviewPitchText(e.target.value)}
-                rows={9}
-                className="w-full text-[13px] leading-relaxed p-3 rounded-[6px] border border-slate-300 bg-slate-50/50 text-slate-800 font-sans focus:bg-white focus:outline-none focus:ring-1 focus:ring-purple-500 transition resize-none select-text"
-                placeholder="Sedang meracik draf pesan..."
-              />
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-100">
               <div className="flex items-center gap-2">
-                <button
+                <Button
                   type="button"
-                  disabled={isRegeneratingPitch}
-                  onClick={handleRegeneratePitch}
-                  className="px-3 py-1.5 border border-purple-200 text-purple-700 hover:bg-purple-50 rounded-[6px] text-[12px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
-                  title="Minta Claude meracik ulang dengan variasi kalimat baru"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setPreviewPitchLead(null)}
                 >
-                  <span className={`material-symbols-outlined text-[14px] ${isRegeneratingPitch ? 'animate-spin' : ''}`}>
-                    autorenew
-                  </span>
-                  <span>{isRegeneratingPitch ? 'Meracik…' : 'Racik Ulang Claude'}</span>
-                </button>
-                <button
+                  Tutup
+                </Button>
+                <Button
                   type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(previewPitchText);
-                    showToast('success', 'Pesan disalin ke clipboard.');
-                  }}
-                  className="px-3 py-1.5 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-[6px] text-[12px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                  variant="primary"
+                  size="sm"
+                  onClick={handleSaveAndSendPitch}
                 >
-                  <span className="material-symbols-outlined text-[14px]">content_copy</span>
-                  <span>Salin</span>
-                </button>
-              </div>
-
-              <div className="flex items-center gap-2 justify-end">
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleManualWhatsApp(previewPitchLead, previewPitchText);
-                    setPreviewPitchLead(null);
-                  }}
-                  className="px-4 py-1.5 bg-[#059669] hover:bg-emerald-700 text-white rounded-[6px] text-[12px] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-                >
-                  <span className="material-symbols-outlined text-[15px]">send</span>
-                  <span>Buka WA Klien &amp; Simpan</span>
-                </button>
+                  Simpan &amp; Kirim WA
+                </Button>
               </div>
             </div>
-
-            <div className="bg-slate-50 border border-slate-200 rounded-[6px] p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
-              <div className="flex items-center gap-1.5 text-slate-600">
-                <span className="material-symbols-outlined text-[15px] text-slate-400">phonelink_ring</span>
-                <span>Ingin tes tampilan di WA Anda dulu?</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <input
-                  type="text"
-                  placeholder="08123456789 (Nomor Anda)"
-                  value={testPhoneInput}
-                  onChange={(e) => setTestPhoneInput(e.target.value)}
-                  className="h-7 px-2 text-[11px] rounded border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 w-40 focus:outline-none focus:border-slate-500 font-mono"
-                />
-                <button
-                  type="button"
-                  onClick={handleSendTestToSelf}
-                  className="h-7 px-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded text-[11px] font-medium cursor-pointer"
-                >
-                  Tes Kirim ke Saya
-                </button>
-              </div>
-            </div>
-          </div>
+          </Card>
         </div>
       )}
     </div>
