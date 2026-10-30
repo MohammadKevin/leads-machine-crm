@@ -1,6 +1,6 @@
 /**
  * ==============================================================================
- * TYPE DEFINITIONS: LEADS OUTREACH & ANTI-DUPLICATION ENGINE
+ * TYPE DEFINITIONS: LEADS OUTREACH & ANTI-DUPLICATION ENGINE (PRD v4)
  * ==============================================================================
  */
 
@@ -16,30 +16,13 @@ export type QueueLeadStatus =
 
 export type LeadStatus = QueueLeadStatus;
 
-export type ClinicCategory =
-  | 'Klinik Pratama'
-  | 'Klinik Gigi'
-  | 'Klinik Kecantikan'
-  | 'Apotek & Praktik Dokter'
-  | string;
-
-export interface LeadTarget {
-  id: string;
-  clinicName: string;
-  city: string;
-  province: string;
-  category: ClinicCategory;
-  whatsappNumber: string;
-  painPointNotes: string;
-  tier: 'A1_PRIORITY';
-  generatedMessage?: string;
-  status: QueueLeadStatus;
-  sentAt?: string;
-  lastError?: string;
-}
-
-export const BATCH_TARGET_TOTAL = 75;
-export const OUTREACH_STORAGE_KEY = 'outreach_leads_75_batch';
+export type StandardLeadStatus =
+  | 'Antre'
+  | 'Terkirim'
+  | 'Hangat'
+  | 'Closing'
+  | 'Ditolak'
+  | 'Tidak merespons';
 
 export type SheetResponseStatus =
   | 'CONTACTED'
@@ -47,6 +30,78 @@ export type SheetResponseStatus =
   | 'IN_PROGRESS'
   | 'CLOSED_DEAL'
   | 'REJECTED';
+
+/**
+ * 8.1 Model Data Prospek Standar (PRD v4)
+ */
+export interface LeadModel {
+  id: string;
+  nama_bisnis: string;
+  kategori: string;
+  kota: string;
+  nomor_wa: string; // Ternormalisasi 628xxx, unik
+  rating_maps?: number;
+  jumlah_ulasan?: number;
+  punya_website: boolean;
+  estimasi_nilai?: number;
+  status: StandardLeadStatus;
+  tahap_followup: 0 | 1 | 2;
+  terkirim_at?: string;
+  jadwal_berikutnya_at?: string;
+  balasan_at?: string;
+  balasan_terakhir?: string;
+  jangan_hubungi: boolean;
+  template_id?: string;
+  variasi_id?: string;
+  saluran?: string;
+  catatan?: string;
+  sumber?: string;
+  dibuat_at: string;
+  diubah_at: string;
+}
+
+/**
+ * Model Pesan Masuk & Keluar (PRD v4)
+ */
+export interface PesanModel {
+  id: string;
+  prospek_id: string;
+  nomor_wa: string;
+  arah: 'masuk' | 'keluar';
+  isi: string;
+  waktu: string;
+  status: 'terkirim' | 'diterima' | 'gagal';
+  tahap?: number;
+}
+
+/**
+ * Model Pengaturan Global & Target (PRD v4)
+ */
+export interface PengaturanModel {
+  target_nominal: number; // default: 100_000_000
+  target_tanggal: string; // default: 2028-10-30 (sebelum usia 20)
+  target_label: string; // default: "Misi Rp 100 Juta"
+  batas_harian: number; // default: 50
+  jeda_detik: number; // default: 20
+  auto_followup_mode: 'manual' | 'auto'; // default: 'manual' (Manusia di loop)
+  fonnte_connected?: boolean;
+  last_webhook_at?: string;
+  webhook_count_24h?: number;
+}
+
+/**
+ * Model Log Pengiriman / Penerimaan
+ */
+export interface LogPengirimanModel {
+  id: string;
+  prospek_id?: string;
+  nomor_disamarkan: string;
+  arah: 'kirim' | 'terima';
+  waktu: string;
+  status: 'sukses' | 'gagal';
+  alasan_gagal?: string;
+  tahap?: number;
+}
 
 export interface OutreachLead {
   id: string;
@@ -202,41 +257,9 @@ export const JATIM_KABUPATEN = [
   'Ponorogo',
 ] as const;
 
-/** Lengkap 38 Kota & Kabupaten se-Jawa Timur */
 export const ALL_38_JAWA_TIMUR = [
   ...JATIM_KOTA,
   ...JATIM_KABUPATEN,
 ] as const;
 
-/** Koridor Utama Pulau Jawa */
-export const KORIDOR_UTAMA_JAWA = [
-  'Solo',
-  'Semarang',
-  'Yogyakarta',
-  'Bandung',
-  'Jakarta',
-  'Bekasi',
-  'Tangerang',
-  'Depok',
-  'Bogor',
-] as const;
-
 export const DEFAULT_CITIES = ['Malang', 'Surabaya', 'Kediri', 'Sidoarjo'];
-
-/** Seluruh opsi wilayah yang dapat dicari */
-export const ALL_AVAILABLE_CITIES = [
-  ...ALL_38_JAWA_TIMUR,
-  ...KORIDOR_UTAMA_JAWA,
-];
-
-export const RESPONSE_STATUS_OPTIONS: Array<{
-  value: SheetResponseStatus;
-  label: string;
-  color: string;
-}> = [
-  { value: 'CONTACTED', label: 'CONTACTED', color: 'bg-amber-100 text-amber-800 border-amber-300' },
-  { value: 'INTERESTED', label: 'INTERESTED', color: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
-  { value: 'IN_PROGRESS', label: 'IN PROGRESS', color: 'bg-blue-100 text-blue-800 border-blue-300' },
-  { value: 'CLOSED_DEAL', label: 'CLOSED DEAL', color: 'bg-purple-100 text-purple-800 border-purple-300' },
-  { value: 'REJECTED', label: 'REJECTED', color: 'bg-rose-100 text-rose-800 border-rose-300' },
-];

@@ -1,8 +1,57 @@
 import { NextResponse } from 'next/server';
 import { fetchWithRetry, normalizeIndonesianPhone } from '@/lib/defensive-client';
 import { SheetLeadRecord, OutreachMetrics } from '@/types/outreach';
+import { normalizeAndDedupLeads, saveLeads, getLeads, mapStandardStatusToSheet } from '@/lib/leads-store';
 
 export const dynamic = 'force-dynamic';
+
+function getFallbackFromLocalStore() {
+  const localLeads = getLeads();
+  const blacklistSet = new Set<string>();
+  let interestedCount = 0;
+  let closingDealCount = 0;
+  let inProgressCount = 0;
+  let rejectedCount = 0;
+
+  const records: SheetLeadRecord[] = localLeads.map((l) => {
+    blacklistSet.add(l.nomor_wa);
+    const sheetStatus = mapStandardStatusToSheet(l.status);
+    if (sheetStatus === 'INTERESTED') interestedCount++;
+    else if (sheetStatus === 'CLOSED_DEAL') closingDealCount++;
+    else if (sheetStatus === 'REJECTED') rejectedCount++;
+
+    return {
+      id: l.id,
+      timestamp: l.dibuat_at,
+      businessName: l.nama_bisnis,
+      category: l.kategori,
+      city: l.kota,
+      phone: l.nomor_wa,
+      normalizedPhone: l.nomor_wa,
+      rating: l.rating_maps || 0,
+      reviewsCount: l.jumlah_ulasan || 0,
+      hasWebsite: l.punya_website,
+      website: null,
+      status: sheetStatus,
+      messageSent: l.catatan,
+      lastSyncAt: l.diubah_at,
+    };
+  });
+
+  return {
+    success: true,
+    blacklist: Array.from(blacklistSet),
+    records,
+    metrics: {
+      totalUniqueContacted: blacklistSet.size,
+      interestedCount,
+      closingDealCount,
+      inProgressCount,
+      rejectedCount,
+      lastSyncTimestamp: new Date().toISOString(),
+    },
+  };
+}
 
 export async function GET() {
   const sheetUrl =
@@ -51,6 +100,10 @@ export async function GET() {
     }
 
     if (!json || json.status !== 'success' || !Array.isArray(json.data)) {
+      const fallback = getFallbackFromLocalStore();
+      if (fallback.records.length > 0) {
+        return NextResponse.json(fallback);
+      }
       return NextResponse.json(
         {
           success: false,
@@ -61,6 +114,12 @@ export async function GET() {
         { status: 502 }
       );
     }
+
+    // Persist cleaned & normalized leads locally
+    try {
+      const { leads } = normalizeAndDedupLeads(json.data);
+      saveLeads(leads);
+    } catch {}
 
     const blacklistSet = new Set<string>();
     const records: SheetLeadRecord[] = [];
@@ -153,6 +212,10 @@ export async function GET() {
       metrics,
     });
   } catch (err: unknown) {
+    const fallback = getFallbackFromLocalStore();
+    if (fallback.records.length > 0) {
+      return NextResponse.json(fallback);
+    }
     const errorMsg = err instanceof Error ? err.message : 'Kesalahan jaringan saat pre-fetch kontak existing.';
     return NextResponse.json(
       {

@@ -1,0 +1,10 @@
+{
+  "target_nominal": 100000000,
+  "target_tanggal": "2028-10-30",
+  "target_label": "Target Menuju Rp 100 Jt",
+  "batas_harian": 50,
+  "jeda_detik": 20,
+  "auto_followup_mode": "manual",
+  "fonnte_connected": true,
+  "webhook_count_24h": 0
+}

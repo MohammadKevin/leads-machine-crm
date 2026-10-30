@@ -1,0 +1,585 @@
+﻿business_name,category,phone_number,normalized_phone,maps_url,rating,review_count,website,lead_status,rejection_reason,generated_pitch,last_sync_at
+"Matematika Sakamoto Kediri","Bimbel / Edukasi","+6282337455958","6282337455958","","4.9","30","sakamoto.co.id","LOST_FRANCHISE","Franchise (Sistem cabang dari pusat)","Penolakan sistem franchise","2026-09-29T13:02:33.076Z"
+"DRG ARIF SETIAWAN SPKG / DENTAL STUDIO","general","6281252859295","6281252859295","","0","0","","INTERESTED","","","2026-10-30T09:44:27.728Z"
+"My Family Dental Care Kediri","Klinik Gigi","+6281336915939","6281336915939","","4.7","20","","CONTACTED","","Penawaran demo alur reservasi pasien & stand QR ulasan","2026-09-29T13:02:33.076Z"
+"REAF Dental Care","Klinik Gigi","+6282152006161","6282152006161","","4.8","18","","CONTACTED","","Penawaran demo alur reservasi pasien & stand QR ulasan","2026-09-29T13:02:33.076Z"
+"Egao Dental Care","Klinik Gigi","+6282111511588","6282111511588","","4.6","12","","CONTACTED","","Penawaran demo alur reservasi pasien & stand QR ulasan","2026-09-29T13:02:33.076Z"
+"Klinik Sahabat Gigi","Klinik Gigi","+6282140761550","6282140761550","","4.7","16","","CONTACTED","","Penawaran demo alur reservasi pasien & stand QR ulasan","2026-09-29T13:02:33.076Z"
+"Apoteker NK Medika","Apotek / Farmasi","+6281334455891","6281334455891","","4.7","14","","CONTACTED","","Katalog obat & akrilik review Google Maps kasir","2026-09-29T13:02:33.076Z"
+"Layanan Bisnis +6285171019475","Kesehatan / Bisnis","+6285171019475","6285171019475","","0","0","","CONTACTED","","Respon pesan otomatis bot","2026-09-29T13:02:33.076Z"
+"Mutiara Furniture Interior","Mebel & Interior","+628122709350","628122709350","","4.5","10","","CONTACTED","","Katalog display mebel online","2026-09-29T13:02:33.076Z"
+"Abadi Furniture & Plastik","Mebel & Plastik","+6281334010778","6281334010778","","4.6","14","","CONTACTED","","Katalog display mebel online","2026-09-29T13:02:33.076Z"
+"Mebel INDAH Kediri","Mebel & Interior","+6282142019000","6282142019000","","4.7","22","","CONTACTED","","Katalog display mebel online","2026-09-29T13:02:33.076Z"
+"Paradiso Furniture","Mebel & Interior","+6281959398120","6281959398120","","4.4","9","","CONTACTED","","Katalog display mebel online","2026-09-29T13:02:33.076Z"
+"Mebel Lancar Jaya Abadi","Mebel & Interior","+628563404142","628563404142","","4.5","11","","CONTACTED","","Katalog display mebel online","2026-09-29T13:02:33.076Z"
+"Mebel Surya Sakti","Mebel & Interior","+6282138972702","6282138972702","","4.6","16","","CONTACTED","","Katalog display mebel online","2026-09-29T13:02:33.076Z"
+"45 Meubel","Mebel & Interior","+6281387427155","6281387427155","","4.5","13","","CONTACTED","","Katalog display mebel online","2026-09-29T13:02:33.076Z"
+"Party Scene Florist Malang","Florist & Dekorasi","+6287859104286","6287859104286","","4.9","35","","CONTACTED","","Katalog bucket bunga & pemesanan instan","2026-09-29T13:02:33.076Z"
+"Gauri Florist","Florist & Dekorasi","+62882008897820","62882008897820","","4.8","20","","CONTACTED","","Katalog bucket bunga & pemesanan instan","2026-09-29T13:02:33.076Z"
+"MARY FLORIST STUDIO 2","Florist & Dekorasi","+6281517911737","6281517911737","","4.8","24","","CONTACTED","","Katalog bucket bunga & pemesanan instan","2026-09-29T13:02:33.076Z"
+"REZZEN BAKERY","Bakery / Cake","+628155555323","628155555323","","4.6","40","","CONTACTED","","Menu katalog digital & direct WhatsApp order","2026-09-29T13:02:33.076Z"
+"Endul's Bakery and Catering","Bakery & Catering","+6281222111388","6281222111388","","4.7","25","","CONTACTED","","Paket katering digital & form pesanan","2026-09-29T13:02:33.076Z"
+"Amalia Bakehouse & Catering","Bakery & Catering","+62881036697022","62881036697022","","4.6","15","","CONTACTED","","Paket katering digital & form pesanan","2026-09-29T13:02:33.076Z"
+"Queen Cookies Malang","Cookies / Bakery","+628990367165","628990367165","","4.7","14","","CONTACTED","","Katalog hampers & kue kering","2026-09-29T13:02:33.076Z"
+"Hampers & Roti +6289561949265","Bakery / Hamper","+6289561949265","6289561949265","","4.6","12","","CONTACTED","","Katalog hampers digital","2026-09-29T13:02:33.076Z"
+"Nonacocooch & Saun","Kuliner / Cafe","+6281233627141","6281233627141","","4.5","10","","CONTACTED","","Menu reservasi meja & promo","2026-09-29T13:02:33.076Z"
+"Meowse Kreatif Food","Kuliner / Snack","+6281737512344","6281737512344","","4.6","11","","CONTACTED","","Menu katalog kuliner","2026-09-29T13:02:33.076Z"
+"Expert Dessert Buffet","Catering / Dessert","+6281734370249","6281734370249","","4.7","18","","CONTACTED","","Portofolio buffet & katering event","2026-09-29T13:02:33.076Z"
+"Raster7 Sablon Malang","Sablon & Konveksi","+6282131008657","6282131008657","","4.8","35","","CONTACTED","","Portofolio hasil sablon & daftar harga","2026-09-29T13:02:33.076Z"
+"Olga Garment","Garment / Konveksi","+6285150273962","6285150273962","","4.5","17","","CONTACTED","","Katalog konveksi","2026-09-29T13:02:33.076Z"
+"Sablon Kaos Malang & Konveksi","Sablon & Konveksi","+6285138750034","6285138750034","","4.6","19","","CONTACTED","","Portofolio sablon kaos","2026-09-29T13:02:33.076Z"
+"Konveksi Malang Custom","Konveksi Kaos","+6285604444291","6285604444291","","4.5","12","","CONTACTED","","Katalog konveksi","2026-09-29T13:02:33.076Z"
+"Mylo Production","Sablon & Merchandise","+628981309325","628981309325","","4.7","20","","CONTACTED","","Katalog merchandise & sablon","2026-09-29T13:02:33.076Z"
+"Sablon Kaos Malang Mas Dik","Sablon Kaos","+628980080309","628980080309","","4.8","24","","CONTACTED","","Portofolio sablon kaos","2026-09-29T13:02:33.076Z"
+"Sablon Kaos Konveksi Malang","Sablon Kaos","+6281345009292","6281345009292","","4.7","21","","CONTACTED","","Portofolio konveksi","2026-09-29T13:02:33.076Z"
+"Tempat Bikin Kaos Jawa","Konveksi","+6285706142939","6285706142939","","4.5","10","","CONTACTED","","Portofolio konveksi","2026-09-29T13:02:33.076Z"
+"Laju Industry","Konveksi & Garment","+6281939897030","6281939897030","","4.6","16","","CONTACTED","","Portofolio konveksi","2026-09-29T13:02:33.076Z"
+"Taufik Trans Rental Mobil","Rental Mobil","+6285646675363","6285646675363","","4.7","30","","CONTACTED","","Sistem reservasi armada online","2026-09-29T13:02:33.076Z"
+"ALAM GARAGE Bks","Bengkel Otomotif","+6283150101091","6283150101091","","4.7","18","","CONTACTED","","Booking servis & akrilik maps","2026-09-29T13:02:33.076Z"
+"Surya Flooring","Interior & Lantai","+6288707073777","6288707073777","","4.6","14","","CONTACTED","","Katalog display interior & lantai","2026-09-29T13:02:33.076Z"
+"Ready Set Fashion","Fashion Retail","+6287734823183","6287734823183","","4.5","12","","CONTACTED","","Katalog produk busana","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6289516564400","Bisnis Lokal","+6289516564400","6289516564400","","4.7","15","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6281944970885","Bisnis Lokal","+6281944970885","6281944970885","","4.6","12","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6289501007000","Bisnis Lokal","+6289501007000","6289501007000","","4.5","11","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6289658301140","Bisnis Lokal","+6289658301140","6289658301140","","4.6","10","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +628596458780","Bisnis Lokal","+628596458780","628596458780","","4.5","8","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6289647323774","Bisnis Lokal","+6289647323774","6289647323774","","4.7","14","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +628980323258","Bisnis Lokal","+628980323258","628980323258","","4.6","13","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6283850326777","Bisnis Lokal","+6283850326777","6283850326777","","4.5","9","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6282232739073","Bisnis Lokal","+6282232739073","6282232739073","","4.6","12","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6285730687505","Bisnis Lokal","+6285730687505","6285730687505","","4.7","16","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6285738730820","Bisnis Lokal","+6285738730820","6285738730820","","4.6","11","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6282139075086","Bisnis Lokal","+6282139075086","6282139075086","","4.8","19","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6282141320446","Bisnis Lokal","+6282141320446","6282141320446","","4.7","15","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6281230277182","Bisnis Lokal","+6281230277182","6281230277182","","4.6","14","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6282225508459","Bisnis Lokal","+6282225508459","6282225508459","","4.5","10","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6282335666745","Bisnis Lokal","+6282335666745","6282335666745","","4.7","18","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6281331752092","Bisnis Lokal","+6281331752092","6281331752092","","4.6","12","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6281336334060","Bisnis Lokal","+6281336334060","6281336334060","","4.8","20","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6285777030308","Bisnis Lokal","+6285777030308","6285777030308","","4.7","17","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +628584642038","Bisnis Lokal","+628584642038","628584642038","","4.5","9","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6285790279942","Bisnis Lokal","+6285790279942","6285790279942","","4.6","13","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6282144118093","Bisnis Lokal","+6282144118093","6282144118093","","4.7","15","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6281216128162","Bisnis Lokal","+6281216128162","6281216128162","","4.6","14","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6285132502709","Bisnis Lokal","+6285132502709","6285132502709","","4.8","22","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6285707619830","Bisnis Lokal","+6285707619830","6285707619830","","4.5","10","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6282140987712","Bisnis Lokal","+6282140987712","6282140987712","","4.7","16","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6281233458810","Bisnis Lokal","+6281233458810","6281233458810","","4.6","12","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6285103126829","Bisnis Lokal","+6285103126829","6285103126829","","4.5","9","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Prospek Bisnis +6281233046182","Bisnis Lokal","+6281233046182","6281233046182","","4.7","15","","CONTACTED","","Pesan outreach terkirim","2026-09-29T13:02:33.076Z"
+"Klinik Insani & Apotek Insani Farma","Klinik Kesehatan","6282232360201","6282232360201","Jl. Raya Pulorejo No.297, Mergelo, Pulorejo, Prajurit Kulon, Mojokerto City, East Java 61325","4.6","110","","CONTACTED","","Halo Kak, salam kenal dari sesama pegiat usaha lokal. Saya melihat profil Klinik Insani & Apotek Insani Farma di Mojokerto dan tertarik dengan layanan di bidang Klinik Kesehatan.
+
+Banyak rekan pengelola usaha serupa cerita kalau admin sering kewalahan membalas chat tanya daftar harga dan jam layanan berulang kali. Kami bisa bantu siapkan landing page kilat yang langsung terhubung ke WhatsApp pemesanan agar pelanggan bisa langsung pesan dengan ringkas.
+
+Kira-kira jika kami buatkan pratinjau/desain demonya terlebih dahulu tanpa biaya, apakah berkenan kami kirimkan tautannya ke nomor ini?","2026-10-13T12:47:02.437Z"
+"Kos & Homestay Villa Tidar","Rumah wisata","62819864824","62819864824","Jalan Perum Jl. Villa Puncak Tidar No.N-12, Doro, Karangwidoro, Kec. Dau, Kabupaten Malang, Jawa Timur 65149","4.5","144","https://wa.me/62819864824","CONTACTED","","Halo tim dan pengelola, salam kenal! Saya Kevin, sesama pelaku usaha lokal di Jawa Timur. Saya melihat profil Kos & Homestay Villa Tidar di Google Maps Malang.
+
+Kami sedang membantu beberapa pelaku usaha lokal untuk memiliki website profil ringkas yang rapi, cepat diakses, dan langsung terintegrasi ke WhatsApp konsultasi tanpa biaya mahal.
+
+Kira-kira jika kami buatkan pratinjau/desain demonya terlebih dahulu tanpa biaya, apakah berkenan kami kirimkan tautannya ke nomor ini Kak?","2026-10-13T12:49:51.091Z"
+"Kost Exclusive The Srie (Putri)","Rumah Pondokan","6282343711005","6282343711005","Jl. Ikan Kakap, Tunjungsekar, Kec. Lowokwaru, Kota Malang, Jawa Timur 65142","5","11","","CONTACTED","","Selamat siang Kak, semoga harinya lancar ya. Saya kebetulan melihat ulasan positifnya (5★ dari 11 ulasan) di Google Maps area Malang untuk Kost Exclusive The Srie (Putri).
+
+Bagus sekali reputasi pelayanannya Kak. Cuma saya perhatikan, saat pelanggan mencari info resmi lewat internet, belum ada web profil resmi atau katalog mandiri yang bisa diakses langsung tanpa harus tanya satu-satu ke admin.
+
+Kira-kira jika kami buatkan pratinjau/desain demonya terlebih dahulu tanpa biaya, apakah berkenan kami kirimkan tautannya ke nomor ini Kak?","2026-10-13T12:50:39.105Z"
+"History Fonnte","WhatsApp History","62811360923","62811360923","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285236730004","6285236730004","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281393450827","6281393450827","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281233340567","6281233340567","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281233325997","6281233325997","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285707074015","6285707074015","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281333549658","6281333549658","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285755852344","6285755852344","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281358888443","6281358888443","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285179740105","6285179740105","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281357015238","6281357015238","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281252557000","6281252557000","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6282245576999","6282245576999","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285784582261","6285784582261","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285204226322","6285204226322","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6282244681797","6282244681797","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281130006789","6281130006789","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281255277785","6281255277785","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281229509505","6281229509505","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285647322774","6285647322774","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","628157938155","628157938155","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","62895327003456","62895327003456","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281215951695","6281215951695","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","62895384195060","62895384195060","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","628996456780","628996456780","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281575002030","6281575002030","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285875109098","6285875109098","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285785278669","6285785278669","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6282323775533","6282323775533","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","628992280007","628992280007","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285965982678","6285965982678","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285878026341","6285878026341","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","628112109991","628112109991","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285891385526","6285891385526","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6289531914822","6289531914822","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281321307311","6281321307311","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285722552212","6285722552212","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285161262561","6285161262561","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6289658501146","6289658501146","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6288802342374","6288802342374","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281259528818","6281259528818","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285100031911","6285100031911","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285119302628","6285119302628","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281316668539","6281316668539","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6282137039909","6282137039909","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281363757266","6281363757266","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281901273307","6281901273307","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6287838399469","6287838399469","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6287863126896","6287863126896","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281330116106","6281330116106","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","628123026437","628123026437","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281226370658","6281226370658","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281225568448","6281225568448","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6282231382293","6282231382293","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","628113822726","628113822726","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","628983482808","628983482808","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281212108062","6281212108062","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","62818530877","62818530877","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285111356161","6285111356161","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6282336483333","6282336483333","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6282137354800","6282137354800","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6282234471191","6282234471191","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281295115758","6281295115758","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281335561639","6281335561639","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281959998120","6281959998120","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285231109001","6285231109001","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285604444212","6285604444212","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281805077494","6281805077494","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281310015623","6281310015623","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285956779723","6285956779723","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285648595096","6285648595096","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285136575855","6285136575855","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","62895393698832","62895393698832","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6282144118090","6282144118090","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","628125211289","628125211289","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285337457995","6285337457995","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281357025041","6281357025041","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281131110000","6281131110000","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","628988385060","628988385060","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281330207016","6281330207016","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285713947470","6285713947470","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","62817383373","62817383373","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285334595670","6285334595670","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281217422487","6281217422487","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285791633326","6285791633326","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6282310439195","6282310439195","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6282331833089","6282331833089","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281216961857","6281216961857","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","62811360298","62811360298","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6282218751909","6282218751909","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281333114281","6281333114281","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","628997074121","628997074121","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281222227615","6281222227615","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285524412505","6285524412505","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6282115071588","6282115071588","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285210163468","6285210163468","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6289616116103","6289616116103","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6287881388887","6287881388887","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281313101994","6281313101994","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6282115465503","6282115465503","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281216093373","6281216093373","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285215502780","6285215502780","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6287737365073","6287737365073","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281321137064","6281321137064","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6289680345111","6289680345111","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281357153549","6281357153549","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281246424747","6281246424747","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6282139278028","6282139278028","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281334158892","6281334158892","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281977388553","6281977388553","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6282230535441","6282230535441","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6282234765321","6282234765321","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6282142053708","6282142053708","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281335305203","6281335305203","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6285220121910","6285220121910","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6282142006400","6282142006400","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","62816553434","62816553434","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281333714719","6281333714719","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281166227564","6281166227564","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"History Fonnte","WhatsApp History","6281802066161","6281802066161","","0","0","","EXISTING_CHAT","","Import riwayat pesan dari public/fonnte-history.xlsx","2026-10-21T13:08:12.240Z"
+"Kost 49 Ekslusif Surabaya (@kosthessasurabaya)","Hotel jangka panjang","6285100990771","6285100990771","Banyu Urip Wetan V No.49-51, Putat Jaya, Kec. Sawahan, Surabaya, Jawa Timur 60255","4.7","17","https://www.instagram.com/kosthessasurabaya?igsh=M3htcG4xc214YnJ6&utm_source=qr","CONTACTED","","Selamat pagi Kak admin Kost 49 Ekslusif Surabaya 🙏 Salut, kost di Surabaya yang ulasannya udah 4.7 bintang dari 17 review, pasti makin ramai terus ya! Mau tanya sopan nih Kak, untuk penanggung jawab atau Owner biasanya pegang nomor ini atau ada kontak khusus ya?
+
+Kebetulan kami ada buatkan contoh konsep website/katalog kilat gratis khusus untuk Kost 49 Ekslusif Surabaya biar admin nggak capek jawab pertanyaan umum yang sama berulang-ulang dari calon penghuni baru. Kira-kira berkenan kalau kami kirimkan link pratinjaunya ke nomor ini buat dilihat santai atau diteruskan ke Owner, Kak? 🙏","2026-10-21T23:52:48.682Z"
+"SEWA VILLA KARTIKA BATU MALANG (Private Pool Inside & Full AC Bedrooms)","general","6281235802547","6281235802547","","0","0","","CONTACTED","","","2026-10-22T00:16:47.331Z"
+"Samadi Homestay Batu","Vila","6285247069279","6285247069279","Perum Samadi Residence A3, Jl. Samadi, Pesanggrahan, Batu, Batu City, East Java 65313","5","27","","CONTACTED","","Selamat pagi Kak admin, semoga harinya lancar selalu. Tadi saya sempat melihat profil Samadi Homestay Batu di Google Maps daerah Batu, dengan rating 5★ (27 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Samadi Homestay Batu pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Samadi Homestay Batu agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T00:18:20.444Z"
+"Villa Di Batu","Pondok","6285748916018","6285748916018","JatimPark 1, Jl. Kartika No.2, Sisir, Kec. Batu, Kota Batu, Jawa Timur 65315","4.7","47","","CONTACTED","","Halo, selamat pagi tim admin, salam kenal. Tadi saya sempat melihat profil Villa Di Batu di Google Maps daerah Batu, dengan rating 4.7★ (47 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Villa Di Batu pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Villa Di Batu agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T00:20:46.460Z"
+"D'Villa Batu (D'Villa Keluarga W Sumberejo Batu)","Vila","6281249215597","6281249215597","Jl. Indragiri, Sumberejo, Kec. Batu, Kota Batu, Jawa Timur 65318","4.9","1","https://www.facebook.com/share/QxzNDQR39DwU4pRA/?mibextid=qi2Omg","CONTACTED","","Selamat pagi Kak, semoga sehat dan lancar rezekinya untuk seluruh tim D'Villa Keluarga W. Saya Kevin, web developer dari Jawa Timur. Saat mengamati kawasan Sumbere","2026-10-22T00:22:23.585Z"
+"KLINIK UTAMA AZKA MEDIKA","Apotek","6285335476174","6285335476174","Kabupaten Sidoarjo, Jawa Timur","4.3","211","","CONTACTED","","Halo selamat pagi Kak, salam kenal saya Kevin. Saya Kevin, web developer lokal dari Malang, Jawa Timur. Tadi saya sempat melihat profil KLINIK UTAMA AZKA MEDIKA di Google Maps daerah Sidoarjo, dengan rating 4.3★ (211 ulasan) yang sangat bagus dan aktif melayani pelanggan.
+
+Sebagai sesama pelaku usaha, sayang sekali bisnis dengan reputasi sebaik ini belum memiliki website profil resmi mandiri di Google Maps. Padahal di bidang Apotek, banyak pemilik usaha menghadapi kendala calon pasien ragu datang karena tidak menemukan profil dokter resmi dan daftar layanan yang jelas di Google.
+
+Maka dari itu, saya sudah sempat menyiapkan *1 sampel pratinjau konsep website modern* yang sangat ringan dibuka di HP khusus untuk KLINIK UTAMA AZKA MEDIKA. Sampel rancangan awal ini murni saya buatkan cuma-cuma sekadar untuk dilihat dan dinilai terlebih dahulu tanpa ikatan komitmen apapun.
+
+Boleh izin saya bagikan tautan sampel pratinjaunya di sini untuk dilihat-lihat santai, Kak? 🙏","2026-10-22T03:15:15.075Z"
+"APOTEK MEDIPLUS","Apotek","6285179774097","6285179774097","Jl. Werkudoro I blok No.D-71","5","42","","CONTACTED","","Selamat pagi Kak, salam kenal dari Kevin di Jawa Timur. Saya Kevin, web developer lokal dari Malang, Jawa Timur. Tadi saya sempat melihat profil APOTEK MEDIPLUS di Google Maps daerah Sidoarjo, dengan rating 5★ (42 ulasan) yang sangat bagus dan aktif melayani pelanggan.
+
+Sebagai sesama pelaku usaha, sayang sekali bisnis dengan reputasi sebaik ini belum memiliki website profil resmi mandiri di Google Maps. Padahal di bidang Apotek, banyak pemilik usaha menghadapi kendala calon pasien ragu datang karena tidak menemukan profil dokter resmi dan daftar layanan yang jelas di Google.
+
+Maka dari itu, saya sudah sempat menyiapkan *1 sampel pratinjau konsep website modern* yang sangat ringan dibuka di HP khusus untuk APOTEK MEDIPLUS. Sampel rancangan awal ini murni saya buatkan cuma-cuma sekadar untuk dilihat dan dinilai terlebih dahulu tanpa ikatan komitmen apapun.
+
+Boleh izin saya bagikan tautan sampel pratinjaunya di sini untuk dilihat-lihat santai, Kak? 🙏","2026-10-22T03:17:01.079Z"
+"KLINIK NALA HUSADA SIDOARJO","Klinik Medis","6285194596392","6285194596392","Jl. Nala No.17, RT./03/RW./06","5","14","","CONTACTED","","Selamat pagi Kak, salam kenal dari Kevin di Jawa Timur. Saya Kevin, web developer lokal dari Malang, Jawa Timur. Tadi saya sempat melihat profil KLINIK NALA HUSADA SIDOARJO di Google Maps daerah Sidoarjo, dengan rating 5★ (14 ulasan) yang sangat bagus dan aktif melayani pelanggan.
+
+Sebagai sesama pelaku usaha, sayang sekali bisnis dengan reputasi sebaik ini belum memiliki website profil resmi mandiri di Google Maps. Padahal di bidang Klinik Medis, banyak pemilik usaha menghadapi kendala calon pasien ragu datang karena tidak menemukan profil dokter resmi dan daftar layanan yang jelas di Google.
+
+Maka dari itu, saya sudah sempat menyiapkan *1 sampel pratinjau konsep website modern* yang sangat ringan dibuka di HP khusus untuk KLINIK NALA HUSADA SIDOARJO. Sampel rancangan awal ini murni saya buatkan cuma-cuma sekadar untuk dilihat dan dinilai terlebih dahulu tanpa ikatan komitmen apapun.
+
+Boleh izin saya bagikan tautan sampel pratinjaunya di sini untuk dilihat-lihat santai, Kak? 🙏","2026-10-22T03:18:36.013Z"
+"Praktek dr. Ando Damanik, SpOG(K) & Apotek Surya Farma","Apotek","6289697093355","6289697093355","Ruko Surya Square, Jl. Raya Sungon AA 23","4.8","166","","CONTACTED","","Halo selamat pagi Kak, salam kenal saya Kevin. Saya Kevin, web developer lokal dari Malang, Jawa Timur. Tadi saya sempat melihat profil Praktek dr. Ando Damanik, SpOG(K) & Apotek Surya Farma di Google Maps daerah Sidoarjo, dengan rating 4.8★ (166 ulasan) yang sangat bagus dan aktif melayani pelanggan.
+
+Sebagai sesama pelaku usaha, sayang sekali bisnis dengan reputasi sebaik ini belum memiliki website profil resmi mandiri di Google Maps. Padahal di bidang Apotek, banyak pemilik usaha menghadapi kendala calon pasien ragu datang karena tidak menemukan profil dokter resmi dan daftar layanan yang jelas di Google.
+
+Maka dari itu, saya sudah sempat menyiapkan *1 sampel pratinjau konsep website modern* yang sangat ringan dibuka di HP khusus untuk Praktek dr. Ando Damanik, SpOG(K) & Apotek Surya Farma. Sampel rancangan awal ini murni saya buatkan cuma-cuma sekadar untuk dilihat dan dinilai terlebih dahulu tanpa ikatan komitmen apapun.
+
+Boleh izin saya bagikan tautan sampel pratinjaunya di sini untuk dilihat-lihat santai, Kak? 🙏","2026-10-22T03:20:12.583Z"
+"Klinik Medis Gelora Sidoarjo","Klinik Medis","628113399443","628113399443","B7 No, Jl. Taman Pinang Indah 3-3A","3.8","1","http://linktr.ee/klinikmedisgelora","CONTACTED","","Halo selamat pagi Kak, salam kenal saya Kevin. Saya Kevin, web developer lokal dari Malang, Jawa Timur. Tadi saya sempat melihat profil Klinik Medis Gelora Sidoarjo di Google Maps daerah Sidoarjo, dengan rating 3.8★ (1 ulasan) yang sangat bagus dan aktif melayani pelanggan.
+
+Sebagai sesama pelaku usaha, sayang sekali bisnis dengan reputasi sebaik ini belum memiliki website profil resmi mandiri di Google Maps. Padahal di bidang Klinik Medis, banyak pemilik usaha menghadapi kendala calon pasien ragu datang karena tidak menemukan profil dokter resmi dan daftar layanan yang jelas di Google.
+
+Maka dari itu, saya sudah sempat menyiapkan *1 sampel pratinjau konsep website modern* yang sangat ringan dibuka di HP khusus untuk Klinik Medis Gelora Sidoarjo. Sampel rancangan awal ini murni saya buatkan cuma-cuma sekadar untuk dilihat dan dinilai terlebih dahulu tanpa ikatan komitmen apapun.
+
+Boleh izin saya bagikan tautan sampel pratinjaunya di sini untuk dilihat-lihat santai, Kak? 🙏","2026-10-22T03:21:50.204Z"
+"Apotek Dhamar Setia","Apotek","6285749095095","6285749095095","Jl. Ahmad Dahlan No.94, Mojoroto, Kec. Kota, Kota Kediri, Jawa Timur 64112","5","256","","CONTACTED","","Halo, selamat pagi tim manajemen, salam hangat. Saya Kevin, web developer lokal dari Malang, Jawa Timur. Tadi saya sempat melihat profil Apotek Dhamar Setia di Google Maps daerah Kediri, dengan rating 5★ (256 ulasan) yang sangat bagus dan aktif melayani pelanggan.
+
+Sebagai sesama pelaku usaha, sayang sekali bisnis dengan reputasi sebaik ini belum memiliki website profil resmi mandiri di Google Maps. Padahal di bidang Apotek, banyak pemilik usaha menghadapi kendala calon pasien ragu datang karena tidak menemukan profil dokter resmi dan daftar layanan yang jelas di Google.
+
+Maka dari itu, saya sudah sempat menyiapkan *1 sampel pratinjau konsep website modern* yang sangat ringan dibuka di HP khusus untuk Apotek Dhamar Setia. Sampel rancangan awal ini murni saya buatkan cuma-cuma sekadar untuk dilihat dan dinilai terlebih dahulu tanpa ikatan komitmen apapun.
+
+Boleh izin saya bagikan tautan sampel pratinjaunya di sini untuk dilihat-lihat santai, Kak? 🙏","2026-10-22T03:23:35.290Z"
+"Klinik Sinar Medika","Dokter","6281235459264","6281235459264","Jl. Betet Bawang No.107, Betet, Kec. Pesantren, Kota Kediri, Jawa Timur 64134","4.7","112","","CONTACTED","","Halo selamat pagi Kak, salam kenal saya Kevin. Saya Kevin, web developer lokal dari Malang, Jawa Timur. Tadi saya sempat melihat profil Klinik Sinar Medika di Google Maps daerah Kediri, dengan rating 4.7★ (112 ulasan) yang sangat bagus dan aktif melayani pelanggan.
+
+Sebagai sesama pelaku usaha, sayang sekali bisnis dengan reputasi sebaik ini belum memiliki website profil resmi mandiri di Google Maps. Padahal di bidang Dokter, banyak pemilik usaha menghadapi kendala calon pasien ragu datang karena tidak menemukan profil dokter resmi dan daftar layanan yang jelas di Google.
+
+Maka dari itu, saya sudah sempat menyiapkan *1 sampel pratinjau konsep website modern* yang sangat ringan dibuka di HP khusus untuk Klinik Sinar Medika. Sampel rancangan awal ini murni saya buatkan cuma-cuma sekadar untuk dilihat dan dinilai terlebih dahulu tanpa ikatan komitmen apapun.
+
+Boleh izin saya bagikan tautan sampel pratinjaunya di sini untuk dilihat-lihat santai, Kak? 🙏","2026-10-22T03:25:20.689Z"
+"Klinik Pratama Rawat Jalan Salsabila Medika","Klinik Kesehatan","6282337737613","6282337737613","Jl. Penanggungan No.87, Lirboyo, Kec. Mojoroto, Kabupaten Kediri, Jawa Timur 64117","4.5","174","","CONTACTED","","Halo, selamat pagi tim manajemen, salam hangat. Saya Kevin, web developer lokal dari Malang, Jawa Timur. Tadi saya sempat melihat profil Klinik Pratama Rawat Jalan Salsabila Medika di Google Maps daerah Kediri, dengan rating 4.5★ (174 ulasan) yang sangat bagus dan aktif melayani pelanggan.
+
+Sebagai sesama pelaku usaha, sayang sekali bisnis dengan reputasi sebaik ini belum memiliki website profil resmi mandiri di Google Maps. Padahal di bidang Klinik Kesehatan, banyak pemilik usaha menghadapi kendala calon pasien ragu datang karena tidak menemukan profil dokter resmi dan daftar layanan yang jelas di Google.
+
+Maka dari itu, saya sudah sempat menyiapkan *1 sampel pratinjau konsep website modern* yang sangat ringan dibuka di HP khusus untuk Klinik Pratama Rawat Jalan Salsabila Medika. Sampel rancangan awal ini murni saya buatkan cuma-cuma sekadar untuk dilihat dan dinilai terlebih dahulu tanpa ikatan komitmen apapun.
+
+Boleh izin saya bagikan tautan sampel pratinjaunya di sini untuk dilihat-lihat santai, Kak? 🙏","2026-10-22T03:27:03.232Z"
+"Klinik Utama Sapta Medika","Klinik Kesehatan","6281335658002","6281335658002","Jl. Brigjen Katamso No.49, Kp. Dalem, Kec. Kota, Kota Kediri, Jawa Timur 64126","4.6","223","","CONTACTED","","Halo selamat pagi Kak, salam kenal saya Kevin. Saya Kevin, web developer lokal dari Malang, Jawa Timur. Tadi saya sempat melihat profil Klinik Utama Sapta Medika di Google Maps daerah Kediri, dengan rating 4.6★ (223 ulasan) yang sangat bagus dan aktif melayani pelanggan.
+
+Sebagai sesama pelaku usaha, sayang sekali bisnis dengan reputasi sebaik ini belum memiliki website profil resmi mandiri di Google Maps. Padahal di bidang Klinik Kesehatan, banyak pemilik usaha menghadapi kendala calon pasien ragu datang karena tidak menemukan profil dokter resmi dan daftar layanan yang jelas di Google.
+
+Maka dari itu, saya sudah sempat menyiapkan *1 sampel pratinjau konsep website modern* yang sangat ringan dibuka di HP khusus untuk Klinik Utama Sapta Medika. Sampel rancangan awal ini murni saya buatkan cuma-cuma sekadar untuk dilihat dan dinilai terlebih dahulu tanpa ikatan komitmen apapun.
+
+Boleh izin saya bagikan tautan sampel pratinjaunya di sini untuk dilihat-lihat santai, Kak? 🙏","2026-10-22T03:28:34.853Z"
+"Klinik Pratama dr. Chreslina Subagyo","Klinik Medis","6282260940499","6282260940499","Jl. Gatot Subroto No.161, Mrican, Kec. Mojoroto, Kota Kediri, Jawa Timur 64111","4.7","125","","CONTACTED","","Selamat pagi Kak, salam kenal dari Kevin di Jawa Timur. Saya Kevin, web developer lokal dari Malang, Jawa Timur. Tadi saya sempat melihat profil Klinik Pratama dr. Chreslina Subagyo di Google Maps daerah Kediri, dengan rating 4.7★ (125 ulasan) yang sangat bagus dan aktif melayani pelanggan.
+
+Sebagai sesama pelaku usaha, sayang sekali bisnis dengan reputasi sebaik ini belum memiliki website profil resmi mandiri di Google Maps. Padahal di bidang Klinik Medis, banyak pemilik usaha menghadapi kendala calon pasien ragu datang karena tidak menemukan profil dokter resmi dan daftar layanan yang jelas di Google.
+
+Maka dari itu, saya sudah sempat menyiapkan *1 sampel pratinjau konsep website modern* yang sangat ringan dibuka di HP khusus untuk Klinik Pratama dr. Chreslina Subagyo. Sampel rancangan awal ini murni saya buatkan cuma-cuma sekadar untuk dilihat dan dinilai terlebih dahulu tanpa ikatan komitmen apapun.
+
+Boleh izin saya bagikan tautan sampel pratinjaunya di sini untuk dilihat-lihat santai, Kak? 🙏","2026-10-22T03:30:13.517Z"
+"Apotek wisnu farma kediri","Apotek","628113697711","628113697711","Jl. Ahmad Yani No.109, Tepus, Ngadirejo, Kec. Kota, Kabupaten Kediri, Jawa Timur 64129","4.9","136","","CONTACTED","","Halo selamat pagi Kak, salam kenal saya Kevin. Saya Kevin, web developer lokal dari Malang, Jawa Timur. Tadi saya sempat melihat profil Apotek wisnu farma kediri di Google Maps daerah Kediri, dengan rating 4.9★ (136 ulasan) yang sangat bagus dan aktif melayani pelanggan.
+
+Sebagai sesama pelaku usaha, sayang sekali bisnis dengan reputasi sebaik ini belum memiliki website profil resmi mandiri di Google Maps. Padahal di bidang Apotek, banyak pemilik usaha menghadapi kendala calon pasien ragu datang karena tidak menemukan profil dokter resmi dan daftar layanan yang jelas di Google.
+
+Maka dari itu, saya sudah sempat menyiapkan *1 sampel pratinjau konsep website modern* yang sangat ringan dibuka di HP khusus untuk Apotek wisnu farma kediri. Sampel rancangan awal ini murni saya buatkan cuma-cuma sekadar untuk dilihat dan dinilai terlebih dahulu tanpa ikatan komitmen apapun.
+
+Boleh izin saya bagikan tautan sampel pratinjaunya di sini untuk dilihat-lihat santai, Kak? 🙏","2026-10-22T03:31:56.275Z"
+"WHITE HOUSE VILLA BATU","Vila","6285708966609","6285708966609","Perum. Fiorence Hills B.11, Temas, Kec. Batu, Kota Batu, Jawa Timur 65315","4.9","198","","CONTACTED","","Halo selamat pagi Kak admin, salam kenal yaa. Tadi saya sempat melihat profil WHITE HOUSE VILLA BATU di Google Maps daerah Batu, dengan rating 4.9★ (198 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus WHITE HOUSE VILLA BATU pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk WHITE HOUSE VILLA BATU agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T03:33:56.580Z"
+"VILLA INDIKA PRIVATE POOL","Vila","6282143183220","6282143183220","Dusun dresel bawah, RT.3/RW.8, Oro-Oro Ombo, Kec. Batu, Kota Batu, Jawa Timur 65316","4.7","81","","CONTACTED","","Selamat pagi Kak admin, semoga harinya lancar selalu. Tadi saya sempat melihat profil VILLA INDIKA PRIVATE POOL di Google Maps daerah Batu, dengan rating 4.7★ (81 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus VILLA INDIKA PRIVATE POOL pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk VILLA INDIKA PRIVATE POOL agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T03:35:53.219Z"
+"Kost/co Living Darmo Permai Surabaya","Hotel jangka panjang","62811500317","62811500317","Jl. Darmo Permai Timur XIII No.31, Pradahkalikendal, Kec. Dukuhpakis, Surabaya, Jawa Timur 60189","4.9","54","","CONTACTED","","Selamat pagi Kak admin, semoga harinya lancar selalu. Tadi saya sempat melihat profil Kost/co Living Darmo Permai Surabaya di Google Maps daerah Surabaya, dengan rating 4.9★ (54 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Kost/co Living Darmo Permai Surabaya pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Kost/co Living Darmo Permai Surabaya agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T03:37:38.905Z"
+"RUMAH ASRI 18 kos eksklusif Surabaya","Rumah Pondokan","62818377003","62818377003","Jl. Rungkut Asri No.18, Rungkut Kidul, Rungkut, Surabaya, East Java 60293","4.7","42","https://www.facebook.com/rumahasri18/","CONTACTED","","Halo selamat pagi Kak admin, salam kenal yaa. Tadi saya sempat melihat profil RUMAH ASRI 18 kos eksklusif Surabaya di Google Maps daerah Surabaya, dengan rating 4.7★ (42 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus RUMAH ASRI 18 kos eksklusif Surabaya pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk RUMAH ASRI 18 kos eksklusif Surabaya agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T03:39:29.614Z"
+"Kost kosan indekost homeplaza surabaya","Pondok","6281232472720","6281232472720","Kota Jl. Ploso II No.22-A, RT.002/RW.05, Ploso, Kec. Tambaksari, Surabaya, Jawa Timur 60133","4.9","36","","CONTACTED","","Selamat pagi Kak admin, semoga harinya lancar selalu. Tadi saya sempat melihat profil Kost kosan indekost homeplaza surabaya di Google Maps daerah Surabaya, dengan rating 4.9★ (36 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Kost kosan indekost homeplaza surabaya pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Kost kosan indekost homeplaza surabaya agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T03:41:16.792Z"
+"Kost 98 dan Homestay","Pondok","6285258458202","6285258458202","Jl. Kertajaya IX C No.8, Airlangga, Kec. Gubeng, Surabaya, Jawa Timur 60285","4.4","98","","CONTACTED","","Selamat pagi Kak admin, semoga harinya lancar selalu. Tadi saya sempat melihat profil Kost 98 dan Homestay di Google Maps daerah Surabaya, dengan rating 4.4★ (98 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Kost 98 dan Homestay pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Kost 98 dan Homestay agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T03:43:00.167Z"
+"Griya Logos Kost Eksklusif Sidoarjo","Hotel jangka panjang","6282332660126","6282332660126","Jl. Gesing, RT.06 RW01, Gesing, Banjarsari, Kec. Buduran, Kabupaten Sidoarjo, Jawa Timur 61252","5","18","","CONTACTED","","Halo, selamat pagi tim admin, salam kenal. Tadi saya sempat melihat profil Griya Logos Kost Eksklusif Sidoarjo di Google Maps daerah Sidoarjo, dengan rating 5★ (18 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Griya Logos Kost Eksklusif Sidoarjo pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Griya Logos Kost Eksklusif Sidoarjo agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T03:45:26.825Z"
+"MAJESTY Kost Eksklusif Sidoarjo","Hotel jangka panjang","6282311221250","6282311221250","Gg. Macan Serujo Gg. Gajah No.140, Pucanganom, Kec. Sidoarjo, Kabupaten Sidoarjo, Jawa Timur 61217","5","15","","CONTACTED","","Halo selamat pagi Kak admin, salam kenal yaa. Tadi saya sempat melihat profil MAJESTY Kost Eksklusif Sidoarjo di Google Maps daerah Sidoarjo, dengan rating 5★ (15 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus MAJESTY Kost Eksklusif Sidoarjo pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk MAJESTY Kost Eksklusif Sidoarjo agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T03:47:15.800Z"
+"Kost Eksklusif Omah Sekayu Sidoarjo","Rumah wisata","6285235862852","6285235862852","Perumahan Bumi Citra Fajar, Jl. Sekawan Ayu Raya, Blk. A No.6, Perum Bef, Bulusidokare, Kec. Sidoarjo, Kabupaten Sidoarjo, Jawa Timur 61234","4.9","7","","CONTACTED","","Halo, selamat pagi tim admin, salam kenal. Tadi saya sempat melihat profil Kost Eksklusif Omah Sekayu Sidoarjo di Google Maps daerah Sidoarjo, dengan rating 4.9★ (7 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Kost Eksklusif Omah Sekayu Sidoarjo pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Kost Eksklusif Omah Sekayu Sidoarjo agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T03:49:17.094Z"
+"Kost Eksklusif Jenggolo","Rumah wisata","6281376624965","6281376624965","Jl. Jenggolo I No.17, Pucang, Kec. Sidoarjo, Kabupaten Sidoarjo, Jawa Timur 61219","4.9","14","","CONTACTED","","Selamat pagi Kak admin, semoga harinya lancar selalu. Tadi saya sempat melihat profil Kost Eksklusif Jenggolo di Google Maps daerah Sidoarjo, dengan rating 4.9★ (14 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Kost Eksklusif Jenggolo pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Kost Eksklusif Jenggolo agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T03:51:07.492Z"
+"Kost Exclusive GR SEKALA","Guest house","6285791945767","6285791945767","Jl. Pd. Jati Blok A-26, Jati, Kec. Sidoarjo, Kabupaten Sidoarjo, Jawa Timur 61226","4.8","24","","CONTACTED","","Halo selamat pagi Kak admin, salam kenal yaa. Tadi saya sempat melihat profil Kost Exclusive GR SEKALA di Google Maps daerah Sidoarjo, dengan rating 4.8★ (24 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Kost Exclusive GR SEKALA pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Kost Exclusive GR SEKALA agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T03:52:49.815Z"
+"Kost Campur Bulanan Executive Premium Exclusive Graha Tirta Dahlia 76 Syariah Waru Sidoarjo","Guest house","6281331616366","6281331616366","Perumahan Graha Tirta Cluster Dahlia No.76, Ngingas, Waru, Sidoarjo Regency, East Java 61256","4.9","19","https://www.instagram.com/grahadahliasyariah/","CONTACTED","","Selamat pagi Kak admin, semoga harinya lancar selalu. Tadi saya sempat melihat profil Kost Campur Bulanan Executive Premium Exclusive Graha Tirta Dahlia 76 Syariah Waru Sidoarjo di Google Maps daerah Sidoarjo, dengan rating 4.9★ (19 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Kost Campur Bulanan Executive Premium Exclusive Graha Tirta Dahlia 76 Syariah Waru Sidoarjo pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Kost Campur Bulanan Executive Premium Exclusive Graha Tirta Dahlia 76 Syariah Waru Sidoarjo agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T03:55:33.659Z"
+"Grahas Kost & Residence","Hostel","6285739741149","6285739741149","Jl. Pahlawan II No.78, Rw5, Sidokumpul, Sidoarjo, Sidoarjo Regency, East Java 61213","4.9","23","https://www.instagram.com/grahas_kost/","CONTACTED","","Halo selamat siang Kak admin, salam kenal yaa. Tadi saya sempat melihat profil Grahas Kost & Residence di Google Maps daerah Sidoarjo, dengan rating 4.9★ (23 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Grahas Kost & Residence pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Grahas Kost & Residence agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T04:02:46.067Z"
+"Kos Ekslusif Khusus Putri Sidoarjo Puri Azura","Rumah Pondokan","6285743333124","6285743333124","Jl Kav Jl. Kemiri Indah Bar. No.2 Blok E10, Bluru Cilik, Kemiri, Kec. Sidoarjo, Kabupaten Sidoarjo, Jawa Timur 61234","5","5","","CONTACTED","","Selamat siang Kak admin, semoga harinya lancar selalu. Tadi saya sempat melihat profil Kos Ekslusif Khusus Putri Sidoarjo Puri Azura di Google Maps daerah Sidoarjo, dengan rating 5★ (5 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Kos Ekslusif Khusus Putri Sidoarjo Puri Azura pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Kos Ekslusif Khusus Putri Sidoarjo Puri Azura agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T04:04:14.699Z"
+"Victoria Kost & home stay","Hostel","6285235532233","6285235532233","Ry Agrowilis, Jl. Tembus, Semen, Kec. Semen, Kabupaten Kediri, Jawa Timur 64161","5","36","","CONTACTED","","Halo, selamat siang tim admin, salam kenal. Tadi saya sempat melihat profil Victoria Kost & home stay di Google Maps daerah Kediri, dengan rating 5★ (36 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Victoria Kost & home stay pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Victoria Kost & home stay agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T04:06:58.394Z"
+"Kos Eksklusif Kawi Sejahtera","Rumah Pondokan","6281359294347","6281359294347","Jl. Kawi I No.3a, Mojoroto, Kediri Regency, East Java 64112","4.3","11","","CONTACTED","","Selamat siang Kak admin, semoga harinya lancar selalu. Tadi saya sempat melihat profil Kos Eksklusif Kawi Sejahtera di Google Maps daerah Kediri, dengan rating 4.3★ (11 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Kos Eksklusif Kawi Sejahtera pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Kos Eksklusif Kawi Sejahtera agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T04:08:55.925Z"
+"Rumah Kos Kediri","Hotel jangka panjang","6287779194622","6287779194622","Jl. KH. Agus Salim Gg. VIII No.9 C, Bandar Kidul, Kec. Mojoroto, Kota Kediri, Jawa Timur 63118","4.7","30","https://instagram.com/rumahkoskediri?igshid=YTQwZjQ0NmI0OA==","CONTACTED","","Selamat siang Kak admin, semoga harinya lancar selalu. Tadi saya sempat melihat profil Rumah Kos Kediri di Google Maps daerah Kediri, dengan rating 4.7★ (30 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Rumah Kos Kediri pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Rumah Kos Kediri agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T04:10:27.130Z"
+"kost putri RayVaDa kediri","Hotel","6285235825084","6285235825084","Gg. Guntur No.kav.2, Lirboyo, Kec. Mojoroto, Kota Kediri, Jawa Timur 64117","4.8","33","","CONTACTED","","Halo, selamat siang tim admin, salam kenal. Tadi saya sempat melihat profil kost putri RayVaDa kediri di Google Maps daerah Kediri, dengan rating 4.8★ (33 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus kost putri RayVaDa kediri pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk kost putri RayVaDa kediri agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T04:12:09.207Z"
+"Kost VIP Rumah Kita","Hostel","6282232272850","6282232272850","Jl. Panglima Besar Sudirman No.2500, Selotopeng, Manyaran, Kec. Banyakan, Kabupaten Kediri, Jawa Timur 64157","4.7","18","","CONTACTED","","Halo, selamat siang tim admin, salam kenal. Tadi saya sempat melihat profil Kost VIP Rumah Kita di Google Maps daerah Kediri, dengan rating 4.7★ (18 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Kost VIP Rumah Kita pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Kost VIP Rumah Kita agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T04:13:51.706Z"
+"D'exclusive Panjalu Kost","Rumah berlibur","6282112373454","6282112373454","Jl. Kapten Tendean Jl. Bence Gang 2, Pakunden, Kec. Kota, Kota Kediri, Jawa Timur 34511","4.2","6","","CONTACTED","","Halo, selamat siang tim admin, salam kenal. Tadi saya sempat melihat profil D'exclusive Panjalu Kost di Google Maps daerah Kediri, dengan rating 4.2★ (6 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus D'exclusive Panjalu Kost pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk D'exclusive Panjalu Kost agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T04:15:24.997Z"
+"Interior - Kontraktor - Arsitek | IKONIK","Jasa Konstruksi dan Bangunan","6281216792901","6281216792901","Jl. Tlk. Cendrawasih Gg. XIV No.12 A, RT.07/RW.03, Arjosari, Kec. Blimbing, Kota Malang, Jawa Timur 65126","5","79","https://www.instagram.com/interior_kontraktor_arsitek/","CONTACTED","","Halo, selamat siang tim admin, salam kenal. Tadi saya sempat melihat profil Interior di Google Maps daerah Malang, dengan rating 5★ (79 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Interior pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus mengirimkan foto portofolio dan rincian harga satu per satu secara manual ke calon pelanggan baru satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Interior agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T04:41:38.542Z"
+"Arsitek |Jasa Desain + Bangun Rumah| (Amanah Terpercaya)","Kontraktor, Arsitek & Interior","6282140045910","6282140045910","Arsitek |Jasa Desain   Bangun Rumah| (Amanah Terpercaya), Jl. Lesanpuro Dalam No.16, RT.04/RW.03, Lesanpuro, Kec. Kedungkandang, Kota Malang, Jawa Timur 65138","5","115","https://desainrumahmalang1.wixsite.com/rizky-design-archite","CONTACTED","","Halo selamat siang Kak admin, salam kenal yaa. Tadi saya sempat melihat profil Arsitek |Jasa Desain + Bangun Rumah| (Amanah Terpercaya) di Google Maps daerah Malang, dengan rating 5★ (115 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Arsitek |Jasa Desain + Bangun Rumah| (Amanah Terpercaya) pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus mengirimkan foto portofolio dan rincian harga satu per satu secara manual ke calon pelanggan baru satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Arsitek |Jasa Desain + Bangun Rumah| (Amanah Terpercaya) agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T04:43:13.620Z"
+"Arsitek & Interior BALEE Design - Kota Malang & Batu","Kontraktor","6282143002825","6282143002825","Jl. Apel No.14 RT19, RW.05, Caru, Pendem, belakang megatrans, Kota Batu, Jawa Timur 65324","5","9","https://sites.google.com/view/baleedesignpartners/","CONTACTED","","Selamat siang Kak admin, semoga harinya lancar selalu. Tadi saya sempat melihat profil Arsitek & Interior BALEE Design di Google Maps daerah Malang, dengan rating 5★ (9 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Arsitek & Interior BALEE Design pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus mengirimkan foto portofolio dan rincian harga satu per satu secara manual ke calon pelanggan baru satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Arsitek & Interior BALEE Design agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T04:44:47.898Z"
+"Setara Langit Arsitek","Kantor Arsitek Interior","6285748557744","6285748557744","Perumahan Istana Gajayana Jl. Gajayana No.A.8, Dinoyo, Kec. Lowokwaru, Kota Malang, Jawa Timur 65144","5","27","https://www.instagram.com/slangitarchitect.co/","CONTACTED","","Halo, selamat siang tim admin, salam kenal. Tadi saya sempat melihat profil Setara Langit Arsitek di Google Maps daerah Malang, dengan rating 5★ (27 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Setara Langit Arsitek pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus mengirimkan foto portofolio dan rincian harga satu per satu secara manual ke calon pelanggan baru satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Setara Langit Arsitek agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T04:48:50.118Z"
+"Jasa Arsitek Malang | Jasa Renovasi | Jasa Gambar Rumah | ARZstudioarchitect","Kantor Arsitek Interior","6281331450086","6281331450086","Pondok Mutiara Asri, Perumahan, Krajan, Pandanlandung, Kec. Wagir, Kabupaten Malang, Jawa Timur 65148","4.8","14","https://www.instagram.com/reel/CzVDZG_youd/?igshid=MzY1NDJmNzMyNQ==","CONTACTED","","Selamat siang Kak admin, semoga harinya lancar selalu. Tadi saya sempat melihat profil Jasa Arsitek Malang | Jasa Renovasi | Jasa Gambar Rumah | ARZstudioarchitect di Google Maps daerah Malang, dengan rating 4.8★ (14 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Jasa Arsitek Malang | Jasa Renovasi | Jasa Gambar Rumah | ARZstudioarchitect pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus mengirimkan foto portofolio dan rincian harga satu per satu secara manual ke calon pelanggan baru satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Jasa Arsitek Malang | Jasa Renovasi | Jasa Gambar Rumah | ARZstudioarchitect agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T04:50:27.848Z"
+"Asatu Arsitek Interior Kontraktor","Kontraktor","6285101777037","6285101777037","Jl. Dewi Sartika ATAS No.35 Blok 3H, Temas, Kec. Batu, Kota Batu, Jawa Timur 65135","4.9","8","","CONTACTED","","Selamat siang Kak admin, semoga harinya lancar selalu. Tadi saya sempat melihat profil Asatu Arsitek Interior Kontraktor di Google Maps daerah Batu, dengan rating 4.9★ (8 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Asatu Arsitek Interior Kontraktor pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus mengirimkan foto portofolio dan rincian harga satu per satu secara manual ke calon pelanggan baru satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Asatu Arsitek Interior Kontraktor agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T04:52:10.899Z"
+"FACON Arsitek Interior Kontraktor","Arsitek","6282228005550","6282228005550","4GCW RJ8, Jl. Wukir No.268, Temas, Kec. Batu, Kota Batu, Jawa Timur 65314","5","3","https://www.instagram.com/facon_kotabatu/","CONTACTED","","Halo, selamat siang tim admin, salam kenal. Tadi saya sempat melihat profil FACON Arsitek Interior Kontraktor di Google Maps daerah Batu, dengan rating 5★ (3 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus FACON Arsitek Interior Kontraktor pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus mengirimkan foto portofolio dan rincian harga satu per satu secara manual ke calon pelanggan baru satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk FACON Arsitek Interior Kontraktor agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T04:53:52.835Z"
+"INTERIOR KOTA BATU","Pengrajin Lemari","6289525122777","6289525122777","Gang masjid darush sholihin Jl. Suropati, RT.03/RW.07, Pesanggrahan, Kec. Batu, Kota Batu, Jawa Timur 65313","5","43","","CONTACTED","","Halo selamat siang Kak admin, salam kenal yaa. Tadi saya sempat melihat profil INTERIOR KOTA BATU di Google Maps daerah Batu, dengan rating 5★ (43 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus INTERIOR KOTA BATU pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus menjawab chat pertanyaan umum yang sama berulang-ulang dari calon pembeli baru di Google Maps satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk INTERIOR KOTA BATU agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T04:55:42.991Z"
+"Pilarrumah.id - Jasa Arsitek & Kontraktor Bangunan","Kontraktor Umum","6282139282600","6282139282600","Jl. Tlogotowo No.01, Dusun pandan, Pandanrejo, Kec. Bumiaji, Kota Batu, Jawa Timur 65332","5","2","","CONTACTED","","Selamat siang Kak admin, semoga harinya lancar selalu. Tadi saya sempat melihat profil Pilarrumah.id di Google Maps daerah Batu, dengan rating 5★ (2 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Pilarrumah.id pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus mengirimkan foto portofolio dan rincian harga satu per satu secara manual ke calon pelanggan baru satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Pilarrumah.id agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T04:57:26.830Z"
+"OTRA Arsitek","Arsitek","6282143961177","6282143961177","Perum, Jl. Pesanggrahan Kusuma Block Panderman No.73, Pesanggrahan, Batu, Batu City, East Java 65313","4.9","19","","CONTACTED","","Selamat siang Kak admin, semoga harinya lancar selalu. Tadi saya sempat melihat profil OTRA Arsitek di Google Maps daerah Batu, dengan rating 4.9★ (19 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus OTRA Arsitek pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus mengirimkan foto portofolio dan rincian harga satu per satu secara manual ke calon pelanggan baru satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk OTRA Arsitek agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T04:59:04.718Z"
+"Imajiner Architect","Arsitek","6281252701789","6281252701789","Perumahan Nadia Residence A 17, Dadaprejo, Kec. Junrejo, Kota Batu, Jawa Timur 65233","4.9","58","","CONTACTED","","Halo, selamat siang tim admin, salam kenal. Tadi saya sempat melihat profil Imajiner Architect di Google Maps daerah Batu, dengan rating 4.9★ (58 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Imajiner Architect pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus mengirimkan foto portofolio dan rincian harga satu per satu secara manual ke calon pelanggan baru satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Imajiner Architect agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T05:00:35.063Z"
+"Jasa Arsitek & Interior Batu","Kantor Arsitek Interior","6285749451898","6285749451898","Dekat Batu, Songgokerto, Kec. Batu, Kota Batu, Jawa Timur 65312","5","1","","CONTACTED","","Selamat siang Kak admin, semoga harinya lancar selalu. Tadi saya sempat melihat profil Jasa Arsitek & Interior Batu di Google Maps daerah Batu, dengan rating 5★ (1 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Jasa Arsitek & Interior Batu pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus mengirimkan foto portofolio dan rincian harga satu per satu secara manual ke calon pelanggan baru satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Jasa Arsitek & Interior Batu agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T05:02:20.232Z"
+"HEFA Furniture Interior Design Malang-Batu","Desainer interior","6281234880350","6281234880350","Jl. Langsep Perumahan Puri Firdaus, Pendem, Kec. Junrejo, Kota Batu, Jawa Timur 65324","5","26","https://www.instagram.com/hefa.furniture/","CONTACTED","","Halo, selamat siang tim admin, salam kenal. Tadi saya sempat melihat profil HEFA Furniture Interior Design Malang di Google Maps daerah Batu, dengan rating 5★ (26 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus HEFA Furniture Interior Design Malang pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus mengirimkan foto portofolio dan rincian harga satu per satu secara manual ke calon pelanggan baru satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk HEFA Furniture Interior Design Malang agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T05:03:53.332Z"
+"PT. Karyatim - Kontraktor Surabaya","Kontraktor Umum","6285111249501","6285111249501","Griya Kencana Asri Blk. J No.2, Wonorejo, Rungkut, Surabaya, East Java 60294","4.9","128","http://linktr.ee/KaryatimSurabaya","CONTACTED","","Halo, selamat siang tim admin, salam kenal. Tadi saya sempat melihat profil PT. Karyatim di Google Maps daerah Surabaya, dengan rating 4.9★ (128 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus PT. Karyatim pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus mengirimkan foto portofolio dan rincian harga satu per satu secara manual ke calon pelanggan baru satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk PT. Karyatim agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T05:05:31.027Z"
+"Wahyu Arsitek : Jasa Desain Gambar Rumah Surabaya, Desain Arsitek, Desain Interior dan Hitung RAB","Kantor Arsitek Interior","6287773333487","6287773333487","Jl. Keputih Timur Jaya timur No.20 A, Keputih, Kec. Sukolilo, Surabaya, Jawa Timur 60111","5","38","https://wahyuarsiteksurabaya.blogspot.com/","CONTACTED","","Halo selamat siang Kak admin, salam kenal yaa. Tadi saya sempat melihat profil Wahyu Arsitek di Google Maps daerah Surabaya, dengan rating 5★ (38 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Wahyu Arsitek pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus mengirimkan foto portofolio dan rincian harga satu per satu secara manual ke calon pelanggan baru satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Wahyu Arsitek agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T05:07:07.993Z"
+"Archipta Interior Design","Desainer interior","62811314952","62811314952","Jl. Raya Sukomanunggal Jaya No.78, Sukomanunggal, Kec. Sukomanunggal, Surabaya, Jawa Timur 60188","4.8","47","","CONTACTED","","Halo selamat siang Kak admin, salam kenal yaa. Tadi saya sempat melihat profil Archipta Interior Design di Google Maps daerah Surabaya, dengan rating 4.8★ (47 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Archipta Interior Design pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus mengirimkan foto portofolio dan rincian harga satu per satu secara manual ke calon pelanggan baru satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Archipta Interior Design agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T05:08:54.701Z"
+"PINAWA Arsitek & Kontraktor Sidoarjo","Kontraktor","6287708888087","6287708888087","Perumahan, Jl. Perum Jenggolo Asri Blk. C No.14, Sono, Sidokerto, Kec. Buduran, Kabupaten Sidoarjo, Jawa Timur 61252","5","5","https://linktr.ee/pinawa.archicon","CONTACTED","","Selamat siang Kak admin, semoga harinya lancar selalu. Tadi saya sempat melihat profil PINAWA Arsitek & Kontraktor Sidoarjo di Google Maps daerah Sidoarjo, dengan rating 5★ (5 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus PINAWA Arsitek & Kontraktor Sidoarjo pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus mengirimkan foto portofolio dan rincian harga satu per satu secara manual ke calon pelanggan baru satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk PINAWA Arsitek & Kontraktor Sidoarjo agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T05:10:45.483Z"
+"Js Studio Arsitek","Arsitek","6282233101090","6282233101090","Dsn Tangunan, RT.4/RW.4, Tangunan, Bulang, Kec. Prambon, Kabupaten Sidoarjo, Jawa Timur 61264","5","93","https://jsstudioarsitek.blogspot.com/?m=1","CONTACTED","","Selamat siang Kak admin, semoga harinya lancar selalu. Tadi saya sempat melihat profil Js Studio Arsitek di Google Maps daerah Sidoarjo, dengan rating 5★ (93 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Js Studio Arsitek pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus mengirimkan foto portofolio dan rincian harga satu per satu secara manual ke calon pelanggan baru satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Js Studio Arsitek agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T05:12:25.254Z"
+"Artaraya interior & Arsitektur","Kontraktor","6289670708989","6289670708989","Grand, Blk. B2 No.1, Demeling, Anggaswangi, Gedangan, Sidoarjo Regency, East Java 61254","4.7","3","","CONTACTED","","Selamat siang Kak admin, semoga harinya lancar selalu. Tadi saya sempat melihat profil Artaraya interior & Arsitektur di Google Maps daerah Sidoarjo, dengan rating 4.7★ (3 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus Artaraya interior & Arsitektur pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus mengirimkan foto portofolio dan rincian harga satu per satu secara manual ke calon pelanggan baru satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk Artaraya interior & Arsitektur agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T05:14:04.959Z"
+"VISMA - Jasa Arsitek Kediri","Arsitek","6282136995609","6282136995609","Jl. Kawi 4 No.6, Mojoroto, Kec. Mojoroto, Kota Kediri, Jawa Timur 64112","5","42","http://www.instagram.com/vismahouse","CONTACTED","","Selamat siang Kak admin, semoga harinya lancar selalu. Tadi saya sempat melihat profil VISMA di Google Maps daerah Kediri, dengan rating 5★ (42 ulasan) yang ramai dan banyak pelanggan puas. Mau tanya Kak admin, untuk penanggung jawab operasional atau Owner biasanya pegang nomor ini langsung atau ada kontak khusus ya?
+
+Saya perhatikan bisnis sebagus VISMA pasti aktif melayani banyak calon pelanggan tiap hari. Biasanya tim admin cukup kewalahan karena harus mengirimkan foto portofolio dan rincian harga satu per satu secara manual ke calon pelanggan baru satu per satu secara manual via chat.
+
+Maka dari itu, kami sempat merancang *sampel pratinjau konsep katalog/website interaktif* khusus untuk VISMA agar pelanggan bisa langsung cek info lengkap mandiri. Sampel rancangan ini murni kami siapkan cuma-cuma sekadar untuk diintip/dilihat tampilannya di HP, tanpa ada ikatan komitmen atau biaya apapun.
+
+Kira-kira berkenan kalau saya kirimkan tautan sampel pratinjaunya ke nomor ini untuk dicek santai atau diteruskan ke Owner, Kak? 🙏","2026-10-22T05:15:00.662Z"
+"Sentosa Arsitek kontraktor bangunan","Kontraktor Umum","6285330221221","6285330221221","Gg. Setono No.28, Banjarmlati, Kec. Mojoroto, Kota Kediri, Jawa Timur 64119","4.7","19","https://rumahdesainkediri.wordpress.com/2025/01/15/jasa-renovasi-rumah-kediri-profesional/","CONTACTED","","Siang, mohon izin bertanya sebentar 🙏 Apakah saya bisa diarahkan ke penanggung jawab atau admin yang biasa pegang chat Sentosa Arsitek? Saya nemu kantornya di Gg. Setono No.28, Banjarmlati, Mojoroto — yang ulasannya di Google sudah 4.7 dari 19 orang, dan dari situ kelihatan yang masuk ke Sentosa ini bukan cuma bangun rumah baru, tapi juga ruko, kantor, kost, sampai renovasi, plus desainnya digratiskan untuk klien yang lanjut pengerjaan. Saya sengaja baca dulu sebelum chat, karena biasanya yang saya tanyakan bukan hal umum.
+
+Yang saya bayangkan paling sering mengulang di chat admin itu pertanyaan seragam: ""biaya per meter berapa?"", ""desainnya benar-benar free ya?"", ""bisa survey lokasi dulu nggak?"", ""borongan sampai finishing atau material dari kami?"", lalu yang agak teknis kayak ""kalau rumah 13x14 dua lantai estimasinya berapa lama dan berapa termin pembayarannya?"". Belum lagi yang tanya pas malam atau hari Minggu — karena belum ada halaman informasi resmi yang bisa dibaca sendiri, chat-chat itu numpuk dan yang duluan dibalas biasanya yang akhirnya deal, sisanya menguap pelan-pelan.
+
+Nah dari situ saya iseng nyiapin semacam sampel pratinjau konsep katalog digital ringan buat Sentosa Arsitek — isinya gambaran paket jasa pelaksanaan, pengawasan, dan cost & fee, contoh portofolio, plus alur konsultasi sampai survei, biar bisa dibuka sendiri dari HP. Perlu saya tegaskan biar tidak salah paham: yang saya siapkan cuma-cuma cukup sampel pratinjau rancangannya saja, untuk sekadar diintip dulu di HP — bukan pembuatan websitenya yang gratis, dan belum ada ikatan atau komitmen apa pun. Kalau berkenan, saya kirim tautannya ke sini supaya admin bisa nilai sendiri layak atau tidak? Terima kasih banyak sudah diluangkan waktunya 🙏","2026-10-22T05:19:07.117Z"
