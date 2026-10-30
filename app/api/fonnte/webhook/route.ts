@@ -16,27 +16,57 @@ export const dynamic = 'force-dynamic';
 // Processed message cache to guarantee idempotency
 const processedHashes = new Set<string>();
 
-const EXPLICIT_REJECTION_KEYWORDS = [
-  'stop',
-  'jangan hubungi',
-  'jangan wa lagi',
-  'jangan chat lagi',
-  'tidak tertarik',
-  'salah sambung',
-  'salah nomor',
-  'bukan saya',
-  'bukan toko',
-  'bukan klinik',
-  'bukan villa',
-  'hapus nomor',
-  'unsub',
-  'blokir',
-];
+export function isConservativeRejection(message: string): boolean {
+  const low = message.toLowerCase().trim();
+
+  // 1. False positive guard: kata ambigu bernada positif TIDAK boleh ditolak (PRD 10.5)
+  if (
+    low.includes('tidak masalah') ||
+    low.includes('tidak apa-apa') ||
+    low.includes('tidak keberatan') ||
+    low.includes('tidak buru-buru') ||
+    low.includes('boleh') ||
+    low.includes('silakan') ||
+    low.includes('kirim aja') ||
+    low.includes('mau tanya')
+  ) {
+    return false;
+  }
+
+  // 2. Frasa penolakan eksplisit
+  const explicitPhrases = [
+    'jangan hubungi',
+    'jangan wa lagi',
+    'jangan chat lagi',
+    'tidak tertarik',
+    'gak tertarik',
+    'salah sambung',
+    'salah nomor',
+    'bukan saya',
+    'bukan klinik',
+    'bukan toko',
+    'bukan villa',
+    'hapus nomor',
+    'blokir',
+    'unsub',
+  ];
+
+  if (explicitPhrases.some((phrase) => low.includes(phrase))) {
+    return true;
+  }
+
+  // 3. Kata 'stop' dengan word boundary (mencegah salah deteksi pada 'desktop' atau 'nonstop')
+  if (/\bstop\b/i.test(low)) {
+    return true;
+  }
+
+  return false;
+}
 
 export async function POST(req: NextRequest) {
   try {
-    // 10.2 Keamanan: verifikasi secret webhook Fonnte
-    const secretConfigured = process.env.FONNTE_WEBHOOK_SECRET;
+    // 10.2 Keamanan: verifikasi secret webhook Fonnte wajib (401 jika tidak cocok)
+    const expectedSecret = process.env.FONNTE_WEBHOOK_SECRET || 'leads_machine_webhook_secret_2026';
     const authHeader = req.headers.get('authorization') || '';
     const xSecret = req.headers.get('x-fonnte-secret') || req.headers.get('x-secret') || '';
     const urlSecret = req.nextUrl.searchParams.get('secret') || '';
@@ -57,26 +87,24 @@ export async function POST(req: NextRequest) {
 
     const bodySecret = String(body.secret || '');
 
-    if (secretConfigured) {
-      const isValid =
-        authHeader === secretConfigured ||
-        authHeader === `Bearer ${secretConfigured}` ||
-        xSecret === secretConfigured ||
-        urlSecret === secretConfigured ||
-        bodySecret === secretConfigured;
+    const isValid =
+      authHeader === expectedSecret ||
+      authHeader === `Bearer ${expectedSecret}` ||
+      xSecret === expectedSecret ||
+      urlSecret === expectedSecret ||
+      bodySecret === expectedSecret;
 
-      if (!isValid) {
-        addLog({
-          nomor_disamarkan: 'UNKNOWN',
-          arah: 'terima',
-          status: 'gagal',
-          alasan_gagal: 'Akses webhook ditolak: secret tidak valid',
-        });
-        return NextResponse.json(
-          { success: false, error: 'Unauthorized: Invalid webhook secret' },
-          { status: 401 }
-        );
-      }
+    if (!isValid) {
+      addLog({
+        nomor_disamarkan: 'UNKNOWN',
+        arah: 'terima',
+        status: 'gagal',
+        alasan_gagal: 'Akses webhook ditolak: secret tidak valid',
+      });
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized: Invalid webhook secret' },
+        { status: 401 }
+      );
     }
 
     // 10.1 Payload Fonnte fields
@@ -139,11 +167,8 @@ export async function POST(req: NextRequest) {
 
     const targetLead = allLeads[targetLeadIndex];
 
-    // 10.4 & 10.5 Analisis penolakan vs minat
-    const lowerMessage = message.toLowerCase();
-    const isExplicitRejection = EXPLICIT_REJECTION_KEYWORDS.some((kw) =>
-      lowerMessage.includes(kw)
-    );
+    // 10.4 & 10.5 Analisis penolakan vs minat secara konservatif
+    const isExplicitRejection = isConservativeRejection(message);
 
     // Save message record
     addMessage({
@@ -242,3 +267,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: errorMsg }, { status: 500 });
   }
 }
+

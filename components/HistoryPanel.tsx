@@ -63,6 +63,12 @@ export default function HistoryPanel({
   const [draggedRecord, setDraggedRecord] = useState<SheetLeadRecord | null>(null);
   const [isFollowUpOpen, setIsFollowUpOpen] = useState(false);
 
+  // Closing flow with packages (PRD 13.2)
+  const [closingModalLead, setClosingModalLead] = useState<SheetLeadRecord | null>(null);
+  const [closingTier, setClosingTier] = useState<'esensial' | 'bisnis' | 'vip'>('bisnis');
+  const [closingPaymentStatus, setClosingPaymentStatus] = useState<'DP 50%' | 'Lunas'>('DP 50%');
+  const [isSubmittingClosing, setIsSubmittingClosing] = useState(false);
+
   // Pagination/virtualization for Terkirim column
   const [terkirimDisplayCount, setTerkirimDisplayCount] = useState(30);
 
@@ -163,8 +169,46 @@ export default function HistoryPanel({
   const handleDrop = async (e: React.DragEvent, targetStatus: SheetResponseStatus) => {
     e.preventDefault();
     if (!draggedRecord) return;
-    await handleStatusChange(draggedRecord, targetStatus);
+    if (targetStatus === 'CLOSED_DEAL') {
+      setClosingModalLead(draggedRecord);
+    } else {
+      await handleStatusChange(draggedRecord, targetStatus);
+    }
     setDraggedRecord(null);
+  };
+
+  const handleConfirmClosing = async () => {
+    if (!closingModalLead) return;
+    setIsSubmittingClosing(true);
+    const tierMap = {
+      esensial: { name: 'Paket Esensial', price: 2500000 },
+      bisnis: { name: 'Paket Bisnis Juara', price: 3500000 },
+      vip: { name: 'Paket VIP Sultan', price: 4500000 },
+    };
+    const t = tierMap[closingTier];
+
+    try {
+      await fetch('/api/deals/close', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prospek_id: closingModalLead.id,
+          klien: closingModalLead.businessName,
+          paket: t.name,
+          total_nilai: t.price,
+          status_pembayaran: closingPaymentStatus,
+          catatan: `Closing via Deal Room (${closingModalLead.city || 'Jatim'})`,
+        }),
+      });
+
+      await handleStatusChange(closingModalLead, 'CLOSED_DEAL');
+      setClosingModalLead(null);
+      showToast('success', `Closing berhasil dicatat: ${closingModalLead.businessName} (${t.name})!`);
+    } catch {
+      showToast('error', 'Gagal mencatat transaksi closing.');
+    } finally {
+      setIsSubmittingClosing(false);
+    }
   };
 
   // Proposal Generator Text
@@ -576,7 +620,7 @@ Mohon kirimkan bukti transfer di sini agar domain resmi dan server ${lead.busine
                   type="button"
                   variant="secondary"
                   disabled={selectedRecord.status === 'CLOSED_DEAL'}
-                  onClick={() => handleStatusChange(selectedRecord, 'CLOSED_DEAL')}
+                  onClick={() => setClosingModalLead(selectedRecord)}
                 >
                   {selectedRecord.status === 'CLOSED_DEAL' ? 'Sudah Closing' : 'Tandai Closing'}
                 </Button>
@@ -724,6 +768,104 @@ Mohon kirimkan bukti transfer di sini agar domain resmi dan server ${lead.busine
         showToast={showToast}
         onFollowUpSent={() => onSync()}
       />
+
+      {/* Modal Paket Closing (PRD 13.2) */}
+      {closingModalLead && (
+        <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+          <Card className="w-full max-w-md p-6 bg-white shadow-xl flex flex-col gap-4 rounded-[14px]">
+            <div className="flex items-start justify-between pb-3 border-b border-[#F0EEE7]">
+              <div>
+                <h3 className="text-[16px] font-semibold text-[#1B1B18]">
+                  Closing Deal: {closingModalLead.businessName}
+                </h3>
+                <p className="text-[12px] text-[#6B6A63] mt-0.5">
+                  Pilih paket website dan status komitmen pembayaran awal.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setClosingModalLead(null)}
+                className="w-7 h-7 rounded-full text-[#6B6A63] hover:text-[#1B1B18] hover:bg-black/5 flex items-center justify-center transition cursor-pointer text-[16px]"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Pilihan Paket */}
+            <div className="flex flex-col gap-2">
+              <label className="text-[12px] text-[#6B6A63] font-medium">Paket Website</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: 'esensial', name: 'Esensial', price: 'Rp 2,5 jt' },
+                  { id: 'bisnis', name: 'Bisnis Juara', price: 'Rp 3,5 jt' },
+                  { id: 'vip', name: 'VIP Sultan', price: 'Rp 4,5 jt' },
+                ].map((tier) => (
+                  <button
+                    key={tier.id}
+                    type="button"
+                    onClick={() => setClosingTier(tier.id as any)}
+                    className={`p-2.5 rounded-[8px] border text-left flex flex-col transition cursor-pointer ${
+                      closingTier === tier.id
+                        ? 'border-[#0B7A55] bg-[#E4F3EC]/50 ring-1 ring-[#0B7A55]'
+                        : 'border-[#ECEAE2] hover:bg-[#F7F6F2]'
+                    }`}
+                  >
+                    <span className="text-[12px] font-semibold text-[#1B1B18]">{tier.name}</span>
+                    <span className="text-[11px] text-[#0B7A55] font-bold mt-1">{tier.price}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Status Pembayaran */}
+            <div className="flex flex-col gap-2">
+              <label className="text-[12px] text-[#6B6A63] font-medium">Skema Pembayaran</label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { id: 'DP 50%', label: 'DP 50% Masuk', desc: 'Sisa 50% dicatat sebagai piutang' },
+                  { id: 'Lunas', label: 'Lunas 100%', desc: 'Pembayaran penuh di awal' },
+                ].map((pm) => (
+                  <button
+                    key={pm.id}
+                    type="button"
+                    onClick={() => setClosingPaymentStatus(pm.id as any)}
+                    className={`p-2.5 rounded-[8px] border text-left flex flex-col transition cursor-pointer ${
+                      closingPaymentStatus === pm.id
+                        ? 'border-[#0B7A55] bg-[#E4F3EC]/50 ring-1 ring-[#0B7A55]'
+                        : 'border-[#ECEAE2] hover:bg-[#F7F6F2]'
+                    }`}
+                  >
+                    <span className="text-[12px] font-semibold text-[#1B1B18]">{pm.label}</span>
+                    <span className="text-[10px] text-[#6B6A63] mt-0.5">{pm.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#F0EEE7]">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => setClosingModalLead(null)}
+                disabled={isSubmittingClosing}
+              >
+                Batal
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={handleConfirmClosing}
+                disabled={isSubmittingClosing}
+              >
+                {isSubmittingClosing ? 'Mencatat…' : 'Catat Closing & Buat Transaksi'}
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

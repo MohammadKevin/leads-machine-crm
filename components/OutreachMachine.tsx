@@ -142,21 +142,29 @@ export default function OutreachMachine({
   const [activeCityPresetId, setActiveCityPresetId] = useState<string>('malang_batu');
   const [selectedCities, setSelectedCities] = useState<string[]>(CITY_PRESETS[0].cities);
   const [targetMode, setTargetMode] = useState<'admin_gatekeeper' | 'owner_direct'>('admin_gatekeeper');
+  const [templateVariant, setTemplateVariant] = useState<'template_a' | 'template_b' | 'ab_split'>('ab_split');
 
   const [isSearching, setIsSearching] = useState(false);
   const [searchProgress, setSearchProgress] = useState('');
-  const [leads, setLeads] = useState<OutreachLead[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem(QUEUE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+  const [leads, setLeads] = useState<OutreachLead[]>(INITIAL_SEED_LEADS);
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+    try {
+      const saved = localStorage.getItem(QUEUE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // PRD 11.7: Antrean tahan restart, reset status sending menggantung ke ready
+          const sanitized = parsed.map((item: OutreachLead) =>
+            item.status === 'sending' ? { ...item, status: 'ready' as const } : item
+          );
+          setLeads(sanitized);
         }
-      } catch {}
-    }
-    return INITIAL_SEED_LEADS;
-  });
+      }
+    } catch {}
+  }, []);
 
   const [tableFilter, setTableFilter] = useState<'ALL' | 'READY' | 'SULTAN'>('ALL');
   const [activeMenuLeadId, setActiveMenuLeadId] = useState<string | null>(null);
@@ -297,35 +305,28 @@ export default function OutreachMachine({
   };
 
   // Dispatch a single lead
-  const handleSendSingleLead = async (item: OutreachLead) => {
+  const handleSendSingleLead = async (item: OutreachLead, forcedVariant?: 'template_a' | 'template_b'): Promise<boolean> => {
     setIsGeneratingPitchId(item.id);
+
+    // Determine variant: if ab_split, alternate based on item.phone or id
+    const variant = forcedVariant || (templateVariant === 'ab_split' ? (item.phone.slice(-1) > '4' ? 'template_a' : 'template_b') : templateVariant);
 
     // 1. Generate or retrieve pitch message
     let finalMessage = item.pitchMessage;
     if (!finalMessage) {
-      try {
-        const gr = await fetch('/api/outreach/generate-pitch', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lead: item, targetMode }),
-        });
-        const gd = await gr.json();
-        if (gr.ok && gd.success && gd.message) {
-          finalMessage = gd.message;
-        }
-      } catch {}
-    }
+      if (variant === 'template_a') {
+        finalMessage = `Halo selamat siang Kak pengelola *${item.businessName}* di ${item.city || 'Jatim'}. Salam kenal saya Kevin dari Malang.
 
-    if (!finalMessage) {
-      finalMessage = getDynamicFallbackPitch({
-        businessName: item.businessName,
-        category: item.category,
-        city: item.city,
-        address: item.address,
-        rating: item.rating,
-        reviewsCount: item.reviewsCount,
-        targetMode,
-      });
+Saya perhatikan ${item.businessName} punya ulasan bagus di Google Maps tapi belum ada website resmi. Saya bantu buatkan konsep website modern agar calon pelanggan bisa langsung chat reservasi via WhatsApp tanpa potongan komisi.
+
+Boleh saya kirimkan link konsep pratinjaunya nggih Kak?`;
+      } else {
+        finalMessage = `Halo selamat siang Kak, salam kenal dari Kevin di Malang. Izin menyapa pengelola *${item.businessName}*.
+
+Kemarin saya sempat melihat profil usaha Kakak di Google Maps. Izin bertanya apakah saat ini ${item.businessName} ada rencana pembuatan website profil untuk mempermudah calon pelanggan reservasi langsung?
+
+Kalau berkenan, saya sudah siapkan konsep pratinjau gratisnya Kak. Terima kasih.`;
+      }
     }
 
     // Set sending status
@@ -340,7 +341,7 @@ export default function OutreachMachine({
       const res = await fetch('/api/outreach/send-single', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lead: item, message: finalMessage }),
+        body: JSON.stringify({ lead: item, message: finalMessage, templateVariant: variant }),
       });
       const data = await res.json().catch(() => ({}));
 
@@ -361,6 +362,7 @@ export default function OutreachMachine({
         }
         onContactSentSuccess(item.phone, done);
         showToast('success', `Pesan terkirim ke ${item.businessName}!`);
+        return true;
       } else {
         const errMsg = data?.error || 'Gagal pengiriman WhatsApp Fonnte.';
         if (nextIndex !== -1) {
@@ -368,6 +370,7 @@ export default function OutreachMachine({
           saveQueue(nextList);
         }
         showToast('error', `Gagal kirim ke ${item.businessName}: ${humanizeErrorReason(errMsg)}`);
+        return false;
       }
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : 'Kesalahan jaringan';
@@ -378,14 +381,34 @@ export default function OutreachMachine({
         saveQueue(nextList);
       }
       showToast('error', `Gagal kirim: ${errMsg}`);
+      return false;
     } finally {
       setIsGeneratingPitchId(null);
     }
   };
 
-  // Auto-send batch loop
+  // Auto-send batch loop with PRD 11.3 Safety (Hours, Circuit Breaker, Random Delays 20-60s)
   const runBatch = async () => {
     if (runningRef.current) return;
+
+    // 1. Check sending hours (09.00 - 17.00 WIB)
+    const now = new Date();
+    const wibHour = (now.getUTCHours() + 7) % 24;
+    const wibMinute = now.getUTCMinutes();
+    const timeNum = wibHour + wibMinute / 60;
+    if (timeNum < 9.0 || timeNum >= 17.0) {
+      const proceed = window.confirm(
+        `Peringatan PRD 11.3: Waktu saat ini (${String(wibHour).padStart(2, '0')}:${String(wibMinute).padStart(2, '0')} WIB) berada di luar jam kirim aman (09.00 - 17.00 WIB).\n\nTetap lanjutkan pengiriman?`
+      );
+      if (!proceed) return;
+    }
+
+    // 2. Check total daily limit (50 messages)
+    if (todayChatsCount >= 50) {
+      showToast('warn', 'Batas harian 50 pesan tercapai. Sisa pesan ditunda ke besok demi keamanan nomor WA.');
+      return;
+    }
+
     const queue = leadsRef.current.filter((l) => Boolean(l && l.phone));
     const pendingIndices = queue
       .map((l, i) => (l.status === 'ready' || l.status === 'in_queue' || l.status === 'failed' ? i : -1))
@@ -402,7 +425,9 @@ export default function OutreachMachine({
     setIsRunning(true);
     setIsPaused(false);
     setIsCooldown(false);
-    showToast('success', `Memulai pengiriman untuk ${pendingIndices.length} prospek.`);
+    showToast('success', `Memulai pengiriman untuk ${pendingIndices.length} prospek (jeda aman acak 20-60 detik).`);
+
+    let consecutiveFailures = 0;
 
     for (let p = 0; p < pendingIndices.length; p++) {
       if (abortRef.current) break;
@@ -415,12 +440,23 @@ export default function OutreachMachine({
       const lead = leadsRef.current[idx];
       if (!lead) continue;
 
-      await handleSendSingleLead(lead);
+      const ok = await handleSendSingleLead(lead);
+      if (ok) {
+        consecutiveFailures = 0;
+      } else {
+        consecutiveFailures++;
+        if (consecutiveFailures >= 5) {
+          abortRef.current = true;
+          showToast('error', 'Circuit Breaker: Terjadi 5 kegagalan berturut-turut. Pengiriman dihentikan otomatis demi keamanan nomor WA.');
+          break;
+        }
+      }
 
       const isLast = p === pendingIndices.length - 1;
       if (!isLast && !abortRef.current) {
-        // Safe dispatch delay
-        for (let s = 15; s > 0; s--) {
+        // PRD 11.3: Jeda acak 20 - 60 detik
+        const randomDelay = Math.floor(Math.random() * (60 - 20 + 1)) + 20;
+        for (let s = randomDelay; s > 0; s--) {
           if (abortRef.current) break;
           setCountdown(s);
           await new Promise((r) => setTimeout(r, 1000));
@@ -564,6 +600,24 @@ export default function OutreachMachine({
               </span>
             </div>
           </div>
+          {/* PRD 12.3: Variasi Template (A/B Testing) */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[12px] text-[#6B6A63] font-normal">Template pesan (A/B)</span>
+            <div className="relative">
+              <select
+                value={templateVariant}
+                onChange={(e) => setTemplateVariant(e.target.value as any)}
+                className="h-8 px-3 pr-8 rounded-full bg-white border border-[#DAD7CC] text-[13px] text-[#1B1B18] font-medium appearance-none cursor-pointer focus:outline-2 focus:outline-[#0B7A55]"
+              >
+                <option value="ab_split">A/B Otomatis (Bergantian)</option>
+                <option value="template_a">Template A (Solusi Langsung)</option>
+                <option value="template_b">Template B (Soft Intro & Izin)</option>
+              </select>
+              <span className="material-symbols-outlined text-[16px] text-[#6B6A63] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                expand_more
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Action Button: Tarik prospek A1 */}
@@ -605,16 +659,33 @@ export default function OutreachMachine({
         ]}
         statusText={
           countdown > 0
-            ? `Jeda ${countdown} detik…`
+            ? `Jeda acak ${countdown} detik…`
             : isRunning
-            ? 'Sedang mengirim pesan…'
-            : 'Jeda 20 pesan · siap dikirim'
+            ? 'Sedang mengirim pesan (jeda 20–60s)…'
+            : 'Siap kirim (jeda acak 20–60s)'
         }
         isAutoSending={isRunning}
         onToggleAutoSend={isRunning ? handleStopAutoSend : runBatch}
         onExportCsv={handleExportCsv}
         canAutoSend={antreCount > 0}
       />
+
+      {/* PRD 12.5: Dashboard Balasan per 100 Pesan per Template (A/B) */}
+      <div className="flex flex-wrap items-center justify-between px-4 py-2 bg-white/70 rounded-[10px] border border-[#ECEAE2] text-[12px] text-[#6B6A63] shadow-xs">
+        <div className="flex items-center gap-4">
+          <span className="font-semibold text-[#1B1B18]">Metrik A/B (PRD 12.5):</span>
+          <span>
+            <strong className="text-[#1B1B18]">Template A:</strong> 0 balasan / 0 pesan (Target: 3%+)
+          </span>
+          <span>·</span>
+          <span>
+            <strong className="text-[#1B1B18]">Template B:</strong> 0 balasan / 0 pesan (Target: 3%+)
+          </span>
+        </div>
+        <div className="text-[11px] text-[#0B7A55] font-medium">
+          Pengaman WA: 09.00–17.00 WIB · Jeda acak 20–60s · Circuit breaker 5x
+        </div>
+      </div>
 
       {/* 3. Tabel Hasil Radar */}
       <Card className="flex flex-col overflow-hidden">

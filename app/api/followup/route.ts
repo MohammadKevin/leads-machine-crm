@@ -18,6 +18,23 @@ export interface FollowUpItem {
   terakhirDikontak: string;
 }
 
+export function isWibSendingHours(): { allowed: boolean; message: string; wibHour: number; wibMinute: number } {
+  const now = new Date();
+  const wibHour = (now.getUTCHours() + 7) % 24;
+  const wibMinute = now.getUTCMinutes();
+  const timeNum = wibHour + wibMinute / 60;
+  // PRD 11.3: 09.00 - 17.00 WIB
+  const allowed = timeNum >= 9.0 && timeNum < 17.0;
+  return {
+    allowed,
+    wibHour,
+    wibMinute,
+    message: allowed
+      ? 'Jam kerja aktif (09.00 - 17.00 WIB)'
+      : `Di luar jam kirim aman (09.00 - 17.00 WIB). Waktu WIB sekarang: ${String(wibHour).padStart(2, '0')}:${String(wibMinute).padStart(2, '0')}.`,
+  };
+}
+
 export function generateFollowUpMessage(lead: { businessName: string; city?: string; category?: string }, tahap: 1 | 2): string {
   const name = lead.businessName;
   const city = lead.city || 'Jawa Timur';
@@ -42,6 +59,7 @@ export async function GET() {
     const leads = getLeads();
     const now = new Date();
     const followUpQueue: FollowUpItem[] = [];
+    let updatedAny = false;
 
     for (const lead of leads) {
       // Exclude if opted out or already warm / closed / rejected
@@ -49,21 +67,25 @@ export async function GET() {
         continue;
       }
 
-      // Check stage
       const tahap = lead.tahap_followup || 0;
-      if (tahap >= 2) {
-        // Stage 2 is the last stage
-        continue;
-      }
-
-      const lastDateStr = lead.followup_terakhir_at || lead.pesan_pertama_at || lead.dibuat_at;
+      const lastDateStr = lead.followup_terakhir_at || lead.pesan_pertama_at || lead.terkirim_at || lead.dibuat_at;
       if (!lastDateStr) continue;
 
       const lastDate = new Date(lastDateStr);
       const diffMs = now.getTime() - lastDate.getTime();
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-      // H+2 eligible
+      // PRD: Setelah FU2 (H+4) prospek diam -> status jadi "Tidak merespons"
+      if (tahap >= 2) {
+        if (diffDays >= 2 && lead.status !== 'Tidak merespons') {
+          lead.status = 'Tidak merespons';
+          lead.diubah_at = now.toISOString();
+          updatedAny = true;
+        }
+        continue;
+      }
+
+      // H+2 eligible (FU1)
       if (tahap === 0 && diffDays >= 2) {
         followUpQueue.push({
           leadId: lead.id,
@@ -81,7 +103,7 @@ export async function GET() {
           terakhirDikontak: lastDateStr,
         });
       }
-      // H+4 eligible (>= 2 days after stage 1)
+      // H+4 eligible (FU2)
       else if (tahap === 1 && diffDays >= 2) {
         followUpQueue.push({
           leadId: lead.id,
@@ -101,14 +123,20 @@ export async function GET() {
       }
     }
 
-    // Limit to max 20 per PRD rules
+    if (updatedAny) {
+      saveLeads(leads);
+    }
+
+    // Limit to max 20 per batch (PRD 11.3)
     const limitedQueue = followUpQueue.slice(0, 20);
+    const hourCheck = isWibSendingHours();
 
     return NextResponse.json({
       success: true,
       queue: limitedQueue,
       totalEligible: followUpQueue.length,
       limit: 20,
+      sendingHours: hourCheck,
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Gagal memuat antrean follow-up.';
@@ -119,22 +147,73 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const { items, sendViaFonnte = true } = body as {
+    const {
+      items,
+      sendViaFonnte = true,
+      bypassHours = false,
+      dryRun = false,
+      consecutiveFailuresForTest = 0,
+    } = body as {
       items: Array<{ leadId: string; phone: string; message: string; tahap: 1 | 2 }>;
       sendViaFonnte?: boolean;
+      bypassHours?: boolean;
+      dryRun?: boolean;
+      consecutiveFailuresForTest?: number;
     };
 
     if (!Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ success: false, error: 'Daftar follow-up kosong.' }, { status: 400 });
     }
 
+    // 1. PRD 11.3 Cek jam kirim (09.00 - 17.00 WIB)
+    const hours = isWibSendingHours();
+    if (!hours.allowed && !bypassHours && !dryRun) {
+      return NextResponse.json(
+        {
+          success: false,
+          delayed: true,
+          error: `Di luar jam kirim aman (09.00 - 17.00 WIB). Pengiriman ditunda. Waktu sekarang: ${hours.wibHour}:${hours.wibMinute} WIB.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // 2. PRD 11.3 Cek kuota harian total (default 50)
+    const settings = getSettings();
+    const dailyLimit = settings.batas_harian || 50;
+
     const token = process.env.FONNTE_API_TOKEN || process.env.FONNTE_TOKEN;
     const leads = getLeads();
     const results: Array<{ leadId: string; phone: string; success: boolean; error?: string }> = [];
 
-    for (const item of items) {
+    let consecutiveFailures = consecutiveFailuresForTest || 0;
+    const MAX_CONSECUTIVE_FAILURES = 5;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+
+      // PRD 11.3 Circuit breaker: berhenti setelah 5 gagal berturut-turut
+      if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+        addLog({
+          nomor_disamarkan: 'CIRCUIT_BREAKER',
+          arah: 'kirim',
+          status: 'gagal',
+          alasan_gagal: 'Circuit Breaker: Terjadi 5 kegagalan berturut-turut. Pengiriman dihentikan otomatis.',
+        });
+        return NextResponse.json(
+          {
+            success: false,
+            circuitBreakerTriggered: true,
+            error: 'Circuit Breaker aktif: Pengiriman dihentikan otomatis setelah 5 kegagalan berturut-turut. Periksa perangkat WA.',
+            results,
+          },
+          { status: 503 }
+        );
+      }
+
       const cleanPhone = normalizeIndonesianPhone(item.phone);
       if (!cleanPhone || !isValidIndonesianWhatsApp(cleanPhone)) {
+        consecutiveFailures++;
         results.push({ leadId: item.leadId, phone: item.phone, success: false, error: 'Nomor tidak valid' });
         continue;
       }
@@ -142,16 +221,24 @@ export async function POST(req: NextRequest) {
       const leadIdx = leads.findIndex((l) => l.id === item.leadId || l.nomor_wa === cleanPhone);
       const lead = leadIdx >= 0 ? leads[leadIdx] : null;
 
-      // Abort if prospect replied in the meantime
+      // PRD 11.2: Jika prospek sudah membalas (Hangat) atau opt-out, batalkan follow-up!
       if (lead && (lead.status === 'Hangat' || lead.jangan_hubungi)) {
-        results.push({ leadId: item.leadId, phone: item.phone, success: false, error: 'Dibatalkan (prospek sudah membalas/opt-out)' });
+        results.push({
+          leadId: item.leadId,
+          phone: item.phone,
+          success: false,
+          error: 'Dibatalkan otomatis: prospek sudah membalas atau meminta berhenti.',
+        });
         continue;
       }
 
       let sentSuccess = false;
       let sendError: string | undefined;
 
-      if (sendViaFonnte && token) {
+      if (dryRun) {
+        // Mode simulasi/dry-run untuk pengujian
+        sentSuccess = true;
+      } else if (sendViaFonnte && token) {
         try {
           const formData = new FormData();
           formData.append('target', cleanPhone);
@@ -176,11 +263,11 @@ export async function POST(req: NextRequest) {
           sendError = err instanceof Error ? err.message : 'Kesalahan jaringan';
         }
       } else {
-        // Simulation or direct manual approval
         sentSuccess = true;
       }
 
       if (sentSuccess) {
+        consecutiveFailures = 0;
         const nowIso = new Date().toISOString();
         if (lead) {
           lead.tahap_followup = item.tahap;
@@ -208,6 +295,7 @@ export async function POST(req: NextRequest) {
 
         results.push({ leadId: item.leadId, phone: cleanPhone, success: true });
       } else {
+        consecutiveFailures++;
         addLog({
           prospek_id: item.leadId,
           nomor_disamarkan: cleanPhone.slice(0, 4) + '****' + cleanPhone.slice(-3),
@@ -221,7 +309,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Save updated leads store
     saveLeads(leads);
 
     const successCount = results.filter((r) => r.success).length;

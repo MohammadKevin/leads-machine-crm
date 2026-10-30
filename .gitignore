@@ -44,3 +44,10 @@ next-env.d.ts
 # scratch & temporary files
 /scratch/
 
+# User Data & Backups (PRD 16 & 21)
+/backups/
+/data/
+*.json.bak
+*.csv.bak
+
+
