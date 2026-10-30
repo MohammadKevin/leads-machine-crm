@@ -8,6 +8,8 @@ import PrototypeStudioTab from '@/components/prototype/PrototypeStudioTab';
 import KeuanganTab from '@/components/keuangan/KeuanganTab';
 import PeluangTab from '@/components/peluang/PeluangTab';
 import { WhatsAppConnectionModal } from '@/components/settings/WhatsAppConnectionModal';
+import FaceIdGuard, { useFaceId } from '@/components/FaceIdGuard';
+import { Lock } from 'lucide-react';
 import {
   SheetLeadRecord,
   OutreachMetrics,
@@ -40,6 +42,7 @@ function AppInner() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { lockDashboard } = useFaceId();
   const tabParam = searchParams.get('tab') as TabId | null;
   const activeTab: TabId =
     tabParam === 'history'
@@ -317,14 +320,24 @@ function AppInner() {
       {/* Global Sidebar: 216px, background SAMA dengan halaman, tanpa garis pemisah vertikal kasar */}
       <aside className="fixed left-0 top-0 h-full w-[216px] bg-[#F7F6F2] z-40 flex flex-col justify-between p-4 pb-24 select-none">
         <div className="flex flex-col gap-6">
-          {/* Logo Leads Machine */}
-          <div className="flex items-center gap-2.5 px-2 pt-1">
-            <div className="w-5 h-5 rounded-[6px] bg-[#0B7A55] flex items-center justify-center shrink-0">
-              <div className="w-2 h-2 rounded-[2px] bg-white/90" />
+          {/* Logo Leads Machine & Quick Lock Button */}
+          <div className="flex items-center justify-between px-2 pt-1">
+            <div className="flex items-center gap-2.5">
+              <div className="w-5 h-5 rounded-[6px] bg-[#0B7A55] flex items-center justify-center shrink-0">
+                <div className="w-2 h-2 rounded-[2px] bg-white/90" />
+              </div>
+              <span className="text-[14px] font-semibold text-[#1B1B18] tracking-tight">
+                Leads Machine
+              </span>
             </div>
-            <span className="text-[14px] font-semibold text-[#1B1B18] tracking-tight">
-              Leads Machine
-            </span>
+            <button
+              type="button"
+              onClick={lockDashboard}
+              className="p-1 rounded-[6px] text-[#6B6A63] hover:text-[#1B1B18] hover:bg-black/5 transition cursor-pointer"
+              title="Kunci Dashboard (Face ID)"
+            >
+              <Lock className="w-3.5 h-3.5" />
+            </button>
           </div>
 
           {/* Navigation Links with keyboard shortcuts 1/2/3/4/5 */}
@@ -460,6 +473,17 @@ function AppInner() {
               <span className="hidden sm:inline">Sheets tersinkron</span>
             </div>
 
+            {/* Kunci Dashboard Button */}
+            <button
+              type="button"
+              onClick={lockDashboard}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] hover:bg-black/4 text-[12px] text-[#6B6A63] hover:text-[#1B1B18] transition cursor-pointer"
+              title="Kunci Dashboard dengan Face ID"
+            >
+              <Lock className="w-3.5 h-3.5 text-[#6B6A63]" />
+              <span className="hidden sm:inline">Kunci</span>
+            </button>
+
             {activeTab === 'history' && (
               <Button
                 type="button"
@@ -566,7 +590,9 @@ export default function Home() {
         </div>
       }
     >
-      <AppInner />
+      <FaceIdGuard>
+        <AppInner />
+      </FaceIdGuard>
     </Suspense>
   );
 }
