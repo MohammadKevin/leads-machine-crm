@@ -1,5 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Subdomain yang digunakan untuk dashboard aplikasi Leads Machine (bukan prototype UMKM)
+const RESERVED_SUBDOMAINS = new Set([
+  '',
+  'www',
+  'crm',
+  'leads',
+  'app',
+  'dashboard',
+  'admin',
+]);
+
+const ROOT_DOMAIN = 'corecraft.my.id';
+
 export function middleware(req: NextRequest) {
   const url = req.nextUrl;
   const hostname = req.headers.get('host') || '';
@@ -14,22 +27,26 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Bersihkan port (misal localhost:3000 -> localhost)
+  // Bersihkan port (misal localhost:3000 -> localhost, crm.corecraft.my.id:443 -> crm.corecraft.my.id)
   const hostWithoutPort = hostname.replace(/:\d+$/, '').toLowerCase();
-  const parts = hostWithoutPort.split('.');
 
   let subdomain: string | null = null;
 
   // Format 1: [subdomain].corecraft.my.id
-  if (hostWithoutPort.endsWith('corecraft.my.id')) {
-    const subParts = hostWithoutPort.replace('.corecraft.my.id', '').split('.');
-    if (subParts.length > 0 && subParts[0] && subParts[0] !== 'www' && subParts[0] !== 'leads' && subParts[0] !== 'app') {
-      subdomain = subParts[0];
+  if (hostWithoutPort.endsWith(ROOT_DOMAIN)) {
+    if (hostWithoutPort !== ROOT_DOMAIN && hostWithoutPort.endsWith(`.${ROOT_DOMAIN}`)) {
+      const sub = hostWithoutPort.slice(0, -(ROOT_DOMAIN.length + 1)).split('.')[0];
+      if (sub && !RESERVED_SUBDOMAINS.has(sub)) {
+        subdomain = sub;
+      }
     }
   }
   // Format 2: Pengujian lokal, misal [subdomain].localhost:3000
-  else if (hostWithoutPort.endsWith('localhost') && parts.length === 2 && parts[0] !== 'www') {
-    subdomain = parts[0];
+  else if (hostWithoutPort.endsWith('localhost')) {
+    const parts = hostWithoutPort.split('.');
+    if (parts.length >= 2 && parts[0] && !RESERVED_SUBDOMAINS.has(parts[0])) {
+      subdomain = parts[0];
+    }
   }
 
   // Jika terdeteksi subdomain klien (misal klinik.corecraft.my.id), rewrite internal ke /p/[subdomain]

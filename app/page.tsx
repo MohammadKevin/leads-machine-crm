@@ -72,8 +72,13 @@ function AppInner() {
   const goTab = useCallback(
     (tab: TabId) => {
       const params = new URLSearchParams(searchParams.toString());
-      params.set('tab', tab);
-      router.replace(`${pathname}?${params.toString()}`);
+      if (tab === 'outreach') {
+        params.delete('tab');
+      } else {
+        params.set('tab', tab);
+      }
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname);
     },
     [router, pathname, searchParams]
   );
