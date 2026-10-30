@@ -1,0 +1,20 @@
+[
+  {
+    "prospek_id": "lead-6281252859295",
+    "nomor_disamarkan": "6281****295",
+    "arah": "terima",
+    "status": "sukses",
+    "alasan_gagal": "Prospek menolak: \"Maaf mas Kevin tidak tertarik,...\"",
+    "id": "log-1793356107450-8sjf",
+    "waktu": "2026-10-30T10:28:27.450Z"
+  },
+  {
+    "prospek_id": "lead-6281252859295",
+    "nomor_disamarkan": "6281****295",
+    "arah": "terima",
+    "status": "sukses",
+    "alasan_gagal": "Balasan diterima (Hangat): \"Halo mas Kevin, boleh info det...\"",
+    "id": "log-1793356100936-ypdb",
+    "waktu": "2026-10-30T10:28:20.936Z"
+  }
+]

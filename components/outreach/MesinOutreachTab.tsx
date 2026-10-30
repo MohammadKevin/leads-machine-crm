@@ -472,7 +472,7 @@ export default function MesinOutreachTab({
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              {ALL_AVAILABLE_CITIES.map((city) => {
+              {ALL_AVAILABLE_CITIES.map((city: string) => {
                 const isSelected = selectedCities.includes(city);
                 return (
                   <button

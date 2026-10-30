@@ -47,6 +47,8 @@ export interface LeadModel {
   status: StandardLeadStatus;
   tahap_followup: 0 | 1 | 2;
   terkirim_at?: string;
+  pesan_pertama_at?: string;
+  followup_terakhir_at?: string;
   jadwal_berikutnya_at?: string;
   balasan_at?: string;
   balasan_terakhir?: string;
@@ -263,3 +265,57 @@ export const ALL_38_JAWA_TIMUR = [
 ] as const;
 
 export const DEFAULT_CITIES = ['Malang', 'Surabaya', 'Kediri', 'Sidoarjo'];
+
+export type ClinicCategory =
+  | 'Klinik Pratama'
+  | 'Klinik Gigi'
+  | 'Klinik Kecantikan'
+  | 'Apotek & Praktik Dokter'
+  | string;
+
+export interface LeadTarget {
+  id: string;
+  clinicName: string;
+  city: string;
+  province: string;
+  category: ClinicCategory;
+  whatsappNumber: string;
+  painPointNotes: string;
+  tier: 'A1_PRIORITY';
+  generatedMessage?: string;
+  status: QueueLeadStatus;
+  sentAt?: string;
+  lastError?: string;
+}
+
+export const BATCH_TARGET_TOTAL = 75;
+export const OUTREACH_STORAGE_KEY = 'outreach_leads_75_batch';
+
+export const KORIDOR_UTAMA_JAWA = [
+  'Solo',
+  'Semarang',
+  'Yogyakarta',
+  'Bandung',
+  'Jakarta',
+  'Bekasi',
+  'Tangerang',
+  'Depok',
+  'Bogor',
+] as const;
+
+export const ALL_AVAILABLE_CITIES = [
+  ...ALL_38_JAWA_TIMUR,
+  ...KORIDOR_UTAMA_JAWA,
+];
+
+export const RESPONSE_STATUS_OPTIONS: Array<{
+  value: SheetResponseStatus;
+  label: string;
+  color: string;
+}> = [
+  { value: 'CONTACTED', label: 'CONTACTED', color: 'bg-amber-100 text-amber-800 border-amber-300' },
+  { value: 'INTERESTED', label: 'INTERESTED', color: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
+  { value: 'IN_PROGRESS', label: 'IN PROGRESS', color: 'bg-blue-100 text-blue-800 border-blue-300' },
+  { value: 'CLOSED_DEAL', label: 'CLOSED DEAL', color: 'bg-purple-100 text-purple-800 border-purple-300' },
+  { value: 'REJECTED', label: 'REJECTED', color: 'bg-rose-100 text-rose-800 border-rose-300' },
+];

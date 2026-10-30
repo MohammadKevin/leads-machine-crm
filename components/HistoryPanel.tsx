@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { KanbanCard } from '@/components/ui/KanbanCard';
 import { Drawer } from '@/components/ui/Drawer';
+import { FollowUpModal } from '@/components/followup/FollowUpModal';
 
 interface Props {
   records: SheetLeadRecord[];
@@ -60,6 +61,7 @@ export default function HistoryPanel({
 
   // Dragging state
   const [draggedRecord, setDraggedRecord] = useState<SheetLeadRecord | null>(null);
+  const [isFollowUpOpen, setIsFollowUpOpen] = useState(false);
 
   // Pagination/virtualization for Terkirim column
   const [terkirimDisplayCount, setTerkirimDisplayCount] = useState(30);
@@ -324,6 +326,18 @@ Mohon kirimkan bukti transfer di sini agar domain resmi dan server ${lead.busine
             </Button>
           </div>
         )}
+      </div>
+
+      {/* Action bar / Follow-up trigger */}
+      <div className="flex items-center justify-between px-1 -mb-1">
+        <span className="text-[13px] font-medium text-[#6B6A63]">Pipeline Leads</span>
+        <button
+          type="button"
+          onClick={() => setIsFollowUpOpen(true)}
+          className="flex items-center gap-1.5 text-[12px] font-medium text-[#0B7A55] hover:text-[#0B6B4A] hover:underline cursor-pointer"
+        >
+          <span>📋 Tinjau Follow-up Hari Ini (H+2 / H+4)</span>
+        </button>
       </div>
 
       {/* 4-Column Pipeline Kanban */}
@@ -702,6 +716,14 @@ Mohon kirimkan bukti transfer di sini agar domain resmi dan server ${lead.busine
           </div>
         )}
       </Drawer>
+
+      {/* Follow-up Review Modal */}
+      <FollowUpModal
+        isOpen={isFollowUpOpen}
+        onClose={() => setIsFollowUpOpen(false)}
+        showToast={showToast}
+        onFollowUpSent={() => onSync()}
+      />
     </div>
   );
 }

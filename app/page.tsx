@@ -5,15 +5,19 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import OutreachMachine from '@/components/OutreachMachine';
 import HistoryPanel from '@/components/HistoryPanel';
 import PrototypeStudioTab from '@/components/prototype/PrototypeStudioTab';
+import KeuanganTab from '@/components/keuangan/KeuanganTab';
+import PeluangTab from '@/components/peluang/PeluangTab';
+import { WhatsAppConnectionModal } from '@/components/settings/WhatsAppConnectionModal';
 import {
   SheetLeadRecord,
   OutreachMetrics,
   OutreachLead,
   SheetResponseStatus,
+  PengaturanModel,
 } from '@/types/outreach';
 import { Button } from '@/components/ui/Button';
 
-type TabId = 'outreach' | 'history' | 'prototype';
+type TabId = 'outreach' | 'history' | 'prototype' | 'keuangan' | 'peluang';
 
 interface Toast {
   type: 'success' | 'error' | 'warn';
@@ -21,17 +25,38 @@ interface Toast {
   id: number;
 }
 
+const DEFAULT_SETTINGS_STATE: PengaturanModel = {
+  target_nominal: 25_000_000,
+  target_tanggal: '2027-03-16',
+  target_label: 'Target Maret 2027',
+  batas_harian: 50,
+  jeda_detik: 20,
+  auto_followup_mode: 'manual',
+  fonnte_connected: true,
+  webhook_count_24h: 0,
+};
+
 function AppInner() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab') as TabId | null;
   const activeTab: TabId =
-    tabParam === 'history' ? 'history' : tabParam === 'prototype' ? 'prototype' : 'outreach';
+    tabParam === 'history'
+      ? 'history'
+      : tabParam === 'prototype'
+      ? 'prototype'
+      : tabParam === 'keuangan'
+      ? 'keuangan'
+      : tabParam === 'peluang'
+      ? 'peluang'
+      : 'outreach';
 
   const [blacklist, setBlacklist] = useState<Set<string>>(new Set());
   const [sheetRecords, setSheetRecords] = useState<SheetLeadRecord[]>([]);
   const [selectedLeadForPrototype, setSelectedLeadForPrototype] = useState<SheetLeadRecord | null>(null);
+  const [settings, setSettings] = useState<PengaturanModel>(DEFAULT_SETTINGS_STATE);
+  const [isWaModalOpen, setIsWaModalOpen] = useState(false);
   const [metrics, setMetrics] = useState<OutreachMetrics>({
     totalUniqueContacted: 0,
     interestedCount: 0,
@@ -59,7 +84,35 @@ function AppInner() {
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
   }, []);
 
-  // Keyboard shortcuts 1, 2, 3, /
+  const fetchSettings = useCallback(async () => {
+    try {
+      const res = await fetch('/api/settings');
+      const data = await res.json();
+      if (res.ok && data.success && data.settings) {
+        setSettings(data.settings);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
+  const handleUpdateSettings = async (partial: Partial<PengaturanModel>) => {
+    const res = await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(partial),
+    });
+    const data = await res.json();
+    if (res.ok && data.success && data.settings) {
+      setSettings(data.settings);
+    } else {
+      throw new Error(data.error || 'Gagal menyimpan');
+    }
+  };
+
+  // Keyboard shortcuts 1, 2, 3, 4, 5, /
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -88,6 +141,12 @@ function AppInner() {
       } else if (e.key === '3') {
         e.preventDefault();
         goTab('prototype');
+      } else if (e.key === '4') {
+        e.preventDefault();
+        goTab('keuangan');
+      } else if (e.key === '5') {
+        e.preventDefault();
+        goTab('peluang');
       }
     };
 
@@ -234,7 +293,7 @@ function AppInner() {
 
   const closedCount = sheetRecords.filter((r) => r.status === 'CLOSED_DEAL').length;
   const currentRevenue = closedCount * 2500000;
-  const targetRevenue = 25000000;
+  const targetRevenue = settings.target_nominal || 25000000;
   const progressPercent = Math.min(100, Math.round((currentRevenue / targetRevenue) * 100));
 
   const pageTitle =
@@ -242,7 +301,11 @@ function AppInner() {
       ? 'Radar Klien'
       : activeTab === 'history'
       ? 'Deal Room'
-      : 'Prototype Studio';
+      : activeTab === 'prototype'
+      ? 'Prototype Studio'
+      : activeTab === 'keuangan'
+      ? 'Keuangan & Target'
+      : 'Peluang Proyek';
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#F7F6F2] text-[#1B1B18] antialiased">
@@ -259,7 +322,7 @@ function AppInner() {
             </span>
           </div>
 
-          {/* Navigation Links with keyboard shortcuts 1/2/3 */}
+          {/* Navigation Links with keyboard shortcuts 1/2/3/4/5 */}
           <nav className="flex flex-col gap-1">
             <button
               type="button"
@@ -299,18 +362,46 @@ function AppInner() {
               <span>Prototype Studio</span>
               <span className="text-[12px] text-[#6B6A63] font-normal">3</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => goTab('keuangan')}
+              className={`h-9 flex items-center justify-between px-3 rounded-[8px] transition cursor-pointer text-[13px] ${
+                activeTab === 'keuangan'
+                  ? 'bg-white text-[#1B1B18] font-medium shadow-xs ring-1 ring-[#ECEAE2]'
+                  : 'text-[#6B6A63] hover:text-[#1B1B18] hover:bg-black/4'
+              }`}
+            >
+              <span>Keuangan</span>
+              <span className="text-[12px] text-[#6B6A63] font-normal">4</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => goTab('peluang')}
+              className={`h-9 flex items-center justify-between px-3 rounded-[8px] transition cursor-pointer text-[13px] ${
+                activeTab === 'peluang'
+                  ? 'bg-white text-[#1B1B18] font-medium shadow-xs ring-1 ring-[#ECEAE2]'
+                  : 'text-[#6B6A63] hover:text-[#1B1B18] hover:bg-black/4'
+              }`}
+            >
+              <span>Peluang</span>
+              <span className="text-[12px] text-[#6B6A63] font-normal">5</span>
+            </button>
           </nav>
         </div>
 
-        {/* Widget Target Maret 2027 di dasar sidebar (dibangun dari data nyata, elevated padding agar tidak tabrakan dengan dev indicators) */}
+        {/* Dynamic Target widget di dasar sidebar */}
         <div className="bg-white/60 ring-1 ring-[#ECEAE2] p-3 rounded-[10px] flex flex-col gap-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
-          <div className="text-[11px] text-[#6B6A63] font-normal">Target Maret 2027</div>
+          <div className="text-[11px] text-[#6B6A63] font-normal truncate">
+            {settings.target_label || 'Target Maret 2027'}
+          </div>
           <div className="flex items-baseline gap-1">
             <span className="text-[13px] font-bold text-[#1B1B18] leading-none tabular-nums">
-              Rp {currentRevenue >= 1000000 ? `${Math.round(currentRevenue / 1000000)} jt` : currentRevenue}
+              Rp {currentRevenue >= 1000000 ? `${(currentRevenue / 1000000).toFixed(1).replace('.0', '')} jt` : currentRevenue.toLocaleString('id-ID')}
             </span>
             <span className="text-[11px] text-[#6B6A63] font-normal leading-none tabular-nums">
-              / Rp 25 jt
+              / Rp {targetRevenue >= 1000000 ? `${Math.round(targetRevenue / 1000000)} jt` : targetRevenue.toLocaleString('id-ID')}
             </span>
           </div>
           <div className="w-full bg-[#ECEAE2] h-1 rounded-full overflow-hidden my-0.5">
@@ -320,7 +411,7 @@ function AppInner() {
             />
           </div>
           <div className="text-[11px] text-[#6B6A63] font-normal tabular-nums">
-            {closedCount} dari 10 deal
+            {closedCount} dari {Math.max(10, Math.ceil(targetRevenue / 2500000))} deal
           </div>
         </div>
       </aside>
@@ -334,35 +425,46 @@ function AppInner() {
           </h1>
 
           <div className="flex items-center gap-3">
-            {activeTab === 'outreach' && (
-              <div className="flex items-center gap-2 select-none">
-                <span className="w-2 h-2 rounded-full bg-[#0B7A55]" />
-                <span className="text-[13px] text-[#6B6A63]">Sheets tersinkron</span>
+            {activeTab === 'history' && (
+              <div className="relative w-56 sm:w-64">
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={dealRoomSearch}
+                  onChange={(e) => setDealRoomSearch(e.target.value)}
+                  placeholder="Cari bisnis, nomor, kota…"
+                  className="w-full h-8 px-3 rounded-[8px] bg-white border border-[#DAD7CC] text-[13px] text-[#1B1B18] placeholder:text-[#6B6A63] focus:outline-2 focus:outline-[#0B7A55]"
+                />
               </div>
             )}
 
+            {/* WA Fonnte Connection button & indicator */}
+            <button
+              type="button"
+              onClick={() => setIsWaModalOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] hover:bg-black/4 text-[12px] text-[#6B6A63] transition cursor-pointer"
+              title="Periksa status koneksi WhatsApp & Webhook Fonnte"
+            >
+              <span className="w-2 h-2 rounded-full bg-[#0B7A55]" />
+              <span className="hidden sm:inline">WA Fonnte Aktif</span>
+            </button>
+
+            {/* Sheets tersinkron indicator */}
+            <div className="flex items-center gap-1.5 select-none px-2.5 py-1 text-[12px] text-[#6B6A63]">
+              <span className="w-2 h-2 rounded-full bg-[#0B7A55]" />
+              <span className="hidden sm:inline">Sheets tersinkron</span>
+            </div>
+
             {activeTab === 'history' && (
-              <div className="flex items-center gap-2">
-                <div className="relative w-56 sm:w-64">
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    value={dealRoomSearch}
-                    onChange={(e) => setDealRoomSearch(e.target.value)}
-                    placeholder="Cari bisnis, nomor, kota…"
-                    className="w-full h-8 px-3 rounded-[8px] bg-white border border-[#DAD7CC] text-[13px] text-[#1B1B18] placeholder:text-[#6B6A63] focus:outline-2 focus:outline-[#0B7A55]"
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  disabled={isSyncing}
-                  onClick={() => syncFromSheets(true)}
-                >
-                  {isSyncing ? 'Sinkron…' : 'Sinkron'}
-                </Button>
-              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={isSyncing}
+                onClick={() => syncFromSheets(true)}
+              >
+                {isSyncing ? 'Sinkron…' : 'Sinkron'}
+              </Button>
             )}
           </div>
         </header>
@@ -402,8 +504,30 @@ function AppInner() {
               showToast={showToast}
             />
           )}
+
+          {activeTab === 'keuangan' && (
+            <KeuanganTab
+              records={sheetRecords}
+              settings={settings}
+              onUpdateSettings={handleUpdateSettings}
+              showToast={showToast}
+            />
+          )}
+
+          {activeTab === 'peluang' && (
+            <PeluangTab showToast={showToast} />
+          )}
         </main>
       </div>
+
+      {/* WhatsApp & Webhook Connection Modal */}
+      <WhatsAppConnectionModal
+        isOpen={isWaModalOpen}
+        onClose={() => setIsWaModalOpen(false)}
+        settings={settings}
+        onRefresh={fetchSettings}
+        showToast={showToast}
+      />
 
       {/* Floating Toast Notification */}
       {toasts.length > 0 && (

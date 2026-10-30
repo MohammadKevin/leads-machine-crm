@@ -293,7 +293,7 @@ export default function OutreachDashboard() {
               </thead>
               <tbody className="divide-y divide-olive-100">
                 {leads.map((lead, index) => {
-                  const badge = STATUS_BADGE[lead.status];
+                  const badge = (STATUS_BADGE as any)[lead.status] || { label: String(lead.status), className: '' };
                   return (
                     <tr key={lead.id} className="hover:bg-cream-100/70 transition text-[11px] align-top">
                       <td className="px-3 py-2.5 font-mono text-olive-500">{index + 1}</td>

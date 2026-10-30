@@ -164,7 +164,7 @@ export default function RiwayatTab({
             >
               Semua ({records.length})
             </button>
-            {RESPONSE_STATUS_OPTIONS.map((opt) => {
+            {RESPONSE_STATUS_OPTIONS.map((opt: any) => {
               const count = records.filter((r) => r.status === opt.value).length;
               return (
                 <button
